@@ -1,0 +1,58 @@
+name: Build Android AAB
+on:
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      KS_B64: ${{ secrets.KS_B64 }}
+      KS_PASS: ${{ secrets.KS_PASS }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check password secret
+        run: |
+          if [ -z "$KS_PASS" ]; then echo "::error::Add the repository secret KS_PASS first (a strong password, 10+ characters)"; exit 1; fi
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Create signing key (first run only)
+        if: env.KS_B64 == ''
+        run: |
+          keytool -genkeypair -keystore upload.jks -alias upload -keyalg RSA -keysize 2048 -validity 10000 -storepass "$KS_PASS" -keypass "$KS_PASS" -dname "CN=Farsi App, O=Farsi App, C=US"
+          base64 -w0 upload.jks > keystore-base64.txt
+      - name: Save the key text (download it, then add it as secret KS_B64)
+        if: env.KS_B64 == ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: SECRET-signing-key
+          path: keystore-base64.txt
+          retention-days: 3
+      - uses: actions/setup-node@v4
+        if: env.KS_B64 != ''
+        with:
+          node-version: 22
+      - name: Build the app
+        if: env.KS_B64 != ''
+        run: |
+          mkdir -p www && cp index.html bridge.js www/
+          npm install @capacitor/core @capacitor/cli @capacitor/android
+          npx cap add android
+          mkdir -p assets && cp icon-only.png assets/
+          npx @capacitor/assets generate --android --iconBackgroundColor '#12807F' --iconBackgroundColorDark '#0B5E5E' || echo "icon step skipped"
+          npx cap sync android
+          sed -i "s/versionCode 1/versionCode ${{ github.run_number }}/" android/app/build.gradle
+          cd android && chmod +x gradlew && ./gradlew bundleRelease
+      - name: Sign the bundle
+        if: env.KS_B64 != ''
+        run: |
+          echo "$KS_B64" | base64 -d > upload.jks
+          AAB=$(find android -name "*.aab" | head -1)
+          cp "$AAB" farsi-app.aab
+          jarsigner -keystore upload.jks -storepass "$KS_PASS" -keypass "$KS_PASS" -sigalg SHA256withRSA -digestalg SHA-256 farsi-app.aab upload
+      - name: Publish the signed file
+        if: env.KS_B64 != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: farsi-app-aab
+          path: farsi-app.aab
