@@ -1,0 +1,1 @@
+window.PACK_URL = '';

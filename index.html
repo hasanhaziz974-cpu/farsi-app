@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>تعلّم الفارسية</title>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#EEF4F3;--sf:#fff;--tx:#14263A;--mu:#5B7083;--pr:#12807F;--onpr:#fff;--ac:#E3A12F;--ok:#2E9B5F;--no:#C94B4B;--bd:#D5E2E0;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0E1A24;--sf:#16293A;--tx:#E8F1F0;--mu:#93A8B6;--pr:#3FB8B5;--onpr:#06222A;--ac:#F0B84D;--ok:#4CC27F;--no:#E26D6D;--bd:#264054;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0E1A24;--sf:#16293A;--tx:#E8F1F0;--mu:#93A8B6;--pr:#3FB8B5;--onpr:#06222A;--ac:#F0B84D;--ok:#4CC27F;--no:#E26D6D;--bd:#264054;color-scheme:dark}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font:400 16px/1.6 'Vazirmatn',Tahoma,sans-serif;min-height:100vh}
+#app{max-width:520px;margin:0 auto;padding:0 16px 96px}
+header{display:flex;justify-content:space-between;align-items:center;padding:18px 0 10px}
+h1{font-size:22px;font-weight:800;margin:0}
+.chips{display:flex;gap:8px}
+.chip{background:var(--sf);border:1px solid var(--bd);border-radius:20px;padding:2px 12px;font-weight:600;font-size:14px}
+.chip b{color:var(--ac)}
+h2{font-size:18px;margin:18px 0 10px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--sf);border:1px solid var(--bd);border-radius:14px;padding:14px;margin-bottom:10px;cursor:pointer;width:100%;color:inherit;font:inherit;text-align:start}
+.bar{height:6px;background:var(--bd);border-radius:6px;overflow:hidden;margin-top:6px}
+.bar i{display:block;height:100%;background:var(--pr)}
+.fa{font-size:30px;font-weight:800;direction:rtl;line-height:1.3}
+.mu{color:var(--mu);font-size:14px}
+.btn{background:var(--pr);color:var(--onpr);border:0;border-radius:12px;padding:12px 18px;font:600 16px 'Vazirmatn',Tahoma,sans-serif;cursor:pointer}
+.btn.alt{background:transparent;color:var(--pr);border:1.5px solid var(--pr)}
+.btn.no{background:var(--no);color:#fff}.btn.ok{background:var(--ok);color:#fff}
+.btns{display:flex;gap:10px;margin-top:14px}.btns .btn{flex:1}
+.spk{background:none;border:1.5px solid var(--bd);color:var(--pr);border-radius:50%;width:40px;height:40px;font-size:18px;cursor:pointer;flex:none}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.lt{background:var(--sf);border:1px solid var(--bd);border-radius:12px;padding:10px 0;text-align:center;cursor:pointer;color:var(--tx);font:inherit}
+.lt .fa{font-size:30px}.lt .mu{font-size:12px;direction:ltr}
+.lt.sel{border-color:var(--pr);background:var(--pr);color:var(--onpr)}.lt.sel .mu{color:inherit}
+.det{background:var(--sf);border:1px solid var(--bd);border-radius:14px;padding:14px;margin-bottom:12px;text-align:center}
+.card{background:var(--sf);border:2px solid var(--pr);border-radius:150px 150px 22px 22px;padding:48px 20px 24px;text-align:center;margin-top:14px}
+.card .fa{font-size:52px}
+.tr{font-size:20px;color:var(--pr);direction:ltr;font-weight:600}
+.ar{font-size:22px;font-weight:600;margin-top:4px}
+.opt{display:block;width:100%;background:var(--sf);border:1.5px solid var(--bd);border-radius:12px;padding:13px;margin-bottom:8px;font:600 17px 'Vazirmatn',Tahoma,sans-serif;color:var(--tx);cursor:pointer}
+.opt.good{border-color:var(--ok);background:var(--ok);color:#fff}.opt.bad{border-color:var(--no);background:var(--no);color:#fff}
+nav{position:fixed;inset:auto 0 0 0;background:var(--sf);border-top:1px solid var(--bd);display:flex;justify-content:center;padding-bottom:env(safe-area-inset-bottom,0px)}
+nav div{display:flex;width:100%;max-width:520px}
+nav button{flex:1;background:none;border:0;padding:12px 0 10px;font:600 13px 'Vazirmatn',Tahoma,sans-serif;color:var(--mu);cursor:pointer;border-top:3px solid transparent}
+nav button.on{color:var(--pr);border-top-color:var(--pr)}
+.back{background:none;border:0;color:var(--pr);font:600 15px 'Vazirmatn',Tahoma,sans-serif;cursor:pointer;padding:4px 0}
+.bub{max-width:90%;background:var(--sf);border:1px solid var(--bd);border-radius:16px;padding:10px 12px;margin-bottom:10px;display:flex;gap:8px;align-items:center}
+.bub.b{margin-inline-start:auto;background:var(--pr);color:var(--onpr);border-color:var(--pr)}
+.bub.b .tr,.bub.b .mu{color:inherit}.bub.b .spk{color:var(--onpr);border-color:var(--onpr)}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;justify-content:center;z-index:20}
+.sh{background:var(--sf);color:var(--tx);width:100%;max-width:520px;border-radius:20px 20px 0 0;padding:20px 18px calc(20px + env(safe-area-inset-bottom,0px));max-height:90vh;overflow:auto}
+.adslot{border:1.5px dashed var(--bd);border-radius:12px;padding:14px;text-align:center;color:var(--mu);margin:14px 0;font-size:14px}
+.det:has(+.opt){background:linear-gradient(160deg,#12807F,#0B5E5E);border-color:transparent;color:#fff;box-shadow:0 6px 18px rgba(11,94,94,.28)}
+.det:has(+.opt) .tr{color:#CFF3F1}
+.det:has(+.opt) .mu{color:#D5EDEC}
+.det:has(+.opt) .spk{background:#ffffff26;border-color:#ffffffaa;color:#fff}
+.rowf{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
+.ring{width:58px;height:58px;border-radius:50%;background:conic-gradient(var(--ac) calc(var(--p)*1%),var(--bd) 0);display:grid;place-items:center;position:relative;flex:none}
+.ring::before{content:'';position:absolute;inset:6px;border-radius:50%;background:var(--sf)}.ring b{position:relative;font-size:15px}
+.bdg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}.bdg>div{border:1px solid var(--bd);border-radius:12px;padding:8px 4px;font-size:12px;line-height:1.4;background:var(--bg)}
+.bdg>div.lk{opacity:.45;filter:grayscale(1)}.bdg i{display:block;font-style:normal;font-size:26px}
+.cel{position:fixed;left:16px;right:16px;top:calc(16px + env(safe-area-inset-top,0px));max-width:480px;margin:auto;background:linear-gradient(160deg,#12807F,#0B5E5E);color:#fff;border-radius:16px;padding:12px 16px;text-align:center;font-weight:700;line-height:1.8;z-index:30;box-shadow:0 10px 30px #0006;animation:celpop .35s ease}
+.cnf{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:29}.cnf i{position:absolute;top:-16px;width:8px;height:14px;border-radius:2px;animation:cnfall linear forwards}
+@keyframes cnfall{to{transform:translateY(110vh) rotate(540deg)}}@keyframes celpop{from{transform:translateY(-24px) scale(.94);opacity:0}}
+@media (prefers-reduced-motion:reduce){.cel{animation:none}}
+.opt.sel{border-color:var(--pr);box-shadow:0 0 0 2px var(--pr) inset}
+.fbk{border-radius:14px;padding:12px 14px;margin:6px 0 4px;text-align:center;line-height:1.7;font-weight:600}
+.fbk.ok{background:var(--ok);color:#fff}
+.fbk.no{background:var(--sf);border:1.5px solid var(--ac);color:var(--tx)}
+.srch{width:100%;padding:12px;border:1.5px solid var(--bd);border-radius:12px;background:var(--sf);color:var(--tx);font:inherit}
+:focus-visible{outline:3px solid var(--ac);outline-offset:2px}
+.big{font-size:40px;font-weight:800;color:var(--pr)}
+</style>
+</head>
+<body>
+<div id="app">
+<header><h1>تعلّم الفارسية</h1><div class="chips"><span class="chip" id="st"></span><span class="chip" id="xp"></span></div></header>
+<main id="main"></main>
+</div>
+<nav><div id="nav"></div></nav>
+<script src="bridge.js"></script>
+<script>
+var LES=[
+{t:"التحيات والمجاملة",w:[["سلام","salām","مرحباً"],["خداحافظ","khodā hāfez","مع السلامة"],["ممنون","mamnun","شكراً"],["لطفاً","lotfan","من فضلك"],["ببخشید","bebakhshid","عذراً"],["بله","bale","نعم"],["نه","na","لا"],["خوش آمدید","khosh āmadid","أهلاً وسهلاً"],["حال شما چطور است؟","hāl-e shomā chetor ast","كيف حالك؟"]]},
+{t:"الأرقام 1 إلى 10",w:[["یک","yek","واحد"],["دو","do","اثنان"],["سه","se","ثلاثة"],["چهار","chahār","أربعة"],["پنج","panj","خمسة"],["شش","shesh","ستة"],["هفت","haft","سبعة"],["هشت","hasht","ثمانية"],["نه","noh","تسعة"],["ده","dah","عشرة"]]},
+{t:"الطعام والشراب",w:[["آب","āb","ماء"],["نان","nān","خبز"],["چای","chāy","شاي"],["برنج","berenj","أرز"],["گوشت","gusht","لحم"],["میوه","mive","فاكهة"],["سیب","sib","تفاح"],["شیر","shir","حليب"]]},
+{t:"العائلة والأصدقاء",w:[["مادر","mādar","أم"],["پدر","pedar","أب"],["برادر","barādar","أخ"],["خواهر","khāhar","أخت"],["پسر","pesar","ولد"],["دختر","dokhtar","بنت"],["دوست","dust","صديق"]]},
+{t:"جمل للسفر",w:[["اسم من ... است","esm-e man ... ast","اسمي ..."],["من عربی هستم","man arabi hastam","أنا عربي"],["فارسی بلد نیستم","fārsi balad nistam","لا أتقن الفارسية"],["قیمت چنده؟","gheymat chande","بكم هذا؟"],["کجا است؟","kojā ast","أين المكان؟"],["کمک کنید","komak konid","ساعدوني"]]},
+{t:"الألوان",w:[["سرخ","sorkh","أحمر"],["آبی","ābi","أزرق"],["سبز","sabz","أخضر"],["زرد","zard","أصفر"],["سفید","sefid","أبيض"],["سیاه","siyāh","أسود"],["نارنجی","nārenji","برتقالي"],["قهوه‌ای","ghahve'i","بني"]]},
+{t:"الأيام والوقت",w:[["شنبه","shanbe","السبت"],["یکشنبه","yekshanbe","الأحد"],["دوشنبه","doshanbe","الاثنين"],["سه‌شنبه","seshanbe","الثلاثاء"],["چهارشنبه","chahārshanbe","الأربعاء"],["پنجشنبه","panjshanbe","الخميس"],["جمعه","jom'e","الجمعة"],["امروز","emruz","اليوم"],["فردا","fardā","غداً"],["دیروز","diruz","أمس"]]},
+{t:"الضمائر والأفعال المساعدة",w:[["من","man","أنا"],["تو","to","أنتَ (للمقرّب)"],["او","u","هو / هي"],["ما","mā","نحن"],["شما","shomā","أنتم / حضرتك"],["آنها","ānhā","هم"],["هستم","hastam","أنا موجود / أنا ..."],["نیستم","nistam","لستُ"],["دارم","dāram","عندي"],["ندارم","nadāram","ليس عندي"]]},
+{t:"حروف الجر والمكان",w:[["در", "dar", "في"], ["به", "be", "إلى"], ["از", "az", "من"], ["با", "bā", "مع"], ["برای", "barāye", "من أجل"], ["تا", "tā", "حتى"], ["روی", "ru-ye", "على / فوق"], ["زیر", "zir", "تحت"], ["کنار", "kenār", "بجانب"], ["پشت", "posht", "خلف"], ["بین", "beyn", "بين"]]},
+{t:"الأفعال الأساسية",w:[["رفتن","raftan","الذهاب"],["آمدن","āmadan","المجيء"],["خوردن","khordan","الأكل"],["نوشیدن","nushidan","الشرب"],["دیدن","didan","الرؤية"],["گفتن","goftan","القول"],["خواستن","khāstan","الإرادة"],["دانستن","dānestan","المعرفة"],["خریدن","kharidan","الشراء"],["خواندن","khāndan","القراءة"]]},
+{t:"في المطعم",w:[["رستوران","resturān","مطعم"],["منو","menu","قائمة الطعام"],["غذا","ghazā","طعام"],["کباب","kabāb","كباب"],["سالاد","sālād","سلطة"],["نمک","namak","ملح"],["نوشیدنی","nushidani","مشروب"],["صورت‌حساب","surat-hesāb","الفاتورة"],["یک میز برای دو نفر","yek miz barāye do nafar","طاولة لشخصين"],["خیلی خوشمزه بود","kheyli khosh-mazze bud","كان لذيذاً جداً"]]},
+{t:"التسوق والمال",w:[["بازار","bāzār","سوق"],["قیمت","gheymat","سعر"],["ارزان","arzān","رخيص"],["گران","gerān","غالٍ"],["پول","pul","مال / نقود"],["تخفیف","takhfif","خصم"],["چقدر؟","chaghadr","كم؟"],["بزرگ","bozorg","كبير"],["کوچک","kuchak","صغير"]]},
+{t:"المواصلات والاتجاهات",w:[["ماشین","māshin","سيارة"],["اتوبوس","otobus","حافلة"],["مترو","metro","مترو"],["تاکسی","tāksi","تاكسي"],["فرودگاه","forudgāh","مطار"],["راست","rāst","يمين"],["چپ","chap","يسار"],["مستقیم","mostaghim","مباشرةً"],["نزدیک","nazdik","قريب"],["دور","dur","بعيد"]]},
+{t:"الصحة والطوارئ",w:[["دکتر","doktor","طبيب"],["بیمارستان","bimārestān","مستشفى"],["داروخانه","dārukhāne","صيدلية"],["دارو","dāru","دواء"],["درد","dard","ألم"],["سردرد","sardard","صداع"],["تب","tab","حمّى"],["حالم بد است","hālam bad ast","حالتي سيئة"],["اورژانس","orzhāns","طوارئ"]]},
+{t:"الطبيعة والطقس",w:[["خورشید","khorshid","شمس"],["ماه","māh","قمر / شهر"],["باران","bārān","مطر"],["برف","barf","ثلج"],["باد","bād","ريح"],["هوا","havā","الجو / الهواء"],["گرم","garm","حار"],["سرد","sard","بارد"],["دریا","daryā","بحر"],["کوه","kuh","جبل"]]},
+{t:"البيت والأشياء",w:[["خانه","khāne","بيت"],["در","dar","باب"],["پنجره","panjare","نافذة"],["اتاق","otāgh","غرفة"],["میز","miz","طاولة"],["صندلی","sandali","كرسي"],["کتاب","ketāb","كتاب"],["تخت","takht","سرير"]]},
+{t:"الأرقام 11 إلى 1000",w:[["یازده","yāzdah","11"],["دوازده","davāzdah","12"],["بیست","bist","20"],["سی","si","30"],["چهل","chehel","40"],["پنجاه","panjāh","50"],["صد","sad","100"],["هزار","hezār","1000"]]}
+];
+var LET=[["ا","ā / a","ألف"],["آ","ā","ألف ممدودة"],["ب","b","باء"],["پ","p","مثل P في Pepsi"],["ت","t","تاء"],["ث","s","يُنطق سيناً"],["ج","j","جيم"],["چ","ch","تش"],["ح","h","هاء خفيفة"],["خ","kh","خاء"],["د","d","دال"],["ذ","z","يُنطق زاياً"],["ر","r","راء"],["ز","z","زاي"],["ژ","zh","مثل J في beige"],["س","s","سين"],["ش","sh","شين"],["ص","s","يُنطق سيناً"],["ض","z","يُنطق زاياً"],["ط","t","يُنطق تاءً"],["ظ","z","يُنطق زاياً"],["ع","'","همزة / عين خفيفة"],["غ","gh","غين"],["ف","f","فاء"],["ق","gh / q","غين أو قاف"],["ک","k","كاف"],["گ","g","مثل الجيم المصرية"],["ل","l","لام"],["م","m","ميم"],["ن","n","نون"],["و","v / u / o","واو"],["ه","h","هاء"],["ی","y / i","ياء"]];
+var ALL=[];LES.forEach(function(l,i){l.w.forEach(function(w,j){ALL.push({id:i+"-"+j,fa:w[0],tr:w[1],ar:w[2],l:i})})});
+var DAY=864e5,S={xp:0,st:0,last:"",srs:{},v:2};
+try{var s0=JSON.parse(localStorage.getItem("fa-app")||"null");if(s0){S=s0;S.srs=S.srs||{};S.xp=S.xp||0;S.st=S.st||0;S.last=S.last||''}}catch(e){}
+if(S.v!==2){try{migrateV2()}catch(e){}S.v=2;try{save()}catch(e){}}
+function save(){try{localStorage.setItem("fa-app",JSON.stringify(S))}catch(e){}}
+function ds(t){return new Date(t).toDateString()}
+function gain(n){var ol=lvl(S.xp);S.xp+=n;var t=ds(Date.now()),nd=S.last!==t;if(nd){S.st=S.last===ds(Date.now()-DAY)?S.st+1:1;S.last=t}
+var dg=S.dg;if(!dg||dg.d!==t)dg=S.dg={d:t,x:0,ok:0};dg.x+=n;var dn=dayNo(Date.now());S.hist=S.hist||{};S.hist[dn]=(S.hist[dn]||0)+n;Object.keys(S.hist).forEach(function(k){if(+k<dn-30)delete S.hist[k]});var hit=false;if(!dg.ok&&dg.x>=GOAL){dg.ok=1;S.dgn=(S.dgn||0)+1;S.xp+=10;hit=true}
+var ms=[];if(hit)ms.push('🏆 حققت هدفك اليومي! +10 نقاط');var nl=lvl(S.xp);if(nl>ol)ms.push('🎉 ارتقيت إلى المستوى '+(nl+1)+': '+LT[Math.min(nl,LT.length-1)]);
+if(nd&&MS.indexOf(S.st)>=0)ms.push('🔥 '+S.st+' أيام متتالية، استمر!');
+chk().forEach(function(b){ms.push('🏅 إنجاز جديد: '+b.n)});
+save();top_();if(ms.length)celebrate(ms)}
+function top_(){var live=S.last===ds(Date.now())||S.last===ds(Date.now()-DAY);document.getElementById("st").innerHTML="🔥 <b>"+(live?S.st:0)+"</b> يوم";document.getElementById("xp").innerHTML="⭐ <b>"+S.xp+"</b>"}
+var AU=null;
+function hs(t){var h=5381;for(var i=0;i<t.length;i++)h=((h*33)^t.charCodeAt(i))>>>0;return h.toString(16)}
+function tts(t,cb){try{var u=new SpeechSynthesisUtterance(t);u.lang="fa-IR";u.rate=.85;if(cb)u.onend=cb;speechSynthesis.cancel();speechSynthesis.speak(u)}catch(e){}}
+function say(t,cb){try{speechSynthesis.cancel()}catch(e){}
+try{if(AU)AU.pause()}catch(e){}
+var done=false,n=hs(t)+'.mp3';function f(){if(done)return;done=true;tts(t,cb)}
+function play(src){try{AU=new Audio(src);AU.onerror=f;AU.onended=function(){if(src.indexOf('blob:')===0)try{URL.revokeObjectURL(src)}catch(e){}if(cb)cb()};var p=AU.play();if(p&&p.catch)p.catch(f)}catch(e){f()}}
+if(S.packOk&&PACK_URL&&window.caches){caches.open('farsi-audio-v1').then(function(c){return c.match(packUrl(n))}).then(function(r){if(!r)return play('audio/'+n);return r.blob().then(function(b){play(URL.createObjectURL(b))})}).catch(function(){play('audio/'+n)})}
+else play('audio/'+n)}
+function sh(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t}return a}
+function esc(s){return s.replace(/'/g,"&#39;")}
+var tab="home",sub=null,Q=null,R={show:false},selL=null;
+var TABS=[["home","الدروس"],["verbs","الأفعال"],["gram","قواعد"],["talk","محادثات"],["review","المراجعة"],["me","تقدّمي"]];
+function nav(){document.getElementById("nav").innerHTML=TABS.map(function(t){return '<button class="'+(t[0]===tab||(t[0]==="home"&&(tab==="letters"||tab==="games"))?"on":"")+'" onclick="go(\''+t[0]+'\')">'+t[1]+'</button>'}).join("")}
+function go(t){tab=t;sub=null;Q=null;M=null;PL=null;RP=null;MG=null;LG=null;D=null;LQ=null;G=null;GQ=null;CV=null;CQ=null;RV=false;R.show=false;render()}
+function render0(){nav();top_();var m=document.getElementById("main");if(PL){m.innerHTML=plView();window.scrollTo(0,0);return}
+if(tab==="home")m.innerHTML=sub===null?home():(M?matchView():Q?quiz():lesson());
+else if(tab==="games")m.innerHTML=gamesView();
+else if(tab==="verbs")m.innerHTML=verbsTab();
+else if(tab==="letters")m.innerHTML=letters();
+else if(tab==="gram")m.innerHTML=gram();
+else if(tab==="talk")m.innerHTML=talk();
+else if(tab==="review")m.innerHTML=review();
+else m.innerHTML=me();
+window.scrollTo(0,0)}
+function known(l){return ALL.filter(function(w){return w.l===l&&S.srs[w.id]}).length}
+function home(){var fw=firstWin(),h=fw+(fw?'':heroPanel()+dailyCard()+proverbCard())+'<h2>اختر درساً</h2><p class="mu">أنهِ المراحل الخمس لكل درس بإجابات صحيحة لتفتح الدرس التالي.</p>'+packHint()+plCard()+lettersCard()+gamesCard();
+LES.forEach(function(l,i){var k=known(i),p=sp(i)*20;
+var lk=!unlocked(i),pm=!lk&&!allowed('L',i);h+='<button class="row" style="'+(lk||pm?'opacity:.6':'')+'" onclick="'+(lk?'locked()':pm?'gate(\'L\','+i+')':'sub='+i+';render()')+'"><div style="flex:1"><div style="font-weight:600">'+(lk?'🔒 ':pm?'⭐ ':(S.pass&&S.pass[i]?'✅ ':''))+l.t+'</div><div class="mu">'+(lk?'أنهِ مراحل الدرس السابق لفتحه':pm?'Premium أو شاهد إعلاناً':l.w.length+' كلمات · '+sp(i)+' من 5 مراحل')+'</div><div class="bar"><i style="width:'+p+'%"></i></div></div><span class="mu">‹</span></button>'});
+return h+bannerSlot()}
+var STG=[
+{t:'تعرّف على الكلمات',d:'ترى الكلمة بالفارسية مع نقلها ونطقها وتختار معناها'},
+{t:'استمع واختر',d:'تسمع الكلمة دون أن تراها وتختار معناها'},
+{t:'من العربية إلى الفارسية',d:'ترى المعنى وتختار الكلمة الفارسية الصحيحة'},
+{t:'طابِق الأزواج',d:'صِل كل كلمة فارسية بمعناها العربي'},
+{t:'الاختبار النهائي',d:'أسئلة مختلطة من كل الأنواع، وبها يُفتح الدرس التالي'}];
+function sp(l){return S.pass&&S.pass[l]?5:Math.min(4,(S.sg&&S.sg[l])||0)}
+function goLesson(i){if(allowed('L',i)){sub=i;render()}else{sub=null;render();gate('L',i)}}
+function lesson(){var l=LES[sub],c=sp(sub),h='<button class="back" onclick="sub=null;render()">› رجوع</button><h2>'+l.t+'</h2><p class="mu">٥ مراحل من الأسهل إلى الأصعب. أنهِ كل مرحلة بإجابات صحيحة لتفتح التي بعدها.</p>';
+STG.forEach(function(g,i){var lk=i>c,dn=i<c;h+='<button class="row" style="'+(lk?'opacity:.55':'')+'" onclick="'+(lk?'toast(\'أنهِ المرحلة السابقة أولاً\')':'startStage('+sub+','+i+')')+'"><div style="flex:1"><div style="font-weight:600">'+(lk?'🔒 ':dn?'✅ ':'▶️ ')+'المرحلة '+(i+1)+': '+g.t+'</div><div class="mu">'+g.d+'</div>'+(!lk&&S.sv&&S.sv[sub+'-'+i]?'<div class="mu" style="color:var(--pr);font-weight:600">↻ متابعة'+(S.sv[sub+'-'+i].t==='q'?': سؤال '+Math.min(S.sv[sub+'-'+i].i+1,S.sv[sub+'-'+i].n)+' من '+S.sv[sub+'-'+i].n:' (لعبة المطابقة)')+'</div>':'')+'</div><span class="mu">‹</span></button>'});
+h+='<h2>كلمات الدرس</h2>';
+l.w.forEach(function(w){h+='<div class="row" style="cursor:default"><div><div class="fa">'+w[0]+'</div><div class="tr" style="font-size:16px">'+w[1]+'</div><div class="mu">'+w[2]+'</div></div><button class="spk" aria-label="استمع" onclick="say(\''+esc(w[0])+'\')">🔊</button></div>'});
+return h}
+function startQuiz(li){var c=sp(li);startStage(li,c>=5?4:Math.min(c,4))}
+function startStage(l,g,fresh){M=null;if(fresh)svClear(l,g);if(g===3){startMatch(l,fresh);return}
+if(!fresh&&svLoad(l,g)){render();var rq=Q.qs[Q.i];if(rq&&rq.mode==='aud'&&rq.a===null)say(rq.w.fa);return}
+var pool=ALL.filter(function(w){return w.l===l}),n=g===4?8:Math.min(pool.length,6),ws=[],modes=['rec','aud','rev'];
+while(ws.length<n)ws=ws.concat(sh(pool));ws=ws.slice(0,n);
+Q={l:l,g:g,i:0,sc:0,n:n,done:false,qs:ws.map(function(w,i){
+var same=sh(pool.filter(function(x){return x.ar!==w.ar&&x.fa!==w.fa})),oth=sh(ALL.filter(function(x){return x.l!==l&&x.ar!==w.ar&&x.fa!==w.fa}));
+var d=(g>=2?same.concat(oth):oth.concat(same)).slice(0,3);
+return{w:w,mode:g===0?'rec':g===1?'aud':g===2?'rev':modes[i%3],o:sh([w].concat(d)),a:null}})};
+svSave();render();if(Q.qs[0].mode==='aud')say(Q.qs[0].w.fa)}
+function quiz(){var h='<button class="back" onclick="Q=null;'+(Q.daily?'sub=null;':'')+'render()">› إنهاء</button>';
+if(Q.done===2)return h+Q.res;
+if(Q.done===true){var sc=Q.sc,n=Q.n,last=Q.g===4,nx=Q.l+1<LES.length,was=!!(S.pass&&S.pass[Q.l]);
+if(sc===n)S.pf=1;if(Q.daily){S.dc=ds(Date.now());S.dcn=(S.dcn||0)+1}gain(Q.sc*10+(Q.daily?20:0));if(last)quizDone();svClear(Q.l,Q.g);
+Q.qs.forEach(function(q){var c=q.a===q.w.id;if(c&&!S.srs[q.w.id])S.srs[q.w.id]={b:1,d:Date.now()+DAY};if(!c)S.srs[q.w.id]={b:1,d:Date.now()}});
+if(!Q.daily){S.sg=S.sg||{};S.sg[Q.l]=Math.max(S.sg[Q.l]||0,Q.g+1);if(last){S.pass=S.pass||{};S.pass[Q.l]=true}}save();
+if(sc===n)S.pf=1;var msg=(sc<n?'أحسنت، صحّحت كل أخطائك! ':'ممتاز! ')+(last?(nx&&!was?'فُتح الدرس التالي.':'أنهيت الدرس!'):'فُتحت المرحلة '+(Q.g+2)+'.');
+Q.res='<div class="det" style="margin-top:20px"><div class="big">'+sc+' / '+n+'</div><p>'+msg+'</p><p class="mu">حصلت على '+sc*10+' نقطة</p></div><div class="btns"><button class="btn alt" onclick="Q=null;render()">للدرس</button>'+(last?(nx?'<button class="btn" onclick="Q=null;goLesson('+(Q.l+1)+')">الدرس التالي</button>':''):'<button class="btn" onclick="startStage('+Q.l+','+(Q.g+1)+')">المرحلة التالية</button>')+'</div>';
+if(Q.daily)Q.res='<div class="det" style="margin-top:20px"><div class="big">'+sc+' / '+n+'</div><p>'+(sc<n?'أحسنت، صحّحت كل أخطائك! ':'ممتاز! ')+'أنجزت تحدّي اليوم ⚡ ومعك +20 نقطة مكافأة.</p><p class="mu">حصلت على '+(sc*10+20)+' نقطة</p></div><div class="btns"><button class="btn" onclick="Q=null;sub=null;render()">للرئيسية</button></div>';
+Q.done=2;return h+Q.res}
+var q=Q.qs[Q.i],rv=q.a!==null,w=q.w;
+if(Q.resumed)h+='<div class="mu" style="margin:4px 0">↻ تابعت من حيث توقفت. <button class="back" style="font-size:14px" onclick="startStage('+Q.l+','+Q.g+',true)">ابدأ المرحلة من جديد</button></div>';
+h+='<p class="mu">'+(Q.daily?'⚡ تحدّي اليوم':'المرحلة '+(Q.g+1)+' من 5 · '+STG[Q.g].t)+'<br>'+(q.r?'🔁 إعادة سؤال أخطأت فيه':'السؤال '+(Q.i+1)+' من '+Q.n)+'</p><div class="det">';
+var sk='<button class="spk" style="margin-top:6px" aria-label="استمع" onclick="say(\''+esc(w.fa)+'\')">🔊</button>';
+if(q.mode==='rec')h+='<div class="fa" style="font-size:42px">'+w.fa+'</div>'+((Q.g===0||rv)?'<div class="tr">'+w.tr+'</div>':'')+sk;
+else if(q.mode==='aud')h+=rv?'<div class="fa" style="font-size:36px">'+w.fa+'</div><div class="tr">'+w.tr+'</div>'+sk:'<p class="mu">استمع ثم اختر المعنى</p><button class="spk" style="width:72px;height:72px;font-size:32px" aria-label="استمع" onclick="say(\''+esc(w.fa)+'\')">🔊</button>';
+else h+='<p class="mu">كيف تقولها بالفارسية؟</p><div class="ar" style="font-size:30px">'+w.ar+'</div>';
+h+='</div>';
+q.o.forEach(function(o){var c='opt';if(rv){if(o.id===w.id)c+=' good';else if(o.id===q.a)c+=' bad'}
+var lab=q.mode==='rev'?'<span class="fa" style="font-size:24px">'+o.fa+'</span>'+(rv?'<br><span style="font-size:13px;opacity:.85;direction:ltr;display:inline-block">'+o.tr+'</span>':''):o.ar;
+h+='<button class="'+c+'" '+(rv?'disabled':'')+' onclick="pick(\''+o.id+'\')">'+lab+'</button>'});
+if(rv)h+=fb(q.a===w.id,q,1)+'<div class="btns"><button class="btn" onclick="nextQ()">'+(Q.i===Q.qs.length-1?'النتيجة':'التالي')+'</button></div>';
+return h}
+function pick(id){var q=Q.qs[Q.i];if(q.a!==null)return;q.a=id;q.m=Math.random();var ok=id===q.w.id;snd(ok);STK=ok?STK+1:0;q.s=STK;if(ok){if(!q.r)Q.sc++}else Q.qs.push({w:q.w,mode:q.mode,o:sh(q.o),a:null,r:true});svSave();render();if(q.mode==='rev')say(q.w.fa)}
+function nextQ(){if(Q.done)return;if(Q.i===Q.qs.length-1)Q.done=true;else Q.i++;if(!Q.done)svSave();render();var q=Q.qs[Q.i];if(Q.done!==true&&q&&q.mode==='aud'&&q.a===null)say(q.w.fa)}
+var M=null;
+function startMatch(l,fresh){Q=null;if(!fresh&&svLoad(l,3)){render();return}var pool=sh(ALL.filter(function(w){return w.l===l})).slice(0,5);M={l:l,w:pool,L:sh(pool),R:sh(pool),sel:null,done:{},mis:0,err:null,fin:false};svSave();render()}
+function matchView(){var h='<button class="back" onclick="M=null;render()">› إنهاء</button><p class="mu">المرحلة 4 من 5 · '+STG[3].t+'</p>';
+if(M.fin)return h+'<div class="det" style="margin-top:20px"><div class="big">✓</div><p>'+(M.mis?'أحسنت! أنهيت المطابقة مع '+M.mis+' محاولات خاطئة، وستتقنها أكثر.':'ممتاز! طابقت كل الأزواج بلا خطأ.')+' فُتحت المرحلة الأخيرة.</p><p class="mu">حصلت على '+(M.mis?30:50)+' نقطة</p></div><div class="btns"><button class="btn alt" onclick="M=null;render()">للدرس</button><button class="btn" onclick="startStage('+M.l+',4)">المرحلة التالية</button></div>';
+h+=(M.resumed?'<div class="mu" style="margin:4px 0">↻ تابعت من حيث توقفت. <button class="back" style="font-size:14px" onclick="startStage('+M.l+',3,true)">ابدأ من جديد</button></div>':'')+'<p class="mu">اضغط كلمة فارسية ثم معناها بالعربية.</p>'+(M.err?'<div class="fbk no">ليست مطابقة، حاول مرة أخرى 💪</div>':'')+'<div style="display:flex;gap:10px;margin-top:8px"><div style="flex:1">';
+M.L.forEach(function(w){var c='opt';if(M.done[w.id])c+=' good';else if(M.sel&&M.sel.side==='l'&&M.sel.id===w.id)c+=' sel';else if(M.err&&M.err[0]===w.id)c+=' bad';h+='<button class="'+c+'" onclick="mtap(\'l\',\''+w.id+'\')"><span class="fa" style="font-size:22px">'+w.fa+'</span></button>'});
+h+='</div><div style="flex:1">';
+M.R.forEach(function(w){var c='opt';if(M.done[w.id])c+=' good';else if(M.sel&&M.sel.side==='r'&&M.sel.id===w.id)c+=' sel';else if(M.err&&M.err[1]===w.id)c+=' bad';h+='<button class="'+c+'" onclick="mtap(\'r\',\''+w.id+'\')">'+w.ar+'</button>'});
+return h+'</div></div>'}
+function mtap(side,id){if(M.fin||M.done[id])return;
+if(!M.sel||M.sel.side===side){M.sel={side:side,id:id};render();return}
+var a=M.sel.side==='l'?M.sel.id:id,b=M.sel.side==='l'?id:M.sel.id;M.sel=null;
+if(a===b){M.done[a]=true;snd(true);STK++;var w=M.w.filter(function(x){return x.id===a})[0];say(w.fa);svSave();if(M.w.every(function(x){return M.done[x.id]}))matchEnd();else render()}
+else{M.mis++;snd(false);STK=0;M.err=[a,b];svSave();render();setTimeout(function(){if(M){M.err=null;render()}},700)}}
+function matchEnd(){M.fin=true;svClear(M.l,3);gain(M.mis?30:50);S.sg=S.sg||{};S.sg[M.l]=Math.max(S.sg[M.l]||0,4);save();render()}
+function letters(){var h='<button class="back" onclick="go(\'home\')">› رجوع للدروس</button><button class="row" onclick="go(\'games\')"><div style="font-weight:600">🎮 العب بالحروف والكلمات</div><span class="mu">‹</span></button><h2>الحروف الفارسية (٣٣ حرفاً)</h2>';
+if(selL!==null){var L=LET[selL];h+='<div class="det"><div class="fa" style="font-size:64px">'+L[0]+'</div><div class="tr">'+L[1]+'</div><div class="mu">'+L[2]+'</div><button class="spk" style="margin-top:8px" aria-label="استمع" onclick="say(\''+L[0]+'\')">🔊</button></div>'}
+else h+='<p class="mu">اضغط على أي حرف لترى نطقه.</p>';
+h+='<div class="grid">';LET.forEach(function(l,i){h+='<button class="lt'+(i===selL?" sel":"")+'" onclick="selL='+i+';render()"><div class="fa">'+l[0]+'</div><div class="mu">'+l[1]+'</div></button>'});
+return h+'</div><p class="mu" style="margin-top:14px">ملاحظة: الحروف ث ص ض ط ظ ذ ح ع ق تأتي في الكلمات المأخوذة من العربية.</p>'}
+function queue(){var n=Date.now(),due=ALL.filter(function(w){return S.srs[w.id]&&S.srs[w.id].d<=n}).sort(function(a,b){return S.srs[a.id].d-S.srs[b.id].d});
+var nw=ALL.filter(function(w){return!S.srs[w.id]&&unlocked(w.l)&&allowed('L',w.l)}).slice(0,5);return{due:due,nw:nw,q:due.concat(due.length?[]:nw)}}
+var RC=null,RSQ=[],RN=0;
+function pickNext(){var r=queue(),i;
+for(i=0;i<RSQ.length;i++){if(RSQ[i].at<=RN||!r.q.length){var id=RSQ.splice(i,1)[0].id;return{w:ALL.filter(function(x){return x.id===id})[0],retry:true}}}
+return r.q.length?{w:r.q[0],retry:false}:null}
+function makeRC(p){var w=p.w,c=S.srs[w.id],b=c?c.b:0,ms=!c?['flip']:b<=1?['rec']:b===2?['aud','rev']:b===3?['rev','aud','rec']:['rec','aud','rev','flip'];
+var mode=ms[Math.floor(Math.random()*ms.length)],pool=ALL.filter(function(x){return x.l===w.l&&x.ar!==w.ar&&x.fa!==w.fa}),oth=ALL.filter(function(x){return x.l!==w.l&&x.ar!==w.ar&&x.fa!==w.fa});
+var d=(b>=3?sh(pool).concat(sh(oth)):sh(oth).concat(sh(pool))).slice(0,3);
+return{id:w.id,w:w,b:b,isNew:!c,retry:p.retry,mode:mode,tr:b<=2,o:sh([w].concat(d)),a:null}}
+function srsRate(id,ok,retry){var c=S.srs[id],b=c?c.b:0;
+if(ok){if(retry)S.srs[id]={b:Math.max(1,b),d:Date.now()+DAY};else{b=Math.min(b+1,5);S.srs[id]={b:b,d:Date.now()+[1,2,4,8,16][b-1]*DAY}}}else S.srs[id]={b:1,d:Date.now()+6e4};
+gain(ok?3:1)}
+function review(){var h='<h2>المراجعة اليومية</h2>';
+if(!RC){var p=pickNext();if(!p)return h+'<div class="det"><div class="big">✓</div><p>لا توجد كلمات مستحقة الآن. عد لاحقاً أو ابدأ درساً جديداً.</p></div>';RC=makeRC(p);R.show=false}
+var w=RC.w,rv=RC.a!==null,left=queue().q.length+RSQ.length,
+lab={flip:'تذكّر المعنى',rec:'اختر المعنى',aud:'استمع واختر المعنى',rev:'اختر الكلمة الفارسية'}[RC.mode],
+sk='<button class="spk" style="margin:10px 0" aria-label="استمع" onclick="say(\''+esc(w.fa)+'\')">🔊</button>';
+h+='<p class="mu">'+(RC.isNew?'كلمة جديدة · ':'')+(RC.retry?'🔁 إعادة · ':'')+lab+' · متبقٍ '+left+' بطاقات</p>';
+if(RC.mode==='flip'){h+='<div class="card"><div class="fa">'+w.fa+'</div>'+sk;
+if(R.show)h+='<div class="tr">'+w.tr+'</div><div class="ar">'+w.ar+'</div>';else h+='<div class="mu">فكّر في المعنى ثم اكشفه</div>';
+h+='</div>';
+if(!R.show)h+='<div class="btns"><button class="btn" onclick="R.show=true;render()">اكشف المعنى</button></div>';
+else h+='<div class="btns"><button class="btn no" onclick="rate(\''+w.id+'\',0)">لم أعرفها</button><button class="btn ok" onclick="rate(\''+w.id+'\',1)">عرفتها</button></div>';
+return h}
+h+='<div class="det">';
+if(RC.mode==='rec')h+='<div class="fa" style="font-size:42px">'+w.fa+'</div>'+((RC.tr||rv)?'<div class="tr">'+w.tr+'</div>':'')+sk;
+else if(RC.mode==='aud')h+=rv?'<div class="fa" style="font-size:36px">'+w.fa+'</div><div class="tr">'+w.tr+'</div>'+sk:'<p class="mu">استمع ثم اختر المعنى</p><button class="spk" style="width:72px;height:72px;font-size:32px" aria-label="استمع" onclick="say(\''+esc(w.fa)+'\')">🔊</button>';
+else h+='<p class="mu">كيف تقولها بالفارسية؟</p><div class="ar" style="font-size:30px">'+w.ar+'</div>';
+h+='</div>';
+RC.o.forEach(function(o,k){var c='opt';if(rv){if(o.id===RC.id)c+=' good';else if(k===RC.a)c+=' bad'}
+var lb=RC.mode==='rev'?'<span class="fa" style="font-size:24px">'+o.fa+'</span>'+(rv?'<br><span style="font-size:13px;opacity:.85;direction:ltr;display:inline-block">'+o.tr+'</span>':''):o.ar;
+h+='<button class="'+c+'" '+(rv?'disabled':'')+' onclick="pickRv('+k+')">'+lb+'</button>'});
+if(rv)h+=fb(RC.o[RC.a].id===RC.id,RC,0)+'<div class="btns"><button class="btn" onclick="rvNext()">التالي</button></div>';
+return h}
+function pickRv(k){if(RC.a!==null)return;var ok=RC.o[k].id===RC.id;snd(ok);RC.a=k;RC.m=Math.random();STK=ok?STK+1:0;RC.s=STK;srsRate(RC.id,ok,RC.retry);if(!ok)RSQ.push({id:RC.id,at:RN+3});RN++;render();if(RC.mode==='rev')say(RC.w.fa)}
+function rvNext(){RC=null;render();if(RC&&RC.mode==='aud'&&RC.a===null)say(RC.w.fa)}
+function rate(id,ok){var c=S.srs[id],b=c?c.b:0;if(ok){b=Math.min(b+1,5);S.srs[id]={b:b,d:Date.now()+[1,2,4,8,16][b-1]*DAY}}else S.srs[id]={b:1,d:Date.now()+6e4};R.show=false;RC=null;if(!ok)RSQ.push({id:id,at:RN+3});RN++;gain(ok?3:1);render();var c=ok?CHEER[Math.floor(Math.random()*CHEER.length)]:TRYP[Math.floor(Math.random()*TRYP.length)];toast(c[0]+' — '+c[2])}
+function me(){var k=Object.keys(S.srs).length,m=Object.keys(S.srs).filter(function(i){return S.srs[i].b>=4}).length;
+return '<h2>تقدّمي</h2>'+plBox()+weekBox()+badgeBox()+settingsBox()+premBox()+packBox()+audBox()+'<div class="det"><div class="big">'+S.xp+'</div><div class="mu">نقطة خبرة</div></div><div class="row" style="cursor:default"><span>كلمات بدأت تعلّمها</span><b>'+k+' / '+ALL.length+'</b></div><div class="row" style="cursor:default"><span>كلمات ثبتت في ذاكرتك</span><b>'+m+'</b></div><div class="row" style="cursor:default"><span>أطول سلسلة أيام</span><b>'+S.st+'</b></div><p class="mu">إن لم تسمع النطق، ثبّت صوتاً فارسياً من إعدادات تحويل النص إلى كلام في هاتفك.</p><div class="btns"><button class="btn alt" onclick="if(confirm(\'حذف كل التقدم؟\')){S={xp:0,st:0,last:\'\',srs:{},v:2,prem:S.prem};resetVolatile();save();render()}">إعادة تعيين التقدم</button></div>'}
+
+var DLG=[
+{t:"التعارف",l:[["سلام! حال شما چطور است؟","salām! hāl-e shomā chetor ast?","مرحباً! كيف حالك؟"],["خوبم، ممنون. شما چطورید؟","khubam, mamnun. shomā chetorid?","بخير، شكراً. وأنت؟"],["من هم خوبم. اسم من علی است.","man ham khubam. esm-e man Ali ast.","وأنا بخير أيضاً. اسمي علي."],["خوشبختم. اسم من سارا است.","khoshbakhtam. esm-e man Sārā ast.","تشرفت بمعرفتك. اسمي سارا."],["شما اهل کجا هستید؟","shomā ahl-e kojā hastid?","من أين أنت؟"],["من اهل ایران هستم. شما چطور؟","man ahl-e irān hastam. shomā chetor?","أنا من إيران. وأنت؟"],["من عربی هستم.","man arabi hastam.","أنا عربي."]]},
+{t:"في المطعم",l:[["سلام، یک میز برای دو نفر می‌خواهم.","salām, yek miz barāye do nafar mikhāham.","مرحباً، أريد طاولة لشخصين."],["بفرمایید. این منو است.","befarmāyid. in menu ast.","تفضل. هذه القائمة."],["یک کباب و یک چای لطفاً.","yek kabāb va yek chāy lotfan.","كباب وشاي من فضلك."],["چشم. چیز دیگری؟","cheshm. chiz-e digari?","حاضر. شيء آخر؟"],["نه، ممنون. صورت‌حساب لطفاً.","na, mamnun. surat-hesāb lotfan.","لا، شكراً. الفاتورة من فضلك."],["صد هزار تومان می‌شود.","sad hezār tumān mishavad.","يصبح مئة ألف تومان."]]},
+{t:"في السوق",l:[["ببخشید، این چنده؟","bebakhshid, in chande?","عذراً، بكم هذا؟"],["پنجاه هزار تومان.","panjāh hezār tumān.","خمسون ألف تومان."],["خیلی گران است. تخفیف دارید؟","kheyli gerān ast. takhfif dārid?","غالٍ جداً. هل عندكم خصم؟"],["برای شما چهل هزار تومان.","barāye shomā chehel hezār tumān.","لك بأربعين ألف تومان."],["باشه، می‌خرم.","bāshe, mikharam.","حسناً، سأشتريه."],["ممنون، خداحافظ.","mamnun, khodā hāfez.","شكراً، مع السلامة."]]},
+{t:"السؤال عن الطريق",l:[["ببخشید، فرودگاه کجا است؟","bebakhshid, forudgāh kojā ast?","عذراً، أين المطار؟"],["مستقیم بروید.","mostaghim beravid.","اذهب مباشرة."],["بعد چه؟","ba’d che?","وبعد ذلك؟"],["سر چهارراه به راست بپیچید.","sar-e chahārrāh be rāst bepichid.","عند التقاطع انعطف يميناً."],["دور است؟","dur ast?","هل هو بعيد؟"],["نه، نزدیک است.","na, nazdik ast.","لا، قريب."],["خیلی ممنون.","kheyli mamnun.","شكراً جزيلاً."]]},
+{t:"عند الطبيب",l:[["سلام دکتر. حالم بد است.","salām doktor. hālam bad ast.","مرحباً دكتور. حالتي سيئة."],["مشکل شما چیست؟","moshkel-e shomā chist?","ما مشكلتك؟"],["سردرد و تب دارم.","sardard va tab dāram.","عندي صداع وحمى."],["از کی؟","az key?","منذ متى؟"],["از دیروز.","az diruz.","منذ أمس."],["این دارو را بخورید.","in dāru rā bekhorid.","تناول هذا الدواء."],["ممنون دکتر.","mamnun doktor.","شكراً دكتور."]]}
+];
+var D=null,LQ=null,TR=true;
+function talk(){var h;
+if(RP)return rpView();
+if(LQ)return lq();
+if(RV&&D!==null)return reading();
+if(D===null){h='<h2>محادثات قصيرة</h2><p class="mu">استمع للمحادثة ثم جرّب تمرين الاستماع.</p>';
+DLG.forEach(function(d,i){var lk=i>0&&!(S.dp&&S.dp[i-1]),pm=!lk&&!allowed('D',i);h+='<button class="row" style="'+(lk||pm?'opacity:.6':'')+'" onclick="'+(lk?'lockD()':pm?'gate(\'D\','+i+')':'D='+i+';render()')+'"><div><div style="font-weight:600">'+(lk?'🔒 ':pm?'⭐ ':(S.dp&&S.dp[i]?'✅ ':''))+d.t+'</div><div class="mu">'+(lk?'اجتز تمرين الاستماع السابق لفتحها':pm?'Premium أو شاهد إعلاناً':d.l.length+' جمل')+'</div></div><span class="mu">‹</span></button>'});return h+bannerSlot()}
+var d=DLG[D];
+h='<button class="back" onclick="D=null;render()">› رجوع</button><h2>'+d.t+'</h2><div class="btns" style="margin:0 0 10px"><button class="btn" onclick="playAll()">▶ استمع</button><button class="btn alt" onclick="startLQ()">'+(S.sv&&S.sv['D'+D]?'↻ متابعة تمرين الاستماع':'تمرين استماع')+'</button></div><div class="btns" style="margin:0 0 10px"><button class="btn alt" onclick="RV=true;RQ=null;render()">📖 اقرأ نصاً قصيراً'+(S.rd&&S.rd[D]?' ✅':'')+'</button></div><div class="btns" style="margin:0 0 10px"><button class="btn alt" onclick="rpChoose()">🎭 مثّل الحوار'+(S.rpd&&S.rpd[D]?' ✅':'')+'</button></div><button class="back" onclick="TR=!TR;render()">'+(TR?'إخفاء':'إظهار')+' الترجمة</button><div style="margin-top:8px">';
+d.l.forEach(function(l,i){h+='<div class="bub'+(i%2?' b':'')+'"><div style="flex:1"><div class="fa" style="font-size:22px">'+l[0]+'</div>'+(TR?'<div class="tr" style="font-size:14px">'+l[1]+'</div><div class="mu">'+l[2]+'</div>':'')+'</div><button class="spk" aria-label="استمع" onclick="say(\''+esc(l[0])+'\')">🔊</button></div>'});
+return h+'</div>'}
+function playAll(){var ls=DLG[D].l,i=0;(function n(){if(i>=ls.length)return;say(ls[i++][0],n)})()}
+function startLQ(fresh){if(fresh)lClear();if(!fresh&&lLoad()){render();var rq=LQ.qs[LQ.i];if(rq&&rq.a===null)say(rq.l[0]);return}var all=[];DLG.forEach(function(x){x.l.forEach(function(l){all.push(l)})});
+var qs=sh(DLG[D].l).slice(0,5).map(function(l){var o=sh(all.filter(function(x){return x[2]!==l[2]})).slice(0,3);return{l:l,o:sh([l].concat(o)),a:null}});
+LQ={i:0,sc:0,n:qs.length,fin:false,qs:qs};lSave();render();say(qs[0].l[0])}
+function lq(){var h='<button class="back" onclick="LQ=null;render()">› إنهاء</button>';
+if(LQ.fin){var n=LQ.n;return h+'<div class="det" style="margin-top:20px"><div class="big">'+LQ.sc+' / '+n+'</div><p>'+(LQ.sc<n?'أحسنت، صحّحت كل أخطائك! ':'سمعك ممتاز! ')+(D<DLG.length-1?'فُتحت المحادثة التالية.':'')+'</p><p class="mu">حصلت على '+LQ.sc*10+' نقطة</p></div><div class="btns"><button class="btn alt" onclick="LQ=null;render()">للمحادثة</button>'+(D<DLG.length-1?'<button class="btn" onclick="LQ=null;nextDlg()">المحادثة التالية</button>':'<button class="btn" onclick="startLQ(true)">تمرين جديد</button>')+'</div>'}
+var q=LQ.qs[LQ.i];
+if(LQ.resumed)h+='<div class="mu" style="margin:4px 0">↻ تابعت من حيث توقفت. <button class="back" style="font-size:14px" onclick="startLQ(true)">ابدأ التمرين من جديد</button></div>';
+h+='<p class="mu">'+(q.r?'🔁 إعادة سؤال أخطأت فيه':'الاستماع '+(LQ.i+1)+' من '+LQ.n)+'</p><div class="det"><button class="spk" style="width:72px;height:72px;font-size:32px" aria-label="استمع" onclick="say(\''+esc(q.l[0])+'\')">🔊</button><p class="mu">ماذا سمعت؟ اختر المعنى</p>'+(q.a!==null?'<div class="fa" style="font-size:24px">'+q.l[0]+'</div><div class="tr" style="font-size:16px">'+q.l[1]+'</div>':'')+'</div>';
+q.o.forEach(function(o,k){var c='opt';if(q.a!==null){if(o[2]===q.l[2])c+=' good';else if(o[2]===q.a)c+=' bad'}h+='<button class="'+c+'" '+(q.a!==null?'disabled':'')+' onclick="pickL('+k+')">'+o[2]+'</button>'});
+if(q.a!==null)h+=fb(q.a===q.l[2],q,1)+'<div class="btns"><button class="btn" onclick="nextL()">'+(LQ.i===LQ.qs.length-1?'النتيجة':'التالي')+'</button></div>';
+return h}
+function pickL(k){var q=LQ.qs[LQ.i];if(q.a!==null)return;q.a=q.o[k][2];q.m=Math.random();snd(q.a===q.l[2]);STK=q.a===q.l[2]?STK+1:0;q.s=STK;if(q.a===q.l[2]){if(!q.r)LQ.sc++}else LQ.qs.push({l:q.l,o:sh(q.o),a:null,r:true});lSave();render()}
+function nextL(){if(LQ.i===LQ.qs.length-1){LQ.fin=true;S.dp=S.dp||{};S.dp[D]=true;save();gain(LQ.sc*10);quizDone();lClear()}else{LQ.i++;lSave()}render();if(!LQ.fin)say(LQ.qs[LQ.i].l[0])}
+
+var GR=[
+{t:'ترتيب الجملة',s:'الفعل دائماً في آخر الجملة',n:'ترتيب الجملة الفارسية: <b>الفاعل + المفعول + الفعل</b>. الفعل يأتي في النهاية دائماً، بعكس العربية التي يبدأ بها غالباً. تقول حرفياً: «أنا كتاباً أقرأ».',e:[['من کتاب می‌خوانم','man ketāb mikhānam','أنا أقرأ كتاباً'],['او چای می‌نوشد','u chāy minushad','هو يشرب الشاي'],['ما به بازار می‌رویم','mā be bāzār miravim','نحن نذهب إلى السوق']]},
+{t:'لا تذكير ولا تأنيث',s:'ولا «ال» التعريف',n:'الفارسية <b>بلا مذكر ومؤنث</b>، والضمير «او» يعني هو وهي معاً. وليس فيها «ال» التعريف، فكلمة «کتاب» تعني كتاب أو الكتاب حسب السياق. وللتنكير يمكن وضع «یک» قبل الاسم.',e:[['او دکتر است','u doktor ast','هو / هي طبيب'],['کتاب خوب است','ketāb khub ast','الكتاب جيد'],['یک کتاب','yek ketāb','كتاب (واحد)']]},
+{t:'الجمع',s:'«ها» للجميع و«ان» للأشخاص',n:'أسهل طريقة للجمع إضافة <b>«ها»</b> في آخر الكلمة، وتصلح لكل شيء. وهناك «ان» للأشخاص غالباً. و<b>بعد الأعداد يبقى الاسم مفرداً</b>: «دو کتاب» أي كتابان.',e:[['کتاب‌ها','ketābhā','الكتب'],['دوستان','dustān','الأصدقاء'],['دو کتاب','do ketāb','كتابان']]},
+{t:'فعل الكينونة (هستم)',s:'أنا، أنت، هو...',n:'يتصرّف الفعل «هست» بنهايات الضمائر: <b>-am, -i, (ast), -im, -id, -and</b>. وصيغة «هو / هي» تصير «است» وتأتي غالباً في آخر الجملة.',e:[['من دانشجو هستم','man dāneshju hastam','أنا طالب'],['تو خوب هستی','to khub hasti','أنت بخير'],['او خوب است','u khub ast','هو بخير'],['ما خوب هستیم','mā khub hastim','نحن بخير'],['شما خوب هستید','shomā khub hastid','أنتم بخير'],['آنها خوب هستند','ānhā khub hastand','هم بخير']]},
+{t:'الإضافة والصفة',s:'صوت e بين الكلمتين',n:'لربط المضاف بالمضاف إليه، أو الاسم بصفته، يُنطق صوت <b>«e»</b> في آخر الكلمة الأولى (ولا يُكتب غالباً). وبعد الحرف الصائت يصير «ye». الترتيب كالعربية: <b>الأول ثم الثاني</b>، والصفة بعد الاسم.',e:[['اسم من','esm-e man','اسمي'],['کتاب علی','ketāb-e Ali','كتاب علي'],['خانه بزرگ','khāne-ye bozorg','بيت كبير']]},
+{t:'المضارع',s:'می + الجذر + النهاية',n:'صيغة المضارع: <b>می + جذر الفعل + نهاية الضمير</b> (-am, -i, -ad, -im, -id, -and). مثال بجذر «خور» (أكل): می‌خورم، می‌خوری، می‌خورد، می‌خوریم، می‌خورید، می‌خورند.',e:[['می‌خورم','mikhoram','آكل'],['می‌خوری','mikhori','تأكل'],['می‌خورد','mikhorad','يأكل'],['می‌خوریم','mikhorim','نأكل'],['می‌خواهم','mikhāham','أريد']]},
+{t:'الماضي',s:'جذر الماضي + النهاية',n:'الماضي البسيط: <b>جذر الماضي + نهاية الضمير</b>. وجذر الماضي هو المصدر بلا «ن» (رفتن ← رفت). مثال: رفتم، رفتی، رفت، رفتیم، رفتید، رفتند.',e:[['رفتم','raftam','ذهبتُ'],['خوردم','khordam','أكلتُ'],['دیدم','didam','رأيتُ'],['گفتم','goftam','قلتُ'],['دیروز به بازار رفتم','diruz be bāzār raftam','أمس ذهبت إلى السوق']]},
+{t:'النفي',s:'أضف «ن» قبل الفعل',n:'للنفي تُضاف <b>«ن»</b> في بداية الفعل: می‌خورم ← نمی‌خورم. وفعل الكينونة: هستم ← <b>نیستم</b>. و«دارم» ← «ندارم».',e:[['نمی‌خورم','nemikhoram','لا آكل'],['نیستم','nistam','لستُ'],['ندارم','nadāram','ليس عندي'],['فارسی بلد نیستم','fārsi balad nistam','لا أتقن الفارسية']]},
+{t:'أدوات السؤال',s:'أين، متى، كيف...',n:'ضع أداة السؤال مكان المجهول ولا يتغير ترتيب الجملة. وللأسئلة بنعم أو لا يكفي رفع نبرة الصوت، أو إضافة «آیا» في البداية.',e:[['چه؟','che?','ماذا؟'],['کجا؟','kojā?','أين؟'],['چرا؟','cherā?','لماذا؟'],['چطور؟','chetor?','كيف؟'],['چند؟','chand?','كم؟'],['چه کسی؟','che kasi?','من؟'],['چه وقت؟','che vaght?','متى؟'],['آیا شما عربی هستید؟','āyā shomā arabi hastid?','هل أنت عربي؟']]},
+{"t": "حروف الجر", "s": "في، إلى، من، مع... و«را» ليست منها", "n": "الفارسية تضع حرف الجر <b>قبل الاسم</b> مثل العربية، لكن اختيار الحرف يتبع الفعل والمعنى. أهم الفروق: <b>«به»</b> للاتجاه نحو مكان أو شخص (به مدرسه می‌روم)، و<b>«در»</b> للمكان الساكن (در مدرسه هستم). <b>«از»</b> للمنشأ والابتداء (از ایران هستم). <b>«با»</b> للمصاحبة والوسيلة (با دوستم، با اتوبوس). <b>«برای»</b> للغرض والمستفيد. <b>«تا»</b> للنهاية والغاية (از ... تا ...). وانتبه: <b>«را»</b> <b>ليست حرف جر</b>، بل علامة المفعول به المعيّن (کتاب را می‌خوانم).", "e": [["من به مدرسه می‌روم", "man be madrese miravam", "أذهب إلى المدرسة"], ["من در مدرسه هستم", "man dar madrese hastam", "أنا في المدرسة"], ["من از ایران هستم", "man az irān hastam", "أنا من إيران"], ["با دوستم به بازار می‌روم", "bā dustam be bāzār miravam", "أذهب إلى السوق مع صديقي"], ["این هدیه برای شما است", "in hediye barāye shomā ast", "هذه الهدية لكم"], ["از صبح تا شب کار می‌کنم", "az sobh tā shab kār mikonam", "أعمل من الصباح حتى الليل"], ["کتاب روی میز است", "ketāb ru-ye miz ast", "الكتاب على الطاولة"], ["کتاب را می‌خوانم", "ketāb rā mikhānam", "أقرأ الكتاب"]]}
+];
+var G=null;
+function gram(){var h;
+if(GQ)return gq();
+if(G===null){h='<h2>قواعد مبسطة</h2><p class="mu">قاعدة قصيرة في كل درس مع أمثلة تسمعها.</p>'+(S.gp&&S.gp[6]?'':'<p class="mu">💡 بعد إنهاء تمارين القواعد السبع الأولى يُفتح تبويب «الأفعال».</p>');
+GR.forEach(function(g,i){var lk=i>0&&!(S.gp&&S.gp[i-1]),pm=!lk&&!allowed('G',i);h+='<button class="row" style="'+(lk||pm?'opacity:.6':'')+'" onclick="'+(lk?'lockG()':pm?'gate(\'G\','+i+')':'G='+i+';render()')+'"><div><div style="font-weight:600">'+(lk?'🔒 ':pm?'⭐ ':(S.gp&&S.gp[i]?'✅ ':'▶️ '))+g.t+'</div><div class="mu">'+(lk?'اجتز تمرين القاعدة السابقة لفتحها':pm?'Premium أو شاهد إعلاناً':g.s)+'</div></div><span class="mu">‹</span></button>'});if(GR.every(function(g,i){return S.gp&&S.gp[i]}))h+='<div class="btns"><button class="btn alt" onclick="startGQ()">تمرين شامل على كل القواعد</button></div>';else h+='<p class="mu">🔒 التمرين الشامل يُفتح بعد اجتياز تمارين كل القواعد.</p>';return h+bannerSlot()}
+var g=GR[G];
+h='<button class="back" onclick="G=null;render()">› رجوع</button><h2>'+g.t+'</h2><div class="det" style="text-align:start;line-height:1.9">'+g.n+'</div><h2>أمثلة</h2>';
+g.e.forEach(function(w){h+='<div class="row" style="cursor:default"><div><div class="fa" style="font-size:24px">'+w[0]+'</div><div class="tr" style="font-size:15px">'+w[1]+'</div><div class="mu">'+w[2]+'</div></div><button class="spk" aria-label="استمع" onclick="say(\''+esc(w[0])+'\')">🔊</button></div>'});
+h+='<div class="btns"><button class="btn" onclick="startGQ()">'+(S.sv&&S.sv['G'+G]?'↻ متابعة التمرين ('+Math.min(S.sv['G'+G].i+1,S.sv['G'+G].n)+' من '+S.sv['G'+G].n+')':'تمرين على هذه القاعدة')+'</button></div><div class="btns">'+(G>0?'<button class="btn alt" onclick="G--;render()">السابقة</button>':'')+(G<GR.length-1?'<button class="btn" onclick="nextRule()">القاعدة التالية</button>':'<button class="btn" onclick="G=null;render()">كل القواعد</button>')+'</div>';
+return h}
+
+var GQ=null;
+function startGQ(fresh){if(fresh)gClear();if(!fresh&&gLoad()){render();return}var all=[];GR.forEach(function(x){x.e.forEach(function(e){all.push(e)})});
+var pool=G===null?all:GR[G].e;
+var qs=sh(pool).slice(0,G===null?8:5).map(function(e,i){var o=sh(all.filter(function(x){return x[2]!==e[2]&&x[0]!==e[0]})).slice(0,3);return{e:e,rev:i%2===1,o:sh([e].concat(o)),a:null}});
+GQ={i:0,sc:0,n:qs.length,fin:false,qs:qs};gSave();render()}
+function gq(){var h='<button class="back" onclick="GQ=null;render()">› إنهاء</button>';
+if(GQ.fin){var n=GQ.n;return h+'<div class="det" style="margin-top:20px"><div class="big">'+GQ.sc+' / '+n+'</div><p>'+(GQ.sc<n?'أحسنت، صحّحت كل أخطائك! ':'ممتاز! ')+(G!==null&&G<GR.length-1?'فُتحت القاعدة التالية.':'')+'</p><p class="mu">حصلت على '+GQ.sc*10+' نقطة</p></div><div class="btns"><button class="btn alt" onclick="GQ=null;render()">للقاعدة</button>'+(G!==null&&G<GR.length-1?'<button class="btn" onclick="GQ=null;nextRule()">القاعدة التالية</button>':'<button class="btn" onclick="startGQ(true)">تمرين جديد</button>')+'</div>'}
+var q=GQ.qs[GQ.i],e=q.e;
+if(GQ.resumed)h+='<div class="mu" style="margin:4px 0">↻ تابعت من حيث توقفت. <button class="back" style="font-size:14px" onclick="startGQ(true)">ابدأ التمرين من جديد</button></div>';
+h+='<p class="mu">'+(q.r?'🔁 إعادة سؤال أخطأت فيه':'تمرين '+(GQ.i+1)+' من '+GQ.n)+'</p><div class="det">';
+if(!q.rev)h+='<p class="mu">ما معنى هذه الجملة؟</p><div class="fa" style="font-size:32px">'+e[0]+'</div><div class="tr" style="font-size:16px">'+e[1]+'</div><button class="spk" style="margin-top:6px" aria-label="استمع" onclick="say(\''+esc(e[0])+'\')">🔊</button>';
+else h+='<p class="mu">كيف تقولها بالفارسية؟</p><div class="ar" style="font-size:24px">'+e[2]+'</div>';
+h+='</div>';
+q.o.forEach(function(o,k){var c='opt';if(q.a!==null){if(o===e)c+=' good';else if(k===q.a)c+=' bad'}
+h+='<button class="'+c+'" '+(q.a!==null?'disabled':'')+' onclick="pickG('+k+')">'+(q.rev?'<span class="fa" style="font-size:22px">'+o[0]+'</span><br><span style="font-size:13px;opacity:.85;direction:ltr;display:inline-block">'+o[1]+'</span>':o[2])+'</button>'});
+if(q.a!==null)h+=fb(q.o[q.a]===q.e,q,1)+'<div class="btns"><button class="btn" onclick="nextG()">'+(GQ.i===GQ.qs.length-1?'النتيجة':'التالي')+'</button></div>';
+return h}
+function pickG(k){var q=GQ.qs[GQ.i];if(q.a!==null)return;q.a=k;q.m=Math.random();snd(q.o[k]===q.e);STK=q.o[k]===q.e?STK+1:0;q.s=STK;if(q.o[k]===q.e){if(!q.r)GQ.sc++}else GQ.qs.push({e:q.e,rev:q.rev,o:sh(q.o),a:null,r:true});gSave();render();if(q.rev)say(q.e[0])}
+function nextG(){if(GQ.i===GQ.qs.length-1){GQ.fin=true;if(G!==null){S.gp=S.gp||{};S.gp[G]=true;save()}gain(GQ.sc*10);quizDone();gClear()}else{GQ.i++;gSave()}render()}
+
+var CV=null,CT=0,CQ=null;
+var E0=['م','ی','د','یم','ید','ند'],T0=['am','i','ad','im','id','and'],E1=['یم','یی','ید','ییم','یید','یند'],T1=['yam','yi','yad','yim','yid','yand'];
+var PE=['م','ی','','یم','ید','ند'],PT=['am','i','','im','id','and'];
+var FU=['خواهم','خواهی','خواهد','خواهیم','خواهید','خواهند'],FT=['khāham','khāhi','khāhad','khāhim','khāhid','khāhand'];
+var PR=[['من','أنا'],['تو','أنتَ'],['او','هو / هي'],['ما','نحن'],['شما','أنتم'],['آنها','هم']];
+var TN=['الماضي','المضارع','المستقبل','نفي المضارع','نفي الماضي','الأمر'];
+var V=[
+['رفتن','raftan','الذهاب','رفت','raft','رو','rav',0,['برو','boro','بروید','beravid']],
+['آمدن','āmadan','المجيء','آمد','āmad','آ','ā',1,['بیا','biyā','بیایید','biyāyid']],
+['خوردن','khordan','الأكل','خورد','khord','خور','khor',0],
+['نوشیدن','nushidan','الشرب','نوشید','nushid','نوش','nush',0],
+['دیدن','didan','الرؤية','دید','did','بین','bin',0],
+['گفتن','goftan','القول','گفت','goft','گو','gu',1],
+['خواستن','khāstan','الإرادة','خواست','khāst','خواه','khāh',0],
+['دانستن','dānestan','المعرفة','دانست','dānest','دان','dān',0],
+['کردن','kardan','الفعل / العمل','کرد','kard','کن','kon',0],
+['خریدن','kharidan','الشراء','خرید','kharid','خر','khar',0],
+['خواندن','khāndan','القراءة','خواند','khānd','خوان','khān',0],
+['نوشتن','neveshtan','الكتابة','نوشت','nevesht','نویس','nevis',0],
+['بودن','budan','الكينونة (يكون)','بود','bud','باش','bāsh',0,['باش','bāsh','باشید','bāshid'],'be'],
+['داشتن','dāshtan','الامتلاك (يملك)','داشت','dāsht','دار','dār',0,['داشته باش','dāshte bāsh','داشته باشید','dāshte bāshid'],'np'],
+['شدن','shodan','الصيرورة (يصبح)','شد','shod','شو','shav',0,['بشو','besho','بشوید','beshavid']],
+['دادن','dādan','الإعطاء','داد','dād','ده','dah',0,['بده','bede','بدهید','bedahid']],
+['گرفتن','gereftan','الأخذ','گرفت','gereft','گیر','gir',0],
+['گذاشتن','gozāshtan','الوضع / الترك','گذاشت','gozāsht','گذار','gozār',0],
+['آوردن','āvardan','الإحضار','آورد','āvard','آور','āvar',0,['بیاور','biyāvar','بیاورید','biyāvarid']],
+['بردن','bordan','الأخذ إلى / الفوز','برد','bord','بر','bar',0],
+['ماندن','māndan','البقاء','ماند','mānd','مان','mān',0],
+['نشستن','neshastan','الجلوس','نشست','neshast','نشین','neshin',0],
+['ایستادن','istādan','الوقوف','ایستاد','istād','ایست','ist',0,['بایست','bāyest','بایستید','bāyestid']],
+['خوابیدن','khābidan','النوم','خوابید','khābid','خواب','khāb',0],
+['پختن','pokhtan','الطبخ','پخت','pokht','پز','paz',0],
+['فروختن','forukhtan','البيع','فروخت','forukht','فروش','forush',0],
+['فرستادن','ferestādan','الإرسال','فرستاد','ferestād','فرست','ferest',0],
+['پرسیدن','porsidan','السؤال','پرسید','porsid','پرس','pors',0],
+['شنیدن','shenidan','السماع','شنید','shenid','شنو','shenav',0,['بشنو','beshno','بشنوید','beshnavid']],
+['فهمیدن','fahmidan','الفهم','فهمید','fahmid','فهم','fahm',0],
+['رسیدن','residan','الوصول','رسید','resid','رس','ras',0],
+['کشیدن','keshidan','السحب / الرسم','کشید','keshid','کش','kesh',0],
+['زدن','zadan','الضرب','زد','zad','زن','zan',0],
+['افتادن','oftādan','السقوط','افتاد','oftād','افت','oft',0,['بیفت','biyoft','بیفتید','biyoftid']],
+['ساختن','sākhtan','البناء / الصنع','ساخت','sākht','ساز','sāz',0],
+['دویدن','davidan','الركض','دوید','david','دو','dav',0,['بدو','bedo','بدوید','bedavid']],
+['خندیدن','khandidan','الضحك','خندید','khandid','خند','khand',0],
+['پوشیدن','pushidan','لبس الملابس','پوشید','pushid','پوش','push',0],
+['شناختن','shenākhtan','معرفة الأشخاص','شناخت','shenākht','شناس','shenās',0],
+['ترسیدن','tarsidan','الخوف','ترسید','tarsid','ترس','tars',0],
+['توانستن','tavānestan','القدرة (يستطيع)','توانست','tavānest','توان','tavān',0,0],
+['پریدن','paridan','القفز / الطيران','پرید','parid','پر','par',0],
+['رقصیدن','raghsidan','الرقص','رقصید','raghsid','رقص','raghs',0],
+['بستن','bastan','الإغلاق','بست','bast','بند','band',0],
+['بخشیدن','bakhshidan','العفو / الإهداء','بخشید','bakhshid','بخش','bakhsh',0],
+['شکستن','shekastan','الكسر','شکست','shekast','شکن','shekan',0],
+['ریختن','rikhtan','السكب','ریخت','rikht','ریز','riz',0],
+['انداختن','andākhtan','الرمي','انداخت','andākht','انداز','andāz',0,['بینداز','biyandāz','بیندازید','biyandāzid']],
+['یافتن','yāftan','الإيجاد','یافت','yāft','یاب','yāb',0]
+];
+var PBE=[['هستم','hastam'],['هستی','hasti'],['است','ast'],['هستیم','hastim'],['هستید','hastid'],['هستند','hastand']],NBE=[['نیستم','nistam'],['نیستی','nisti'],['نیست','nist'],['نیستیم','nistim'],['نیستید','nistid'],['نیستند','nistand']];
+function forms0(v,t){var ps=v[3],pst=v[4],st=v[5],stt=v[6],E=v[7]?E1:E0,T=v[7]?T1:T0,r=[],i,a=ps.charAt(0)==='آ';
+if(v[9]==='be'){if(t===1)return PBE;if(t===3)return NBE}
+if(t===5){if(v[8]===0)return[];if(v[8])return[[v[8][0],v[8][1]],[v[8][2],v[8][3]]];return[['ب'+st,'be'+stt],['ب'+st+E[4],'be'+stt+T[4]]]}
+for(i=0;i<6;i++){
+if(t===0)r.push([ps+PE[i],pst+PT[i]]);
+else if(t===1)r.push(v[9]==='np'?[st+E[i],stt+T[i]]:['می\u200c'+st+E[i],'mi'+stt+T[i]]);
+else if(t===2)r.push([FU[i]+' '+ps,FT[i]+' '+pst]);
+else if(t===3)r.push(v[9]==='np'?['ن'+st+E[i],'na'+stt+T[i]]:['نمی\u200c'+st+E[i],'nemi'+stt+T[i]]);
+else r.push([a?'نیا'+ps.slice(1)+PE[i]:'ن'+ps+PE[i],a?'niyā'+pst.slice(1)+PT[i]:'na'+pst+PT[i]])}
+return r}
+function conj(){var h;
+if(CV===-1){h=(tab==='verbs'?'':'<button class="back" onclick="CV=null;render()">› رجوع</button>')+'<h2>تصريف الأفعال ('+V.length+' فعلاً)</h2><div class="btns" style="margin:0 0 10px"><button class="btn" onclick="startCQ()">'+(S.sv&&S.sv.C?'↻ متابعة تمرين التصريف (سؤال '+Math.min(S.sv.C.i+1,S.sv.C.qs.length)+' من '+S.sv.C.qs.length+')':'تمرين على التصريف')+'</button></div><input id="vq" class="srch" placeholder="ابحث: فارسي / عربي / latin" oninput="vfilter()"><div id="vl" style="margin-top:10px">'+vlist('')+'</div>';return h}
+var v=V[CV],f=forms(v,CT);
+h='<button class="back" onclick="CV=-1;render()">› الأفعال</button><h2>'+v[0]+' <span class="mu">'+v[1]+' · '+v[2]+'</span></h2><p class="mu">جذر الماضي: '+v[3]+' · جذر المضارع: '+v[5]+'</p><div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">';
+TN.forEach(function(n,i){h+='<button class="chip" style="cursor:pointer;font:inherit;font-size:14px;'+(i===CT?'background:var(--pr);color:var(--onpr);border-color:var(--pr)':'color:var(--tx)')+'" onclick="CT='+i+';render()">'+n+'</button>'});
+h+='</div>';
+if(!f.length)h+='<p class="mu">لا يوجد فعل أمر لهذا الفعل.</p>';
+f.forEach(function(x,i){var pr=CT===5?(i?PR[4]:PR[1]):PR[i];h+='<div class="row" style="cursor:default"><div><div class="mu">'+pr[0]+' · '+pr[1]+'</div><div class="fa" style="font-size:24px">'+x[0]+'</div><div class="tr" style="font-size:15px">'+x[1]+'</div>'+(gloss(v,CT,i)?'<div class="ar" style="font-size:17px">'+gloss(v,CT,i)+'</div>':'')+'</div><button class="spk" aria-label="استمع" onclick="say(\''+esc(x[0])+'\')">🔊</button></div>'});
+return h}
+function startCQ(fresh){if(fresh)cClear();if(!fresh&&cLoad()){render();return}var qs=[];for(var k=0;k<6;k++){var pl=AV(),v=pl[Math.floor(Math.random()*pl.length)],t=Math.floor(Math.random()*5),p=Math.floor(Math.random()*6),f=forms(v,t);
+var idx=sh([0,1,2,3,4,5].filter(function(x){return x!==p})).slice(0,3).concat([p]);
+qs.push({v:v,t:t,p:p,a:null,o:sh(idx).map(function(x){return{p:x,f:f[x]}})})}
+CQ={i:0,sc:0,fin:false,qs:qs};cSave();render()}
+function cq(){var h='<button class="back" onclick="CQ=null;render()">› إنهاء</button>';
+if(CQ.fin){var n=CQ.qs.length;return h+'<div class="det" style="margin-top:20px"><div class="big">'+CQ.sc+' / '+n+'</div><p>'+(CQ.sc===n?'ممتاز! تصريفك صحيح.':'راجع جداول الأفعال وأعد المحاولة.')+'</p><p class="mu">حصلت على '+CQ.sc*10+' نقطة</p></div><div class="btns"><button class="btn alt" onclick="CQ=null;render()">للأفعال</button><button class="btn" onclick="startCQ(true)">تمرين جديد</button></div>'}
+var q=CQ.qs[CQ.i];
+if(CQ.resumed)h+='<div class="mu" style="margin:4px 0">↻ تابعت من حيث توقفت. <button class="back" style="font-size:14px" onclick="startCQ(true)">ابدأ التمرين من جديد</button></div>';
+h+='<p class="mu">تمرين '+(CQ.i+1)+' من '+CQ.qs.length+'</p><div class="det"><p class="mu">اختر الصيغة الصحيحة</p><div class="fa" style="font-size:30px">'+q.v[0]+'</div><div class="mu">'+q.v[1]+' · '+q.v[2]+'</div><p style="font-weight:600;margin:8px 0 0">'+TN[q.t]+' · '+PR[q.p][0]+' ('+PR[q.p][1]+')</p></div>';
+q.o.forEach(function(o,k){var c='opt';if(q.a!==null){if(o.p===q.p)c+=' good';else if(k===q.a)c+=' bad'}
+h+='<button class="'+c+'" '+(q.a!==null?'disabled':'')+' onclick="pickC('+k+')"><span class="fa" style="font-size:22px">'+o.f[0]+'</span><br><span style="font-size:13px;opacity:.85;direction:ltr;display:inline-block">'+o.f[1]+'</span></button>'});
+if(q.a!==null)h+=fb(q.o[q.a].p===q.p,q,0)+cMean(q)+'<div class="btns"><button class="btn" onclick="nextC()">'+(CQ.i===CQ.qs.length-1?'النتيجة':'التالي')+'</button></div>';
+return h}
+function pickC(k){var q=CQ.qs[CQ.i];if(q.a!==null)return;q.a=k;q.m=Math.random();snd(q.o[k].p===q.p);STK=q.o[k].p===q.p?STK+1:0;q.s=STK;if(q.o[k].p===q.p)CQ.sc++;cSave();render();say(forms(q.v,q.t)[q.p][0])}
+function nextC(){if(CQ.i===CQ.qs.length-1){CQ.fin=true;gain(CQ.sc*10);quizDone();cClear()}else{CQ.i++;cSave()}render()}
+
+function vlist(q){q=(q||'').trim().toLowerCase();var h='',g=0;V.forEach(function(v,i){if(q&&(v[0]+' '+v[1]+' '+v[2]).toLowerCase().indexOf(q)<0)return;var c=v[10]||v[11]?2:1;if(!q&&c!==g){g=c;h+='<h2>'+(c===1?'أفعال بسيطة':'أفعال مركبة ومسبوقة')+'</h2>'}var pm=!allowed('V',i);h+='<button class="row" style="'+(pm?'opacity:.6':'')+'" onclick="'+(pm?'gate(\'V\','+i+')':'CV='+i+';CT=0;render()')+'"><div><div class="fa" style="font-size:24px">'+(pm?'⭐ ':'')+v[0]+'</div><div class="mu">'+v[1]+' · '+v[2]+'</div></div><span class="mu">‹</span></button>'});return h||'<p class="mu">لا توجد نتائج.</p>'}
+function vfilter(){document.getElementById('vl').innerHTML=vlist(document.getElementById('vq').value)}
+
+function forms(v,t){var r,E=v[7]?E1:E0,T=v[7]?T1:T0;
+if(v[10]&&t===5&&!v[8])r=[[v[5],v[6]],[v[5]+E[4],v[6]+T[4]]];else r=forms0(v,t);
+if(v[10])r=r.map(function(x){return[v[10][0]+x[0],v[10][1]+x[1]]});
+if(v[11])r=r.map(function(x){return[v[11][0]+' '+x[0],v[11][1]+' '+x[1]]});
+return r}
+V.push(['برگشتن','bargashtan','العودة','گشت','gasht','گرد','gard',0,null,null,['بر','bar']]);
+V.push(['برداشتن','bardāshtan','الرفع / أخذ الشيء','داشت','dāsht','دار','dār',0,null,null,['بر','bar']]);
+var CM=[
+['کمک','komak','کردن','المساعدة'],['صحبت','sohbat','کردن','التحدث'],['کار','kār','کردن','العمل'],['شروع','shoru’','کردن','البدء'],['تمام','tamām','کردن','الإنهاء'],['پیدا','peydā','کردن','إيجاد الشيء'],['استفاده','estefāde','کردن','الاستخدام'],['فکر','fekr','کردن','التفكير'],['زندگی','zendegi','کردن','العيش'],['سفر','safar','کردن','السفر'],['تلاش','talāsh','کردن','المحاولة'],['گریه','gerye','کردن','البكاء'],['تماشا','tamāshā','کردن','المشاهدة'],['نگاه','negāh','کردن','النظر'],['دعوت','da’vat','کردن','الدعوة'],['قبول','ghabul','کردن','القبول'],['فراموش','farāmush','کردن','النسيان'],['باز','bāz','کردن','الفتح'],['تمیز','tamiz','کردن','التنظيف'],['رانندگی','rānandegi','کردن','القيادة'],['روشن','roshan','کردن','التشغيل / الإضاءة'],['خاموش','khāmush','کردن','الإطفاء'],['پاک','pāk','کردن','المسح'],['ورزش','varzesh','کردن','ممارسة الرياضة'],['استراحت','esterāhat','کردن','الاستراحة'],['بازی','bāzi','کردن','اللعب'],['ترجمه','tarjome','کردن','الترجمة'],['رزرو','rezerv','کردن','الحجز'],['پرداخت','pardākht','کردن','الدفع'],['درخواست','darkhāst','کردن','الطلب'],['انتخاب','entekhāb','کردن','الاختيار'],
+['خوشحال','khoshhāl','شدن','أن تفرح'],['ناراحت','nārāhat','شدن','أن تحزن'],['مریض','mariz','شدن','أن تمرض'],['خسته','khaste','شدن','أن تتعب'],['آماده','āmāde','شدن','الاستعداد'],['بیدار','bidār','شدن','الاستيقاظ'],['سوار','savār','شدن','الركوب'],['پیاده','piyāde','شدن','النزول من المركبة'],['وارد','vāred','شدن','الدخول'],['پیدا','peydā','شدن','أن يوجد / يظهر'],['متوجه','motavajjeh','شدن','الانتباه / الفهم'],['داخل','dākhel','شدن','الدخول إلى'],['بزرگ','bozorg','شدن','أن تكبر'],['گم','gom','شدن','أن تضيع'],
+['جواب','javāb','دادن','الإجابة'],['اجازه','ejāze','دادن','السماح'],['انجام','anjām','دادن','الإنجاز'],['نشان','neshān','دادن','الإظهار'],['ادامه','edāme','دادن','الاستمرار'],['یاد','yād','دادن','التعليم'],['تغییر','taghyir','دادن','التغيير'],['گوش','gush','دادن','الاستماع'],['امتحان','emtehān','دادن','أداء الامتحان'],['قول','ghol','دادن','الوعد'],['تحویل','tahvil','دادن','التسليم'],
+['یاد','yād','گرفتن','التعلّم'],['تصمیم','tasmim','گرفتن','اتخاذ قرار'],['عکس','aks','گرفتن','التصوير'],['تماس','tamās','گرفتن','الاتصال'],['دوش','dush','گرفتن','الاستحمام'],['قرض','gharz','گرفتن','الاستلاف'],['بلیط','belit','گرفتن','الحصول على تذكرة'],
+['دوست','dust','داشتن','الحب / الإعجاب'],['نیاز','niyāz','داشتن','الحاجة'],['عجله','ajale','داشتن','الاستعجال'],['وقت','vaght','داشتن','وجود وقت'],
+['حرف','harf','زدن','الكلام'],['زنگ','zang','زدن','الاتصال هاتفياً'],['قدم','ghadam','زدن','التنزه مشياً'],['لبخند','labkhand','زدن','الابتسام'],['دست','dast','زدن','التصفيق / اللمس'],
+['غذا','ghazā','خوردن','تناول الطعام'],['صبحانه','sobhāne','خوردن','تناول الفطور'],['ناهار','nāhār','خوردن','تناول الغداء'],['شام','shām','خوردن','تناول العشاء'],['قسم','ghasam','خوردن','الحلف'],
+['خواب','khāb','دیدن','الحلم'],['راه','rāh','رفتن','المشي'],['بالا','bālā','رفتن','الصعود'],['پایین','pāyin','رفتن','النزول'],
+['بیرون','birun','آمدن','الخروج'],['پایین','pāyin','آمدن','النزول'],['بالا','bālā','آمدن','الصعود'],
+['نقاشی','naghāshi','کشیدن','الرسم'],['کمک','komak','خواستن','طلب المساعدة'],['سوال','soāl','پرسیدن','طرح سؤال'],['منتظر','montazer','ماندن','الانتظار']
+];
+CM.forEach(function(c){var b=V.filter(function(x){return x[0]===c[2]})[0],nv=b.slice();nv[0]=c[0]+' '+b[0];nv[1]=c[1]+' '+b[1];nv[2]=c[3];nv[11]=[c[0],c[1]];if(b[0]==='کردن')nv[8]=['کن','kon','کنید','konid'];if(b[0]==='شدن')nv[8]=['شو','sho','شوید','shavid'];V.push(nv)});
+
+function unlocked(i){return i===0||!!(S.pass&&S.pass[i-1])}
+function toast(m){try{var o=document.querySelector('.tst');if(o&&o.remove)o.remove()}catch(e){}var d=document.createElement('div');d.className='tst';d.textContent=m;d.style.cssText='position:fixed;left:16px;right:16px;bottom:90px;max-width:480px;margin:auto;background:var(--tx);color:var(--bg);padding:12px 16px;border-radius:12px;text-align:center;z-index:9';document.body.appendChild(d);setTimeout(function(){d.remove()},2600)}
+function locked(){toast('أنهِ مراحل الدرس السابق أولاً')}
+function lockG(){toast('اجتز تمرين القاعدة السابقة أولاً (كل الإجابات صحيحة)')}
+function lockD(){toast('اجتز تمرين الاستماع السابق أولاً (كل الإجابات صحيحة)')}
+function goRule(n){if(allowed('G',n)){G=n;render()}else gate('G',n)}
+function lockV(){var n=0;while(n<7&&S.gp&&S.gp[n])n++;sheet('<h2 style="margin-top:0">🔒 تصريف الأفعال</h2><p>يُفتح بعد أن تنهي تمارين القواعد السبع الأولى بإجابات صحيحة، وآخرها قاعدة «الماضي». أنجزت <b>'+n+' من 7</b>.</p><div class="btns"><button class="btn" onclick="closeSheet();goRule('+n+')">اذهب إلى القاعدة التالية</button></div><div class="btns"><button class="btn alt" style="border-color:var(--bd);color:var(--mu)" onclick="closeSheet()">إغلاق</button></div>')}
+function nextRule(){if(!(S.gp&&S.gp[G])){toast('اجتز تمرين هذه القاعدة أولاً');return}var n=G+1;if(allowed('G',n)){G=n;render()}else gate('G',n)}
+
+var MONET_ON=false,DEV=false,FREE=MONET_ON?{L:4,G:2,D:2,V:12}:{L:999,G:999,D:999,V:999},NM={L:'هذا الدرس',G:'هذه القاعدة',D:'هذه المحادثة',V:'هذا الفعل'};
+function allowed(k,i){return i<FREE[k]||!!S.prem||!!(S.unl&&S.unl[k+i])}
+function AV(){return V.filter(function(v,i){return allowed('V',i)})}
+function sheet(h){closeSheet();var d=document.createElement('div');d.id='sh';d.className='ov';d.innerHTML='<div class="sh">'+h+'</div>';d.onclick=function(e){if(e.target===d)closeSheet()};document.body.appendChild(d)}
+function closeSheet(){var d=document.getElementById('sh');if(d&&d.remove)d.remove()}
+function openItem(k,i){if(k==='L')sub=i;else if(k==='G')G=i;else if(k==='D')D=i;else{CV=i;CT=0}render()}
+function nextDlg(){var n=D+1;if(allowed('D',n)){D=n;render()}else{D=null;render();gate('D',n)}}
+function gate(k,i){var h='<h2 style="margin-top:0">⭐ محتوى Premium</h2><p>'+NM[k]+' ضمن النسخة المدفوعة.</p>';
+if(k!=='V')h+='<div class="btns"><button class="btn alt" onclick="watchUnlock(\''+k+'\','+i+')">شاهد إعلاناً لفتحه مرة واحدة</button></div>';
+h+='<div class="btns"><button class="btn" onclick="paywall()">افتح كل المحتوى بدون إعلانات</button></div><div class="btns"><button class="btn alt" style="border-color:var(--bd);color:var(--mu)" onclick="closeSheet()">ليس الآن</button></div>';sheet(h)}
+function watchUnlock(k,i){closeSheet();MONET.reward(function(){S.unl=S.unl||{};S.unl[k+i]=true;save();openItem(k,i)})}
+function paywall(){sheet('<h2 style="margin-top:0">⭐ Premium</h2><p>• كل الدروس والقواعد والمحادثات<br>• كل الأفعال (أكثر من 130) مع النطق<br>• بدون أي إعلانات<br>• كل التحديثات القادمة</p><div class="btns" style="flex-direction:column"><button class="btn" onclick="MONET.buy(\'lifetime\')">شراء لمرة واحدة · '+MONET.prices.lifetime+'</button><button class="btn alt" onclick="MONET.buy(\'yearly\')">اشتراك سنوي · '+MONET.prices.yearly+'</button><button class="btn alt" onclick="MONET.buy(\'monthly\')">اشتراك شهري · '+MONET.prices.monthly+'</button></div><p class="mu" style="margin-top:10px">يمكنك إلغاء الاشتراك في أي وقت من متجر Google Play.</p><div class="btns"><button class="btn alt" style="border-color:var(--bd);color:var(--mu)" onclick="MONET.restore()">استعادة المشتريات</button><button class="btn alt" style="border-color:var(--bd);color:var(--mu)" onclick="closeSheet()">إغلاق</button></div>')}
+var MONET={prices:{lifetime:'—',yearly:'—',monthly:'—'},
+buy:function(p){var B=window.AppBridge;if(B&&B.buy)B.buy(p,function(ok){if(ok)MONET.grant()});else if(DEV)MONET.grant();else toast('الشراء غير متاح حالياً')},
+grant:function(){S.prem=true;save();closeSheet();try{if(window.AppBridge&&AppBridge.hideBanner)AppBridge.hideBanner()}catch(e){}render();toast('تم تفعيل Premium ⭐')},
+restore:function(){var B=window.AppBridge;if(B&&B.restore)B.restore(function(ok){if(ok)MONET.grant();else toast('لا توجد مشتريات سابقة')});else toast(DEV?'وضع التجربة: لا توجد مشتريات':'غير متاح حالياً')},
+reward:function(cb){var B=window.AppBridge;if(B&&B.showRewarded)B.showRewarded(function(ok){if(ok)cb();else toast('لم يكتمل الإعلان')});else if(DEV)fakeAd('إعلان مكافأة',cb);else toast('الإعلان غير متاح حالياً، حاول لاحقاً')},
+interstitial:function(){var B=window.AppBridge;if(S.prem)return;if(B&&B.showInterstitial)B.showInterstitial();else if(DEV)fakeAd('إعلان بيني')}};
+function fakeAd(t,cb){var n=3;sheet('<div style="text-align:center"><p class="mu">'+t+' (تجريبي)</p><div class="big" id="adn">3</div><div class="btns"><button class="btn" id="adb" disabled>انتظر...</button></div></div>');var b=document.getElementById('adb'),c=document.getElementById('adn'),iv=setInterval(function(){n--;if(c)c.textContent=n>0?n:'✓';if(n<=0){clearInterval(iv);if(b){b.disabled=false;b.textContent=cb?'استلم المكافأة':'إغلاق';b.onclick=function(){closeSheet();if(cb)cb()}}}},1000)}
+function bannerSlot(){return(MONET_ON&&!S.prem&&DEV)?'<div class="adslot">مساحة إعلان بانر (تجريبي)</div>':''}
+function quizDone(){if(S.prem||!MONET_ON)return;S.qc=(S.qc||0)+1;save();if(S.qc%3===0)setTimeout(function(){MONET.interstitial()},900)}
+function premBox(){if(!MONET_ON)return'';if(S.prem)return'<div class="det">⭐ <b>Premium مفعّل</b><br><span class="mu">شكراً لدعمك! كل المحتوى مفتوح بلا إعلانات.</span></div>'+(DEV?'<button class="btn alt" style="margin-bottom:12px" onclick="S.prem=false;save();render()">إلغاء Premium (تجريبي)</button>':'');
+return'<div class="det"><b>النسخة المجانية</b><p class="mu">افتح كل المحتوى وأزل الإعلانات.</p><button class="btn" onclick="paywall()">ترقية إلى Premium</button>'+(DEV?'<p class="mu" style="margin-top:10px">وضع التجربة: الإعلانات والشراء محاكاة.</p>':'')+'</div>'}
+try{if(!S.prem&&window.AppBridge&&AppBridge.showBanner)AppBridge.showBanner()}catch(e){}
+
+[].push.apply(DLG,[{"t": "في الفندق", "l": [["سلام، من اتاق رزرو کرده‌ام.", "salām, man otāgh rezerv karde-am.", "مرحباً، لقد حجزت غرفة."], ["اسم شما لطفاً؟", "esm-e shomā lotfan?", "اسمك من فضلك؟"], ["اسم من علی احمدی است.", "esm-e man Ali Ahmadi ast.", "اسمي علي أحمدي."], ["بله، یک اتاق برای سه شب. پاسپورت لطفاً.", "bale, yek otāgh barāye se shab. pāspurt lotfan.", "نعم، غرفة لثلاث ليالٍ. جواز السفر من فضلك."], ["بفرمایید. صبحانه شامل است؟", "befarmāyid. sobhāne shāmel ast?", "تفضل. هل الفطور مشمول؟"], ["بله، از ساعت هفت تا ده.", "bale, az sā’at-e haft tā dah.", "نعم، من السابعة حتى العاشرة."]]}, {"t": "في المطار", "l": [["ببخشید، گیت پرواز تهران کجا است؟", "bebakhshid, gayt-e parvāz-e tehrān kojā ast?", "عذراً، أين بوابة رحلة طهران؟"], ["گیت شماره پنج، سمت راست.", "gayt-e shomāre-ye panj, samt-e rāst.", "البوابة رقم خمسة، على اليمين."], ["پرواز سر وقت است؟", "parvāz sar-e vaght ast?", "هل الرحلة في موعدها؟"], ["نه، بیست دقیقه تأخیر دارد.", "na, bist daghighe ta’khir dārad.", "لا، فيها تأخير عشرين دقيقة."], ["چمدان من را کجا تحویل بدهم؟", "chamedān-e man rā kojā tahvil bedaham?", "أين أسلّم حقيبتي؟"], ["پیش‌خوان شماره دو.", "pish-khān-e shomāre-ye do.", "عند الكاونتر رقم اثنين."]]}, {"t": "في التاكسي", "l": [["سلام، به هتل آزادی می‌روید؟", "salām, be hotel-e āzādi miravid?", "مرحباً، هل تذهب إلى فندق آزادي؟"], ["بله، سوار شوید.", "bale, savār shavid.", "نعم، اركب."], ["چقدر طول می‌کشد؟", "chaghadr tul mikeshad?", "كم يستغرق الوقت؟"], ["حدود بیست دقیقه.", "hodud-e bist daghighe.", "حوالي عشرين دقيقة."], ["لطفاً همین‌جا نگه دارید.", "lotfan hamin-jā negah dārid.", "من فضلك توقف هنا."], ["بفرمایید. پنجاه هزار تومان.", "befarmāyid. panjāh hezār tumān.", "تفضل. خمسون ألف تومان."]]}, {"t": "في المقهى", "l": [["سلام، دو تا چای و یک کیک لطفاً.", "salām, do tā chāy va yek keyk lotfan.", "مرحباً، شايان وقطعة كيك من فضلك."], ["چای با شکر یا بدون شکر؟", "chāy bā shekar yā bedun-e shekar?", "الشاي بسكر أم بدون سكر؟"], ["با شکر، لطفاً.", "bā shekar, lotfan.", "بسكر، من فضلك."], ["چیز دیگری میل دارید؟", "chiz-e digari meyl dārid?", "هل تريد شيئاً آخر؟"], ["نه، همین کافی است.", "na, hamin kāfi ast.", "لا، هذا يكفي."], ["همه‌اش بیست و پنج هزار تومان.", "hame-ash bist o panj hezār tumān.", "المجموع خمسة وعشرون ألف تومان."]]}, {"t": "في الصيدلية", "l": [["سلام، برای سردرد دارو دارید؟", "salām, barāye sardard dāru dārid?", "مرحباً، هل عندكم دواء للصداع؟"], ["بله، این قرص خوب است.", "bale, in ghors khub ast.", "نعم، هذا القرص جيد."], ["چند بار باید بخورم؟", "chand bār bāyad bekhoram?", "كم مرة يجب أن أتناوله؟"], ["روزی سه بار بعد از غذا.", "ruzi se bār ba’d az ghazā.", "ثلاث مرات يومياً بعد الأكل."], ["عارضه‌ای هم دارد؟", "āreze-i ham dārad?", "هل له أعراض جانبية؟"], ["نه، ولی اگر بهتر نشدید به دکتر بروید.", "na, vali agar behtar nashodid be doktor beravid.", "لا، لكن إن لم تتحسن فاذهب إلى الطبيب."]]}, {"t": "شراء الملابس", "l": [["ببخشید، این پیراهن سایز بزرگ دارید؟", "bebakhshid, in pirāhan sāyz-e bozorg dārid?", "عذراً، هل عندكم هذا القميص بمقاس كبير؟"], ["بله، چه رنگی می‌خواهید؟", "bale, che rangi mikhāhid?", "نعم، أي لون تريد؟"], ["آبی. می‌توانم امتحان کنم؟", "ābi. mitavānam emtehān konam?", "أزرق. هل يمكنني تجربته؟"], ["بله، اتاق پرو آن‌جا است.", "bale, otāgh-e porov ān-jā ast.", "نعم، غرفة القياس هناك."], ["اندازه است. قیمتش چقدر است؟", "andāze ast. gheymatash chaghadr ast?", "مناسب. كم سعره؟"], ["دویست هزار تومان.", "devist hezār tumān.", "مئتا ألف تومان."]]}, {"t": "في البنك", "l": [["سلام، می‌خواهم پول عوض کنم.", "salām, mikhāham pul avaz konam.", "مرحباً، أريد تبديل عملة."], ["چه ارزی دارید؟", "che arzi dārid?", "أي عملة معك؟"], ["دلار. نرخ امروز چند است؟", "dolār. nerkh-e emruz chand ast?", "دولار. كم سعر اليوم؟"], ["نرخ را روی تابلو ببینید.", "nerkh rā ru-ye tāblo bebinid.", "انظر إلى السعر على اللوحة."], ["خوب است. صد دلار می‌دهم.", "khub ast. sad dolār midaham.", "حسناً. سأعطيك مئة دولار."], ["لطفاً پاسپورت‌تان را نشان دهید.", "lotfan pāspurt-etān rā neshān dahid.", "من فضلك أرني جواز سفرك."]]}, {"t": "مكالمة هاتفية", "l": [["الو، سلام. آقای رضایی هستند؟", "alo, salām. āghā-ye rezāyi hastand?", "ألو، مرحباً. هل السيد رضائي موجود؟"], ["بله، خودم هستم. شما؟", "bale, khodam hastam. shomā?", "نعم، أنا هو. ومن حضرتك؟"], ["من علی هستم. فردا وقت دارید؟", "man Ali hastam. fardā vaght dārid?", "أنا علي. هل عندك وقت غداً؟"], ["بله، ساعت چهار خوب است؟", "bale, sā’at-e chahār khub ast?", "نعم، هل الساعة الرابعة مناسبة؟"], ["عالی است. پس تا فردا.", "āli ast. pas tā fardā.", "ممتاز. إذن إلى الغد."], ["خداحافظ.", "khodā hāfez.", "مع السلامة."]]}, {"t": "في المترو", "l": [["ببخشید، برای رفتن به میدان آزادی کدام خط است؟", "bebakhshid, barāye raftan be meydān-e āzādi kodām khat ast?", "عذراً، أي خط يذهب إلى ميدان آزادي؟"], ["خط دو. دو ایستگاه بعد پیاده شوید.", "khat-e do. do istgāh ba’d piyāde shavid.", "الخط الثاني. انزل بعد محطتين."], ["بلیط کجا می‌فروشند؟", "belit kojā mifurushand?", "أين يبيعون التذاكر؟"], ["دم ورودی.", "dam-e vurudi.", "عند المدخل."], ["مترو هر چند دقیقه می‌آید؟", "metro har chand daghighe miāyad?", "كل كم دقيقة يأتي المترو؟"], ["هر پنج دقیقه.", "har panj daghighe.", "كل خمس دقائق."]]}, {"t": "الوقت والموعد", "l": [["ببخشید، ساعت چند است؟", "bebakhshid, sā’at chand ast?", "عذراً، كم الساعة؟"], ["ساعت ده و نیم است.", "sā’at dah o nim ast.", "الساعة العاشرة والنصف."], ["جلسه ساعت یازده است.", "jalase sā’at-e yāzdah ast.", "الاجتماع الساعة الحادية عشرة."], ["پس نیم ساعت وقت داریم.", "pas nim sā’at vaght dārim.", "إذن عندنا نصف ساعة."], ["می‌توانیم قهوه بخوریم؟", "mitavānim ghahve bekhorim?", "هل نستطيع شرب قهوة؟"], ["بله، برویم.", "bale, beravim.", "نعم، لنذهب."]]}, {"t": "زيارة صديق", "l": [["سلام، خوش آمدید! بفرمایید تو.", "salām, khosh āmadid! befarmāyid to.", "مرحباً، أهلاً بك! تفضل بالدخول."], ["ممنون. این هدیه برای شما است.", "mamnun. in hediye barāye shomā ast.", "شكراً. هذه هدية لك."], ["لطف کردید. بفرمایید بنشینید.", "lotf kardid. befarmāyid benshinid.", "أكرمتني. تفضل بالجلوس."], ["خانه‌ی قشنگی دارید.", "khāne-ye ghashangi dārid.", "عندك بيت جميل."], ["ممنون. چای میل دارید؟", "mamnun. chāy meyl dārid?", "شكراً. هل تريد شاياً؟"], ["بله، با کمال میل.", "bale, bā kamāl-e meyl.", "نعم، بكل سرور."]]}, {"t": "الحديث عن العائلة", "l": [["خانواده‌ی شما چند نفر است؟", "khānevāde-ye shomā chand nafar ast?", "كم عدد أفراد أسرتك؟"], ["پنج نفر: پدر، مادر، دو برادر و من.", "panj nafar: pedar, mādar, do barādar va man.", "خمسة أشخاص: أب وأم وأخوان وأنا."], ["برادرهایتان چه کار می‌کنند؟", "barādarhāyetān che kār mikonand?", "ماذا يعمل إخوتك؟"], ["یکی دانشجو است و دیگری معلم.", "yeki dāneshju ast va digari mo’allem.", "أحدهما طالب والآخر معلم."], ["پدرتان کجا زندگی می‌کند؟", "pedaretān kojā zendegi mikonad?", "أين يعيش والدك؟"], ["در شیراز. شما چطور؟", "dar shirāz. shomā chetor?", "في شيراز. وأنت؟"]]}, {"t": "العمل والهوايات", "l": [["شما چه کاره‌اید؟", "shomā che kāre-id?", "ما مهنتك؟"], ["من مهندس هستم. شما چه؟", "man mohandes hastam. shomā che?", "أنا مهندس. وأنت؟"], ["من پزشک هستم. اوقات فراغت چه می‌کنید؟", "man pezeshk hastam. owghāt-e farāghat che mikonid?", "أنا طبيب. ماذا تفعل في وقت فراغك؟"], ["فوتبال بازی می‌کنم و کتاب می‌خوانم.", "futbāl bāzi mikonam va ketāb mikhānam.", "ألعب كرة القدم وأقرأ الكتب."], ["من عاشق سفر هستم.", "man āshegh-e safar hastam.", "أنا أعشق السفر."], ["عالی است! به ایران سفر کرده‌اید؟", "āli ast! be irān safar karde-id?", "رائع! هل سافرت إلى إيران؟"]]}, {"t": "الطقس", "l": [["امروز هوا چطور است؟", "emruz havā chetor ast?", "كيف الجو اليوم؟"], ["خیلی سرد است و باران می‌بارد.", "kheyli sard ast va bārān mibārad.", "الجو بارد جداً والمطر يهطل."], ["فردا هم باران می‌بارد؟", "fardā ham bārān mibārad?", "هل سيمطر غداً أيضاً؟"], ["نه، فردا هوا آفتابی است.", "na, fardā havā āftābi ast.", "لا، غداً الجو مشمس."], ["خوب است. می‌خواهم به کوه بروم.", "khub ast. mikhāham be kuh beravam.", "جيد. أريد الذهاب إلى الجبل."], ["حتماً چتر و لباس گرم ببرید.", "hatman chatr o lebās-e garm bebarid.", "احرص على أخذ مظلة وملابس دافئة."]]}, {"t": "مشكلة في الفندق", "l": [["ببخشید، تهویه‌ی اتاق کار نمی‌کند.", "bebakhshid, tahviye-ye otāgh kār nemikonad.", "عذراً، مكيّف الغرفة لا يعمل."], ["متأسفم. الان تعمیرکار می‌فرستم.", "mota’assefam. alān ta’mirkār mifrestam.", "أنا آسف. سأرسل فنياً الآن."], ["ممنون. آب گرم هم نداریم.", "mamnun. āb-e garm ham nadārim.", "شكراً. وليس عندنا ماء ساخن أيضاً."], ["همین الان درست می‌شود.", "hamin alān dorost mishavad.", "سيُصلَح حالاً."], ["می‌توانم اتاق عوض کنم؟", "mitavānam otāgh avaz konam?", "هل يمكنني تغيير الغرفة؟"], ["بله، یک اتاق دیگر خالی است.", "bale, yek otāgh-e digar khāli ast.", "نعم، توجد غرفة أخرى خالية."]]}]);
+
+var RD=[{"s": [["اسم من علی است.", "esm-e man Ali ast.", "اسمي علي."], ["من عربی هستم و فارسی یاد می‌گیرم.", "man arabi hastam va fārsi yād migiram.", "أنا عربي وأتعلم الفارسية."], ["امروز با سارا آشنا شدم.", "emruz bā Sārā āshnā shodam.", "اليوم تعرّفت على سارا."], ["سارا اهل ایران است.", "Sārā ahl-e irān ast.", "سارا من إيران."]], "q": "من أين سارا؟", "o": ["من إيران", "من مصر", "من العراق"], "a": 0}, {"s": [["من و دوستم به رستوران رفتیم.", "man va dustam be resturān raftim.", "ذهبت أنا وصديقي إلى المطعم."], ["من کباب و چای سفارش دادم.", "man kabāb va chāy sefāresh dādam.", "طلبت كباباً وشاياً."], ["غذا خیلی خوشمزه بود.", "ghazā kheyli khoshmaze bud.", "كان الطعام لذيذاً جداً."]], "q": "ماذا طلب الكاتب؟", "o": ["سلطة وماء", "كباب وشاي", "أرز وحليب"], "a": 1}, {"s": [["من امروز به بازار رفتم.", "man emruz be bāzār raftam.", "ذهبت اليوم إلى السوق."], ["قیمت‌ها خیلی گران بود.", "gheymat-hā kheyli gerān bud.", "كانت الأسعار غالية جداً."], ["فروشنده تخفیف داد و من خریدم.", "forushande takhfif dād va man kharidam.", "أعطى البائع خصماً فاشتريت."]], "q": "لماذا اشترى الكاتب؟", "o": ["لأن السعر رخيص جداً", "لأن السوق قريب", "لأن البائع أعطى خصماً"], "a": 2}, {"s": [["من در شهر گم شدم.", "man dar shahr gom shodam.", "ضللت الطريق في المدينة."], ["از یک مرد آدرس پرسیدم.", "az yek mard ādres porsidam.", "سألت رجلاً عن العنوان."], ["او گفت مستقیم بروید و به راست بپیچید.", "u goft mostaghim beravid va be rāst bepichid.", "قال لي اذهب مباشرة ثم انعطف يميناً."]], "q": "ماذا قال الرجل؟", "o": ["مباشرة ثم يميناً", "يساراً ثم مباشرة", "ارجع إلى الفندق"], "a": 0}, {"s": [["دیروز حالم بد بود.", "diruz hālam bad bud.", "أمس كانت حالتي سيئة."], ["سردرد و تب داشتم و به دکتر رفتم.", "sardard va tab dāshtam va be doktor raftam.", "كان عندي صداع وحمى فذهبت إلى الطبيب."], ["دکتر دارو داد و امروز بهترم.", "doktor dāru dād va emruz behtaram.", "أعطاني الطبيب دواءً وأنا اليوم أفضل."]], "q": "كيف حاله اليوم؟", "o": ["أسوأ", "أفضل", "لا يزال مريضاً جداً"], "a": 1}, {"s": [["ما سه شب در هتل ماندیم.", "mā se shab dar hotel māndim.", "بقينا ثلاث ليالٍ في الفندق."], ["اتاق تمیز و بزرگ بود.", "otāgh tamiz va bozorg bud.", "كانت الغرفة نظيفة وكبيرة."], ["صبحانه هر روز ساعت هفت بود.", "sobhāne har ruz sā’at-e haft bud.", "كان الفطور كل يوم في السابعة."]], "q": "كم ليلة بقوا في الفندق؟", "o": ["ليلتين", "خمس ليالٍ", "ثلاث ليالٍ"], "a": 2}, {"s": [["امروز در فرودگاه هستم.", "emruz dar forudgāh hastam.", "أنا اليوم في المطار."], ["پرواز بیست دقیقه دیر است.", "parvāz bist daghighe dir ast.", "الرحلة متأخرة عشرين دقيقة."], ["من چمدانم را تحویل دادم و منتظر می‌مانم.", "man chamedānam rā tahvil dādam va montazer mimānam.", "سلّمت حقيبتي وأنا أنتظر."]], "q": "كم تأخرت الرحلة؟", "o": ["عشرين دقيقة", "ساعة كاملة", "لم تتأخر"], "a": 0}, {"s": [["من با تاکسی به هتل رفتم.", "man bā tāksi be hotel raftam.", "ذهبت إلى الفندق بالتاكسي."], ["راننده مهربان بود.", "rānande mehrabān bud.", "كان السائق لطيفاً."], ["سفر بیست دقیقه طول کشید.", "safar bist daghighe tul keshid.", "استغرقت الرحلة عشرين دقيقة."]], "q": "كيف وصل إلى الفندق؟", "o": ["بالمترو", "بالتاكسي", "مشياً"], "a": 1}, {"s": [["هر روز عصر به کافه می‌روم.", "har ruz asr be kāfe miravam.", "أذهب كل مساء إلى المقهى."], ["من چای با شکر می‌خورم.", "man chāy bā shekar mikhoram.", "أشرب الشاي بالسكر."], ["کافه کوچک است ولی آرام است.", "kāfe kuchak ast vali ārām ast.", "المقهى صغير لكنه هادئ."]], "q": "متى يذهب إلى المقهى؟", "o": ["كل صباح", "مرة في الشهر", "كل مساء"], "a": 2}, {"s": [["سر من درد می‌کند.", "sar-e man dard mikonad.", "رأسي يؤلمني."], ["به داروخانه رفتم و قرص گرفتم.", "be dārukhāne raftam va ghors gereftam.", "ذهبت إلى الصيدلية وأخذت حبوباً."], ["باید روزی سه بار بخورم.", "bāyad ruzi se bār bekhoram.", "يجب أن أتناولها ثلاث مرات يومياً."]], "q": "كم مرة يتناول الدواء يومياً؟", "o": ["ثلاث مرات", "مرة واحدة", "مرتين"], "a": 0}, {"s": [["من یک پیراهن آبی خریدم.", "man yek pirāhan-e ābi kharidam.", "اشتريت قميصاً أزرق."], ["سایزش بزرگ بود و اندازه بود.", "sāyzash bozorg bud va andāze bud.", "كان مقاسه كبيراً ومناسباً."], ["قیمتش دویست هزار تومان بود.", "gheymatash devist hezār tumān bud.", "كان سعره مئتي ألف تومان."]], "q": "ما لون القميص؟", "o": ["أحمر", "أزرق", "أخضر"], "a": 1}, {"s": [["می‌خواستم پول عوض کنم.", "mikhāstam pul avaz konam.", "كنت أريد تبديل عملة."], ["به بانک رفتم و صد دلار دادم.", "be bānk raftam va sad dolār dādam.", "ذهبت إلى البنك وأعطيت مئة دولار."], ["کارمند پاسپورت من را دید.", "kārmand pāspurt-e man rā did.", "رأى الموظف جواز سفري."]], "q": "كم دولاراً أعطى؟", "o": ["خمسين دولاراً", "عشرة دولارات", "مئة دولار"], "a": 2}, {"s": [["من به آقای رضایی زنگ زدم.", "man be āghā-ye rezāyi zang zadam.", "اتصلت بالسيد رضائي."], ["فردا ساعت چهار وقت دارد.", "fardā sā’at-e chahār vaght dārad.", "عنده وقت غداً الساعة الرابعة."], ["ما فردا همدیگر را می‌بینیم.", "mā fardā hamdigar rā mibinim.", "سنلتقي غداً."]], "q": "متى سيلتقيان؟", "o": ["غداً", "اليوم", "الأسبوع القادم"], "a": 0}, {"s": [["من هر روز با مترو به کار می‌روم.", "man har ruz bā metro be kār miravam.", "أذهب كل يوم إلى العمل بالمترو."], ["مترو هر پنج دقیقه می‌آید.", "metro har panj daghighe miāyad.", "يأتي المترو كل خمس دقائق."], ["مترو سریع و ارزان است.", "metro sari’ va arzān ast.", "المترو سريع ورخيص."]], "q": "كل كم دقيقة يأتي المترو؟", "o": ["كل عشر دقائق", "كل خمس دقائق", "كل دقيقة"], "a": 1}, {"s": [["امروز جلسه ساعت یازده است.", "emruz jalase sā’at-e yāzdah ast.", "الاجتماع اليوم في الحادية عشرة."], ["الان ساعت ده و نیم است.", "alān sā’at-e dah o nim ast.", "الآن الساعة العاشرة والنصف."], ["من نیم ساعت وقت دارم.", "man nim sā’at vaght dāram.", "عندي نصف ساعة."]], "q": "كم بقي على الاجتماع؟", "o": ["ساعة كاملة", "عشر دقائق", "نصف ساعة"], "a": 2}, {"s": [["دیروز به خانه‌ی دوستم رفتم.", "diruz be khāne-ye dustam raftam.", "ذهبت أمس إلى بيت صديقي."], ["برای او یک هدیه بردم.", "barāye u yek hediye bordam.", "أخذت له هدية."], ["او چای آورد و ما صحبت کردیم.", "u chāy āvard va mā sohbat kardim.", "أحضر الشاي وتحدثنا."]], "q": "ماذا أخذ الكاتب معه إلى صديقه؟", "o": ["هدية", "طعاماً", "كتاباً"], "a": 0}, {"s": [["خانواده‌ی من پنج نفر است.", "khānevāde-ye man panj nafar ast.", "أسرتي من خمسة أشخاص."], ["پدرم در شیراز زندگی می‌کند.", "pedaram dar shirāz zendegi mikonad.", "يعيش والدي في شيراز."], ["برادرم دانشجو است.", "barādaram dāneshju ast.", "أخي طالب."]], "q": "أين يعيش الأب؟", "o": ["في طهران", "في شيراز", "في أصفهان"], "a": 1}, {"s": [["من مهندس هستم.", "man mohandes hastam.", "أنا مهندس."], ["در وقت آزاد فوتبال بازی می‌کنم.", "dar vaght-e āzād futbāl bāzi mikonam.", "ألعب كرة القدم في وقت فراغي."], ["من عاشق سفر هستم.", "man āshegh-e safar hastam.", "أنا أعشق السفر."]], "q": "ماذا يفعل في وقت فراغه؟", "o": ["يرسم", "ينام", "يلعب كرة القدم"], "a": 2}, {"s": [["امروز هوا سرد است و باران می‌بارد.", "emruz havā sard ast va bārān mibārad.", "الجو بارد اليوم والمطر يهطل."], ["فردا هوا آفتابی است.", "fardā havā āftābi ast.", "غداً الجو مشمس."], ["من چتر و لباس گرم می‌برم.", "man chatr o lebās-e garm miboram.", "سآخذ مظلة وملابس دافئة."]], "q": "كيف سيكون الجو غداً؟", "o": ["مشمساً", "ممطراً", "ثلجياً"], "a": 0}, {"s": [["تهویه‌ی اتاق کار نمی‌کند.", "tahviye-ye otāgh kār nemikonad.", "مكيّف الغرفة لا يعمل."], ["آب گرم هم نداریم.", "āb-e garm ham nadārim.", "ولا يوجد ماء ساخن."], ["هتل یک اتاق دیگر به ما داد.", "hotel yek otāgh-e digar be mā dād.", "أعطانا الفندق غرفة أخرى."]], "q": "ماذا فعل الفندق؟", "o": ["أعاد لهم المال", "أعطاهم غرفة أخرى", "لم يفعل شيئاً"], "a": 1}];
+var RV=false,RQ=null;
+function reading(){var t=RD[D],d=DLG[D];
+var h='<button class="back" onclick="RV=false;render()">› رجوع للمحادثة</button><h2>📖 نص قصير: '+d.t+'</h2><div class="btns" style="margin:0 0 10px"><button class="btn" onclick="playText()">▶ استمع للنص</button><button class="btn alt" onclick="TR=!TR;render()">'+(TR?'إخفاء':'إظهار')+' الترجمة</button></div><div class="det" style="text-align:start">';
+t.s.forEach(function(l){h+='<div style="display:flex;gap:8px;align-items:center;margin-bottom:12px"><div style="flex:1"><div class="fa" style="font-size:22px">'+l[0]+'</div>'+(TR?'<div class="tr" style="font-size:14px">'+l[1]+'</div><div class="mu">'+l[2]+'</div>':'')+'</div><button class="spk" aria-label="استمع" onclick="say(\''+esc(l[0])+'\')">🔊</button></div>'});
+h+='</div><h2>اختبر فهمك</h2><div class="det" style="text-align:start"><b>'+t.q+'</b></div>';
+if(!RQ)RQ={a:null};
+t.o.forEach(function(o,k){var c='opt';if(RQ.a!==null){if(k===t.a)c+=' good';else if(k===RQ.a)c+=' bad'}h+='<button class="'+c+'" '+(RQ.a!==null?'disabled':'')+' onclick="pickR('+k+')">'+o+'</button>'});
+if(RQ.a!==null)h+=fb(RQ.a===t.a,RQ,0)+(RQ.a===t.a?'':'<div class="btns"><button class="btn alt" onclick="RQ=null;render()">أعد السؤال</button></div>');
+return h}
+function pickR(k){if(!RQ)RQ={a:null};if(RQ.a!==null)return;RQ.a=k;RQ.m=Math.random();snd(k===RD[D].a);STK=k===RD[D].a?STK+1:0;RQ.s=STK;if(k===RD[D].a&&!(S.rd&&S.rd[D])){S.rd=S.rd||{};S.rd[D]=true;gain(5)}render()}
+function playText(){var ls=RD[D].s,i=0;(function n(){if(i>=ls.length)return;say(ls[i++][0],n)})()}
+
+var CHEER=[["آفرین!", "āfarin", "أحسنت!"], ["عالی!", "āli", "رائع!"], ["درست است!", "dorost ast", "إجابة صحيحة!"], ["خیلی خوب!", "kheyli khub", "جيد جداً!"], ["باریکلا!", "bārikallā", "برافو!"], ["کارت عالی بود!", "kāret āli bud", "عملك رائع!"]],TRYP=[["دوباره تلاش کن!", "dobāre talāsh kon", "حاول مرة أخرى!"], ["نگران نباش!", "negarān nabāsh", "لا تقلق!"], ["تو می‌توانی!", "to mitavāni", "أنت تستطيع!"], ["ادامه بده!", "edāme bede", "واصل!"], ["هیچ اشکالی ندارد!", "hich eshkāli nadārad", "لا بأس!"]],TRYM=["لا بأس، الخطأ جزء من التعلّم. حاول مرة أخرى! 💪", "قريب جداً! ستنجح في المرة القادمة.", "لا تستسلم، كل خطأ يقرّبك من الإتقان.", "انتبه للإجابة الصحيحة وستتذكرها دائماً.", "أنت تتقدم أكثر مما تظن، واصل!"],STK=0;
+function fb(ok,q,note){var m=q.m||0,n=q.s||0;
+if(ok){var c=CHEER[Math.floor(m*CHEER.length)];
+return '<div class="fbk ok"><div style="display:flex;justify-content:center;align-items:center;gap:8px"><span class="fa" style="font-size:24px">'+c[0]+'</span><button class="spk" style="background:#fff2;border-color:#fff8;color:#fff;width:34px;height:34px;font-size:15px" aria-label="استمع" onclick="say(\''+esc(c[0])+'\')">🔊</button></div><div>'+c[2]+' <span style="direction:ltr;display:inline-block;opacity:.85;font-size:14px">'+c[1]+'</span></div>'+(n>=3?'<div>🔥 '+n+' إجابات صحيحة متتالية!</div>':'')+'</div>'}
+var t=TRYM[Math.floor(m*TRYM.length)],p=TRYP[Math.floor(m*TRYP.length)];
+return '<div class="fbk no"><div>'+t+'</div><div class="fa" style="font-size:20px;margin-top:4px">'+p[0]+'</div><div style="opacity:.85;font-size:14px">'+p[2]+' · <span style="direction:ltr;display:inline-block">'+p[1]+'</span></div>'+(note?'<div style="font-size:14px;margin-top:4px">سنعيد هذا السؤال لاحقاً لتتقنه 🔁</div>':'')+'</div>'}
+
+function audBox(){return '<div class="det"><b>🔊 اختبار الصوت</b><p class="mu">اضغط لتسمع كلمة «سلام» وتعرف أي صوت يعمل على جهازك.</p><button class="btn alt" onclick="testAudio()">اختبر الصوت</button><div id="aud" style="margin-top:10px;text-align:start;line-height:1.9"></div></div>'}
+function testAudio(){var t=LES[0].w[0][0],o=document.getElementById('aud'),done=false,file=!!S.packOk;
+say(t);
+function fin(){if(done)return;done=true;var v=[];try{v=speechSynthesis.getVoices().filter(function(x){return /^fa/i.test(x.lang)})}catch(e){}
+o.innerHTML='ملف الصوت المسجّل: '+(file?'✅ يعمل'+(S.packOk?' (من الحزمة المنزّلة)':''):'❌ غير موجود (يُستخدم صوت الهاتف)')+'<br>صوت الهاتف الفارسي: '+(v.length?'✅ '+v[0].name:'❌ غير مثبّت')+(!file&&!v.length?'<br><span class="mu">لن تسمع صوتاً حالياً. ثبّت صوتاً فارسياً من إعدادات تحويل النص إلى كلام، أو أضف ملفات الصوت (انظر README).</span>':'')}
+try{var a=new Audio('audio/'+hs(t)+'.mp3');a.oncanplaythrough=function(){file=true;fin()};a.onerror=function(){fin()};a.load()}catch(e){}
+setTimeout(fin,2500)}
+
+var PACK_URL=window.PACK_URL||'',PK={busy:false,cancel:false,done:0,total:0,err:''};
+function packUrl(n){return PACK_URL.replace(/\/?$/,'/')+n}
+function packHint(){return PACK_URL&&!S.packOk?'<div class="det" style="text-align:start;padding:10px 14px"><span>🔊 نزّل حزمة الصوت لنطق أفضل بدون إنترنت</span> <button class="btn" style="padding:6px 12px;font-size:14px;margin-inline-start:8px" onclick="go(\'me\')">تنزيل</button></div>':''}
+function packHtml(){
+if(!PACK_URL)return '<p class="mu">غير مفعّلة في هذه النسخة (لم يُحدَّد عنوان الحزمة بعد).</p>';
+if(PK.busy){var p=PK.total?Math.round(PK.done/PK.total*100):0;return '<p>جارٍ التنزيل... '+p+'% ('+PK.done+' / '+PK.total+')</p><div class="bar"><i style="width:'+p+'%"></i></div><div class="btns"><button class="btn alt" onclick="PK.cancel=true">إيقاف</button></div>'}
+if(S.packOk)return '<p>✅ الحزمة منزّلة، والنطق عالي الجودة يعمل بدون إنترنت.</p><div class="btns"><button class="btn alt" onclick="packDel()">حذف الحزمة</button></div>';
+return (PK.err?'<p class="mu">'+PK.err+'</p>':'')+'<p class="mu">نطق عالي الجودة يعمل بدون إنترنت بعد التنزيل. يُفضَّل الاتصال بشبكة Wi-Fi.</p><div class="btns"><button class="btn" onclick="packStart()">تنزيل حزمة الصوت</button></div>'}
+function packBox(){if(!PACK_URL)return'';return '<div class="det" style="text-align:start"><b>📦 حزمة الصوت</b><div id="pk" style="margin-top:8px">'+packHtml()+'</div></div>'}
+function packUi(){var e=document.getElementById('pk');if(e)e.innerHTML=packHtml()}
+function packDel(){S.packOk=false;save();try{caches.delete('farsi-audio-v1')}catch(e){}packUi();toast('حُذفت الحزمة')}
+function packStart(){if(PK.busy)return;PK.err='';
+fetch(packUrl('manifest.json')).then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(m){window.__pm=m;var mb=m.files.reduce(function(a,f){return a+f.s},0)/1048576;
+sheet('<h2 style="margin-top:0">📦 تنزيل حزمة الصوت</h2><p>الحجم حوالي <b>'+Math.max(1,Math.round(mb))+' ميغابايت</b> ('+m.files.length+' ملفاً). يُفضَّل الاتصال بشبكة Wi-Fi، ويمكنك إيقاف التنزيل ومتابعته لاحقاً.</p><div class="btns"><button class="btn" onclick="packRun()">ابدأ التنزيل</button><button class="btn alt" onclick="closeSheet()">إلغاء</button></div>')}).catch(function(){toast('تعذّر الاتصال بخادم الصوت، تحقق من الإنترنت')})}
+function packRun(){closeSheet();var m=window.__pm;if(!m||PK.busy)return;
+if(!window.caches){toast('التخزين غير متاح على هذا الجهاز');return}
+PK.busy=true;PK.cancel=false;PK.done=0;PK.err='';PK.total=m.files.length;packUi();
+try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
+caches.open('farsi-audio-v1').then(function(c){var i=0,act=0,fail=0,ended=false;
+function fin(){if(ended)return;ended=true;PK.busy=false;
+if(PK.cancel)toast('أُوقف التنزيل، يمكنك المتابعة لاحقاً');
+else if(fail===0){S.packOk=true;S.packV=m.version;save();toast('اكتمل تنزيل حزمة الصوت ✅')}
+else PK.err='تعذّر تنزيل '+fail+' ملفاً، أعد المحاولة (الملفات المنزّلة محفوظة).';
+packUi()}
+function next(){if(PK.cancel||(i>=m.files.length&&act===0)){fin();return}
+while(act<6&&i<m.files.length&&!PK.cancel){(function(f){i++;act++;var u=packUrl(f.n);
+c.match(u).then(function(h){if(h)return;return fetch(u).then(function(r){if(!r.ok)throw 0;return c.put(u,r)})}).then(function(){PK.done++},function(){fail++}).then(function(){act--;packUi();next()})})(m.files[i])}}
+next()}).catch(function(){PK.busy=false;toast('التخزين غير متاح على هذا الجهاز');packUi()})}
+
+var PL=null,PBANDS=[[0,1],[2,3,4,5,6],[7,8,9,10,11,12],[13,14,15,16]],LPASS=[0,2,7,13,17],GPASS=[0,0,2,4,7],DPASS=[0,0,2,5,10];
+var PLV=[{n:'مبتدئ',d:'تبدأ من الدرس الأول، وهو المناسب لك تماماً.'},{n:'أساسي',d:'تعرف التحيات والأرقام الأولى.'},{n:'متوسط ١',d:'تعرف مفردات الحياة اليومية الأساسية.'},{n:'متوسط ٢',d:'تعرف مفردات السفر والحياة اليومية وجملها الشائعة.'},{n:'متقدم',d:'تتقن مفردات كل الدروس وتعرف بعض القواعد.'}];
+function plQs(b){var ws=ALL.filter(function(w){return PBANDS[b].indexOf(w.l)>=0}),qs=[];
+sh(ws).slice(0,b===3?2:3).forEach(function(w){var d=sh(ws.filter(function(x){return x.ar!==w.ar})).slice(0,3).map(function(x){return x.ar});qs.push({fa:w.fa,ar:w.ar,o:sh([w.ar].concat(d))})});
+if(b===3){var g=[];GR.slice(4).forEach(function(r){r.e.forEach(function(e){g.push(e)})});var e=sh(g)[0],d=sh(g.filter(function(x){return x[2]!==e[2]})).slice(0,3).map(function(x){return x[2]});qs.push({fa:e[0],ar:e[2],o:sh([e[2]].concat(d))})}
+return sh(qs)}
+function startPlace(){PL={st:0,b:0,i:0,sc:[0,0,0,0],qs:null,lv:0};render()}
+function plStart(){PL.st=1;PL.b=0;PL.i=0;PL.qs=plQs(0);render()}
+function plAns(k){var q=PL.qs[PL.i];if(k>=0&&q.o[k]===q.ar)PL.sc[PL.b]++;PL.i++;
+if(PL.i>=3){if(PL.sc[PL.b]>=2&&PL.b<3){PL.b++;PL.i=0;PL.qs=plQs(PL.b)}else{PL.lv=PL.sc[PL.b]>=2?4:PL.b;PL.st=2}}render()}
+function plView(){var h='<button class="back" onclick="PL=null;render()">› إنهاء</button>';
+if(PL.st===0)return h+'<h2>🎯 اختبار تحديد المستوى</h2><div class="det" style="text-align:start;line-height:1.9">اختبار قصير يقدّر مستواك الحالي في الفارسية ويقترح عليك نقطة البداية.<br>• ٣ أسئلة لكل مستوى، وحتى ١٢ سؤالاً كحد أقصى<br>• يتوقف مبكراً إن كنت مبتدئاً<br>• اضغط «لا أعرف» بدل التخمين، فالنتيجة أدق<br>• لن تخسر شيئاً، وأنت من يقرر بعد النتيجة</div><div class="btns"><button class="btn" onclick="plStart()">ابدأ الاختبار</button></div>';
+if(PL.st===2){var v=PLV[PL.lv],sl=LPASS[PL.lv],nm=sl<LES.length?LES[sl].t:'مراجعة القواعد والأفعال';
+h+='<h2>🎯 نتيجتك التقريبية</h2><div class="det"><div class="big">'+v.n+'</div><p>'+v.d+'</p><p class="mu">نتيجة المستويات: '+PL.sc.slice(0,Math.min(PL.b+1,4)).map(function(x,i){return (i+1)+': '+x+'/3'}).join(' · ')+'</p></div><p class="mu">هذا تقدير سريع وليس تقييماً رسمياً.</p>';
+if(PL.lv>0)h+='<div class="det" style="text-align:start">نقترح أن تبدأ من: <b>'+nm+'</b><br><span class="mu">وسنفتح لك الدروس التي قبله، وتبقى متاحة للمراجعة.</span></div><div class="btns"><button class="btn" onclick="plApply()">ابدأ من هناك</button></div><div class="btns"><button class="btn alt" onclick="plKeep()">أفضّل البدء من الدرس الأول</button></div>';
+else h+='<div class="btns"><button class="btn" onclick="plKeep()">ابدأ من الدرس الأول</button></div>';
+return h}
+var q=PL.qs[PL.i];
+h+='<div class="bar"><i style="width:'+Math.round((PL.b*3+PL.i)/12*100)+'%"></i></div><p class="mu" style="margin-top:8px">المستوى '+(PL.b+1)+' من 4 · السؤال '+(PL.i+1)+' من 3</p><div class="det"><p class="mu">ما معنى هذا؟</p><div class="fa" style="font-size:32px">'+q.fa+'</div><button class="spk" style="margin-top:6px" aria-label="استمع" onclick="say(\''+esc(q.fa)+'\')">🔊</button></div>';
+q.o.forEach(function(o,k){h+='<button class="opt" onclick="plAns('+k+')">'+o+'</button>'});
+return h+'<button class="opt" style="color:var(--mu);border-style:dashed" onclick="plAns(-1)">لا أعرف</button>'}
+function plApply(){var lv=PL.lv,i;S.pass=S.pass||{};S.gp=S.gp||{};S.dp=S.dp||{};
+for(i=0;i<Math.min(LPASS[lv],LES.length);i++)S.pass[i]=true;for(i=0;i<GPASS[lv];i++)S.gp[i]=true;for(i=0;i<DPASS[lv];i++)S.dp[i]=true;
+S.pl={lv:lv,t:Date.now()};save();PL=null;tab='home';sub=null;render();toast('فُتحت لك الدروس حتى مستواك')}
+function plKeep(){S.pl={lv:PL.lv,t:Date.now(),kept:true};save();PL=null;render()}
+function plCard(){return(!S.pl&&!S.plSkip&&S.xp<40&&!cnt(S.pass))?'<div class="det" style="text-align:start"><b>🎯 هل لديك خلفية بالفارسية؟</b><p class="mu">اختبار قصير يحدد مستواك ويفتح لك الدروس المناسبة. أو ابدأ من الصفر.</p><div class="btns"><button class="btn" onclick="startPlace()">حدّد مستواي</button><button class="btn alt" onclick="S.plSkip=true;save();render()">ابدأ من الصفر</button></div></div>':''}
+function plBox(){return S.pl?'<div class="det">🎯 مستواك التقريبي: <b>'+PLV[S.pl.lv].n+'</b><div class="btns"><button class="btn alt" onclick="startPlace()">أعد اختبار المستوى</button></div></div>':'<div class="det"><b>🎯 اختبار تحديد المستوى</b><p class="mu">اعرف مستواك وابدأ من الدرس المناسب.</p><button class="btn alt" onclick="startPlace()">ابدأ الاختبار</button></div>'}
+
+function svKey(){return Q?Q.l+'-'+Q.g:M?M.l+'-3':null}
+function svSave(){try{if(Q&&Q.daily)return;var k=svKey();if(!k)return;S.sv=S.sv||{};
+if(Q&&!Q.done)S.sv[k]={t:'q',i:Q.i,sc:Q.sc,n:Q.n,qs:Q.qs.map(function(q){return{w:q.w.id,m:q.mode,o:q.o.map(function(o){return o.id}),a:q.a,r:q.r?1:0}})};
+else if(M&&!M.fin)S.sv[k]={t:'m',w:M.w.map(function(x){return x.id}),L:M.L.map(function(x){return x.id}),R:M.R.map(function(x){return x.id}),d:M.done,mis:M.mis};
+else return;save()}catch(e){}}
+function svClear(l,g){if(S.sv&&S.sv[l+'-'+g]){delete S.sv[l+'-'+g];save()}}
+function svLoad(l,g){var d=S.sv&&S.sv[l+'-'+g];if(!d)return false;
+var by=function(id){return ALL.filter(function(x){return x.id===id})[0]};
+try{if(d.t==='q'&&g!==3){var qs=d.qs.map(function(q){return{w:by(q.w),mode:q.m,o:q.o.map(by),a:q.a,r:!!q.r}});
+if(!qs.length||!qs[d.i]||qs.some(function(q){return!q.w||q.o.some(function(o){return!o})}))throw 0;
+Q={l:l,g:g,i:d.i,sc:d.sc,n:d.n,done:false,resumed:true,qs:qs};return true}
+if(d.t==='m'&&g===3){var ws=d.w.map(by),Ls=d.L.map(by),Rs=d.R.map(by);
+if([].concat(ws,Ls,Rs).some(function(x){return!x}))throw 0;
+M={l:l,w:ws,L:Ls,R:Rs,sel:null,done:d.d||{},mis:d.mis||0,err:null,fin:false,resumed:true};return true}}catch(e){}
+svClear(l,g);return false}
+
+function exId(e){for(var i=0;i<GR.length;i++){var k=GR[i].e.indexOf(e);if(k>=0)return i+'.'+k}return null}
+function exGet(id){var a=String(id).split('.');return GR[+a[0]]&&GR[+a[0]].e[+a[1]]}
+function lnId(l){for(var i=0;i<DLG.length;i++){var k=DLG[i].l.indexOf(l);if(k>=0)return i+'.'+k}return null}
+function lnGet(id){var a=String(id).split('.');return DLG[+a[0]]&&DLG[+a[0]].l[+a[1]]}
+function gKey(){return 'G'+(G===null?'x':G)}
+function gClear(){if(S.sv&&S.sv[gKey()]){delete S.sv[gKey()];save()}}
+function gSave(){try{if(!GQ||GQ.fin)return;S.sv=S.sv||{};S.sv[gKey()]={t:'g',i:GQ.i,sc:GQ.sc,n:GQ.n,qs:GQ.qs.map(function(q){return{e:exId(q.e),v:q.rev?1:0,o:q.o.map(exId),a:q.a,r:q.r?1:0}})};save()}catch(e){}}
+function gLoad(){var d=S.sv&&S.sv[gKey()];if(!d||d.t!=='g')return false;
+try{var qs=d.qs.map(function(q){return{e:exGet(q.e),rev:!!q.v,o:q.o.map(exGet),a:q.a,r:!!q.r}});
+if(!qs.length||!qs[d.i]||qs.some(function(q){return!q.e||q.o.some(function(o){return!o})}))throw 0;
+GQ={i:d.i,sc:d.sc,n:d.n,fin:false,resumed:true,qs:qs};return true}catch(e){gClear();return false}}
+function lKey(){return 'D'+D}
+function lClear(){if(S.sv&&S.sv[lKey()]){delete S.sv[lKey()];save()}}
+function lSave(){try{if(!LQ||LQ.fin)return;S.sv=S.sv||{};S.sv[lKey()]={t:'l',i:LQ.i,sc:LQ.sc,n:LQ.n,qs:LQ.qs.map(function(q){return{l:lnId(q.l),o:q.o.map(lnId),a:q.a,r:q.r?1:0}})};save()}catch(e){}}
+function lLoad(){var d=S.sv&&S.sv[lKey()];if(!d||d.t!=='l')return false;
+try{var qs=d.qs.map(function(q){return{l:lnGet(q.l),o:q.o.map(lnGet),a:q.a,r:!!q.r}});
+if(!qs.length||!qs[d.i]||qs.some(function(q){return!q.l||q.o.some(function(o){return!o})}))throw 0;
+LQ={i:d.i,sc:d.sc,n:d.n,fin:false,resumed:true,qs:qs};return true}catch(e){lClear();return false}}
+
+function cClear(){if(S.sv&&S.sv.C){delete S.sv.C;save()}}
+function cSave(){try{if(!CQ||CQ.fin)return;S.sv=S.sv||{};S.sv.C={t:'c',i:CQ.i,sc:CQ.sc,qs:CQ.qs.map(function(q){return{v:V.indexOf(q.v),t:q.t,p:q.p,a:q.a,o:q.o.map(function(o){return o.p})}})};save()}catch(e){}}
+function cLoad(){var d=S.sv&&S.sv.C;if(!d||d.t!=='c')return false;
+try{var qs=d.qs.map(function(q){var v=V[q.v];if(!v)throw 0;var f=forms(v,q.t);return{v:v,t:q.t,p:q.p,a:q.a,o:q.o.map(function(x){if(!f[x])throw 0;return{p:x,f:f[x]}})}});
+if(!qs.length||!qs[d.i])throw 0;CQ={i:d.i,sc:d.sc,fin:false,resumed:true,qs:qs};return true}catch(e){cClear();return false}}
+
+function lettersCard(){return '<button class="row" onclick="go(\'letters\')"><div><div style="font-weight:600">🔤 الحروف الفارسية</div><div class="mu">٣٣ حرفاً مع النطق · ابدأ منها إن كنت مبتدئاً</div></div><span class="mu">‹</span></button>'}
+function verbsTab(){var n=0;while(n<7&&S.gp&&S.gp[n])n++;
+if(!(S.gp&&S.gp[6]))return '<h2>تصريف الأفعال</h2><div class="det" style="text-align:start"><b>🔒 هذا القسم مقفل</b><p class="mu">يُفتح بعد أن تنهي تمارين القواعد السبع الأولى بإجابات صحيحة، وآخرها قاعدة «الماضي». أنجزت <b>'+n+' من 7</b>.</p><div class="bar"><i style="width:'+Math.round(n/7*100)+'%"></i></div></div><div class="btns"><button class="btn" onclick="go(\'gram\');goRule('+n+')">اذهب إلى القاعدة التالية</button></div>';
+if(CQ)return cq();
+if(CV===null||CV===undefined)CV=-1;
+return conj()}
+
+var GOAL=30,MS=[3,7,14,30,60,100],LV=[0,40,120,260,450,700,1000,1400,1900,2500],LT=['مبتدئ','فضولي','متعلّم','مجتهد','متحدّث','مثابر','ماهر','متمكّن','خبير','أستاذ'];
+var PRV=[["دست بالای دست بسیار است", "dast-e bālā-ye dast besyār ast", "فوق كل ذي علمٍ عليم"], ["کار را به کاردان بسپار", "kār rā be kārdān bespār", "أعطِ الخبز لخبّازه"], ["با یک گل بهار نمی‌شود", "bā yek gol bahār nemishavad", "الربيع لا يأتي بوردة واحدة"], ["کوه به کوه نمی‌رسد، آدم به آدم می‌رسد", "kuh be kuh nemiresad, ādam be ādam miresad", "الجبال لا تلتقي لكن الناس تلتقي"], ["صبر تلخ است ولی بر شیرین دارد", "sabr talkh ast vali bar-e shirin dārad", "الصبر مرّ لكن ثمره حلو"], ["تا تنور داغ است نان را بچسبان", "tā tanur dāgh ast nān rā bechasbān", "اضرب الحديد وهو ساخن"], ["آدم عاقل از یک سوراخ دو بار گزیده نمی‌شود", "ādam-e āghel az yek surākh do bār gazide nemishavad", "لا يُلدغ المؤمن من جحرٍ مرتين"], ["از ماست که بر ماست", "az māst ke bar māst", "من أنفسنا وعلى أنفسنا"], ["عجله کار شیطان است", "ajale kār-e shaytān ast", "العجلة من الشيطان"], ["یک دست صدا ندارد", "yek dast sedā nadārad", "اليد الواحدة لا تصفّق"], ["دوست آن است که گیرد دست دوست", "dust ān ast ke gīrad dast-e dust", "الصديق من يأخذ بيد صديقه"], ["کار نیکو کردن از پر کردن است", "kār-e niku kardan az por kardan ast", "جودة العمل خير من كثرته"], ["سخن کز دل برآید لاجرم بر دل نشیند", "sokhan kaz del barāyad lājaram bar del neshinad", "ما خرج من القلب وصل إلى القلب"], ["خواهی نشوی رسوا همرنگ جماعت شو", "khāhi nashavi rosvā hamrang-e jamā’at shu", "إن أردت ألّا تُفضَح فكن مع الجماعة"]];
+function lvl(x){var l=0;for(var i=0;i<LV.length;i++)if(x>=LV[i])l=i;return l}
+function cnt(o){return Object.keys(o||{}).length}
+var BD=[
+{id:'first',i:'🌱',n:'أول خطوة',d:'اجمع ١٠ نقاط',f:function(){return S.xp>=10}},
+{id:'l1',i:'📘',n:'درسي الأول',d:'أنهِ درساً كاملاً',f:function(){return cnt(S.pass)>=1}},
+{id:'l5',i:'🎓',n:'خمسة دروس',d:'أنهِ ٥ دروس',f:function(){return cnt(S.pass)>=5}},
+{id:'w50',i:'🧠',n:'٥٠ كلمة',d:'ابدأ حفظ ٥٠ كلمة',f:function(){return cnt(S.srs)>=50}},
+{id:'w100',i:'📚',n:'١٠٠ كلمة',d:'ابدأ حفظ ١٠٠ كلمة',f:function(){return cnt(S.srs)>=100}},
+{id:'st3',i:'🔥',n:'٣ أيام',d:'٣ أيام متتالية',f:function(){return S.st>=3}},
+{id:'st7',i:'🌟',n:'أسبوع كامل',d:'٧ أيام متتالية',f:function(){return S.st>=7}},
+{id:'goal',i:'🏆',n:'هدف اليوم',d:'حقّق هدفك اليومي',f:function(){return(S.dgn||0)>=1}},
+{id:'perf',i:'🎯',n:'بلا أخطاء',d:'أنهِ مرحلة دون خطأ',f:function(){return!!S.pf}},
+{id:'rule',i:'✍️',n:'ثلاث قواعد',d:'أتقن ٣ قواعد',f:function(){return cnt(S.gp)>=3}},
+{id:'dlg',i:'💬',n:'محادثاتي',d:'أنهِ ٣ محادثات',f:function(){return cnt(S.dp)>=3}},
+{id:'verb',i:'⚡',n:'سيد الأفعال',d:'افتح تصريف الأفعال',f:function(){return!!(S.gp&&S.gp[6])}},
+{id:'rp',i:'🎭',n:'ممثل بارع',d:'أنهِ حواراً تفاعلياً',f:function(){return(S.rpn||0)>=1}},
+{id:'game',i:'🎮',n:'لاعب',d:'أنهِ لعبة واحدة',f:function(){return(S.gm||0)>=1}},
+{id:'chal',i:'⚡',n:'متحدٍّ',d:'أنهِ تحدّي اليوم',f:function(){return(S.dcn||0)>=1}},
+{id:'xp500',i:'⭐',n:'٥٠٠ نقطة',d:'اجمع ٥٠٠ نقطة',f:function(){return S.xp>=500}}];
+function chk(){S.bd=S.bd||{};var nb=[];BD.forEach(function(b){if(!S.bd[b.id]&&b.f()){S.bd[b.id]=Date.now();nb.push(b)}});return nb}
+function celebrate(ms){sfx('win');try{var d=document.createElement('div');d.className='cel';d.innerHTML=ms.map(function(m){return'<div>'+m+'</div>'}).join('');document.body.appendChild(d);
+if(!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches)){var c=document.createElement('div');c.className='cnf';var cl=['#E3A12F','#12807F','#E26D6D','#4CC27F','#6C8EF5'];
+for(var i=0;i<38;i++){var e=document.createElement('i');e.style.left=Math.random()*100+'%';e.style.background=cl[i%5];e.style.animationDelay=Math.random()*.5+'s';e.style.animationDuration=(1.6+Math.random()*1.3)+'s';c.appendChild(e)}document.body.appendChild(c);setTimeout(function(){c.remove()},3400)}
+setTimeout(function(){d.remove()},3600)}catch(e){}}
+function heroPanel(){var l=lvl(S.xp),cur=LV[l],nx=LV[l+1],pc=nx?Math.round((S.xp-cur)/(nx-cur)*100):100,t=ds(Date.now()),dg=S.dg&&S.dg.d===t?S.dg:{x:0,ok:0},gp=Math.min(100,Math.round(dg.x/GOAL*100)),due=queue().due.length;
+return '<div class="det" style="text-align:start">'+streakLine()+'<div class="rowf"><div><div class="mu">مستواك</div><div style="font-size:19px;font-weight:800">المستوى '+(l+1)+' · '+LT[Math.min(l,LT.length-1)]+'</div></div><div class="ring" style="--p:'+gp+'"><b>'+(dg.ok?'✓':dg.x)+'</b></div></div><div class="bar"><i style="width:'+pc+'%"></i></div><div class="mu" style="margin-top:4px">'+(nx?(nx-S.xp)+' نقطة للمستوى التالي':'وصلت لأعلى مستوى 👑')+' · هدف اليوم '+Math.min(dg.x,GOAL)+' من '+GOAL+(dg.ok?' ✅':'')+'</div>'+stepBtn()+(due?'<button class="btn alt" style="margin-top:10px;width:100%;padding:8px" onclick="go(\'review\')">🔁 '+due+' كلمات تنتظر مراجعتك</button>':'')+'</div>'}
+function proverbCard(){var p=PRV[dayNo(Date.now())%PRV.length];
+return '<div class="det" style="text-align:start"><div class="mu">🌹 حكمة اليوم</div><div style="display:flex;gap:10px;align-items:center;margin-top:4px"><div style="flex:1"><div class="fa" style="font-size:21px">'+p[0]+'</div><div class="tr" style="font-size:13px">'+p[1]+'</div><div class="mu">'+p[2]+'</div></div><button class="spk" aria-label="استمع" onclick="say(\''+esc(p[0])+'\')">🔊</button></div></div>'}
+function firstWin(){if(S.xp>0||S.fw)return '';
+return '<div class="det" style="border-color:var(--ac)"><div class="mu">🌹 أول جملة لك بالفارسية، في ١٠ ثوانٍ!</div><div class="fa" style="font-size:28px;margin-top:6px">سلام! حال شما چطور است؟</div><div class="tr" style="font-size:15px">salām! hāl-e shomā chetor ast?</div><div class="ar" style="font-size:18px">مرحباً! كيف حالك؟</div><div class="btns"><button class="spk" style="flex:none" aria-label="استمع" onclick="say(\'سلام! حال شما چطور است؟\')">🔊</button><button class="btn" onclick="fwDone()">تعلّمتها! +١٠ نقاط</button></div></div>'}
+function fwDone(){S.fw=1;gain(10);render()}
+function badgeBox(){var n=0;BD.forEach(function(b){if(S.bd&&S.bd[b.id])n++});
+return '<div class="det"><b>🏅 إنجازاتي ('+n+' من '+BD.length+')</b><div class="bdg">'+BD.map(function(b){var u=S.bd&&S.bd[b.id];return'<div class="'+(u?'':'lk')+'"><i>'+b.i+'</i><b>'+b.n+'</b><div class="mu" style="font-size:11px">'+b.d+'</div></div>'}).join('')+'</div></div>'}
+
+var AR={
+'رفتن':['ذهب',0,0,'ذهب',0,0,'اذهب','اذهبوا'],
+'آمدن':['جاء','جئ','جاؤوا','جيء',0,'جيئ','تعالَ','تعالوا'],
+'خوردن':['أكل',0,0,'أكل','آكل',0,'كُلْ','كُلوا'],
+'نوشیدن':['شرب',0,0,'شرب',0,0,'اشرب','اشربوا'],
+'دیدن':['رأى','رأي','رأوا','رى',0,'ر','انظر','انظروا'],
+'گفتن':['قال','قل','قالوا','قول',0,0,'قُلْ','قولوا'],
+'خواستن':['أراد','أرد','أرادوا','ريد',0,0,0,0],
+'دانستن':['علم',0,0,'علم',0,0,'اعلم','اعلموا'],
+'کردن':['فعل',0,0,'فعل',0,0,'افعل','افعلوا'],
+'خریدن':['اشترى','اشتري','اشتروا','شتري',0,'شتر','اشترِ','اشتروا'],
+'خواندن':['قرأ',0,'قرؤوا','قرأ',0,'قرؤ','اقرأ','اقرؤوا'],
+'نوشتن':['كتب',0,0,'كتب',0,0,'اكتب','اكتبوا'],
+'بودن':['كان','كن','كانوا','كون',0,0,'كن','كونوا'],
+'شدن':['صار','صر','صاروا','صير',0,0,'صِر','صيروا'],
+'دادن':['أعطى','أعطي','أعطوا','عطي',0,'عط','أعطِ','أعطوا'],
+'گرفتن':['أخذ',0,0,'أخذ','آخذ',0,'خُذْ','خُذوا'],
+'گذاشتن':['وضع',0,0,'ضع',0,0,'ضَعْ','ضعوا'],
+'آوردن':['أحضر',0,0,'حضر',0,0,'أحضر','أحضروا'],
+'بردن':['حمل',0,0,'حمل',0,0,'احمل','احملوا'],
+'ماندن':['بقي','بقي','بقوا','بقى',0,'بق','ابقَ','ابقوا'],
+'نشستن':['جلس',0,0,'جلس',0,0,'اجلس','اجلسوا'],
+'ایستادن':['وقف',0,0,'قف',0,0,'قِفْ','قفوا'],
+'خوابیدن':['نام','نم','ناموا','نام',0,0,'نَمْ','ناموا'],
+'پختن':['طبخ',0,0,'طبخ',0,0,'اطبخ','اطبخوا'],
+'فروختن':['باع','بع','باعوا','بيع',0,0,'بِعْ','بيعوا'],
+'فرستادن':['أرسل',0,0,'رسل',0,0,'أرسل','أرسلوا'],
+'پرسیدن':['سأل',0,0,'سأل',0,0,'اسأل','اسألوا'],
+'شنیدن':['سمع',0,0,'سمع',0,0,'اسمع','اسمعوا'],
+'فهمیدن':['فهم',0,0,'فهم',0,0,'افهم','افهموا'],
+'رسیدن':['وصل',0,0,'صل',0,0,'صِلْ','صلوا'],
+'کشیدن':['سحب',0,0,'سحب',0,0,'اسحب','اسحبوا'],
+'زدن':['ضرب',0,0,'ضرب',0,0,'اضرب','اضربوا'],
+'افتادن':['سقط',0,0,'سقط',0,0,'اسقط','اسقطوا'],
+'ساختن':['بنى','بني','بنوا','بني',0,'بن','ابنِ','ابنوا'],
+'دویدن':['ركض',0,0,'ركض',0,0,'اركض','اركضوا'],
+'خندیدن':['ضحك',0,0,'ضحك',0,0,'اضحك','اضحكوا'],
+'پوشیدن':['لبس',0,0,'لبس',0,0,'البس','البسوا'],
+'شناختن':['عرف',0,0,'عرف',0,0,'اعرف','اعرفوا'],
+'ترسیدن':['خاف','خف','خافوا','خاف',0,0,'خَفْ','خافوا'],
+'توانستن':['استطاع','استطع','استطاعوا','ستطيع',0,0,0,0],
+'پریدن':['قفز',0,0,'قفز',0,0,'اقفز','اقفزوا'],
+'رقصیدن':['رقص',0,0,'رقص',0,0,'ارقص','ارقصوا'],
+'بستن':['أغلق',0,0,'غلق',0,0,'أغلق','أغلقوا'],
+'بخشیدن':['غفر',0,0,'غفر',0,0,'اغفر','اغفروا'],
+'شکستن':['كسر',0,0,'كسر',0,0,'اكسر','اكسروا'],
+'ریختن':['سكب',0,0,'سكب',0,0,'اسكب','اسكبوا'],
+'انداختن':['رمى','رمي','رموا','رمي',0,'رم','ارمِ','ارموا'],
+'یافتن':['وجد',0,0,'جد',0,0,'جِدْ','جدوا'],
+'برگشتن':['عاد','عد','عادوا','عود',0,0,'عُدْ','عودوا'],
+'برداشتن':['رفع',0,0,'رفع',0,0,'ارفع','ارفعوا']};
+function arPast(a){var ps=a[1]||a[0],pm=a[2]||a[0]+'وا',nn=ps.slice(-1)==='ن'?ps.slice(0,-1)+'نّا':ps+'نا';return[ps+'تُ',ps+'تَ',a[0],nn,ps+'تم',pm]}
+function arPres(a){var r=a[3],rp=a[5]||r;return[a[4]||'أ'+r,'ت'+r,'ي'+r,'ن'+r,'ت'+rp+'ون','ي'+rp+'ون']}
+function gloss(v,t,i){if(v[11])return null;
+if(v[0]==='داشتن'){var C=['عندي','عندك','عنده','عندنا','عندكم','عندهم'];return t===0?'كان '+C[i]:t===1?C[i]:t===2?'سيكون '+C[i]:t===3?'ليس '+C[i]:t===4?'لم يكن '+C[i]:null}
+var a=AR[v[0]];if(!a)return null;
+if(t===0)return arPast(a)[i];
+if(v[0]==='بودن'&&t===3)return['لستُ','لستَ','ليس','لسنا','لستم','ليسوا'][i];
+var pr=arPres(a);
+if(t===1)return pr[i];if(t===2)return'س'+pr[i];if(t===3)return'لا '+pr[i];if(t===4)return'ما '+arPast(a)[i];
+if(t===5)return(i?a[7]:a[6])||null;return null}
+function cMean(q){var f=forms(q.v,q.t)[q.p],g=gloss(q.v,q.t,q.p);
+return '<div class="det" style="text-align:start;margin-top:8px"><span class="mu">الصيغة الصحيحة:</span> <b class="fa" style="font-size:20px">'+f[0]+'</b>'+(g?'<div style="font-size:19px;margin-top:4px">تعني: <b>'+g+'</b></div>':'<div class="mu" style="margin-top:4px">صيغة «'+TN[q.t]+'» للضمير «'+PR[q.p][1]+'» من الفعل «'+q.v[0]+'» ('+q.v[2]+')</div>')+'</div>'}
+
+/* ===== role-play dialogue ===== */
+var RP=null;
+function rpMine(i){return RP.role==='A'?i%2===0:i%2===1}
+function bub(l,mine){return'<div class="bub'+(mine?' b':'')+'"><div style="flex:1"><div class="fa" style="font-size:22px">'+l[0]+'</div><div class="tr" style="font-size:14px">'+l[1]+'</div><div class="mu">'+l[2]+'</div></div><button class="spk" aria-label="استمع" onclick="say(\''+esc(l[0])+'\')">🔊</button></div>'}
+function rpChoose(){sheet('<h2 style="margin-top:0">🎭 تمثيل الأدوار</h2><p>اختر دورك في الحوار، وسيتكلم التطبيق بدور الطرف الآخر وتردّ أنت.</p><div class="btns" style="flex-direction:column"><button class="btn" onclick="startRP(\'A\')">أبدأ أنا (الطرف الأول)</button><button class="btn alt" onclick="startRP(\'B\')">أرد أنا (الطرف الثاني)</button></div><div class="btns"><button class="btn alt" style="border-color:var(--bd);color:var(--mu)" onclick="closeSheet()">إلغاء</button></div>')}
+function startRP(role){closeSheet();RP={d:D,role:role,i:0,sc:0,n:0,fin:false,o:null,bad:{},hint:false,mis:0};rpEnter();render();if(!rpMine(0))say(DLG[RP.d].l[0][0])}
+function rpEnter(){var L=DLG[RP.d].l;RP.hint=false;RP.mis=0;RP.bad={};if(RP.i<L.length&&rpMine(RP.i)){var ln=L[RP.i],all=[];DLG.forEach(function(x,di){if(di!==RP.d)x.l.forEach(function(l){all.push(l)})});
+RP.o=sh([ln].concat(sh(all.filter(function(l){return l[2]!==ln[2]&&l[0]!==ln[0]})).slice(0,2)))}}
+function rpEnd(){var L=DLG[RP.d].l;if(RP.i>=L.length&&!RP.fin){RP.fin=true;S.rpn=(S.rpn||0)+1;S.rpd=S.rpd||{};S.rpd[RP.d]=true;gain(RP.sc*10+10)}}
+function rpNext(){RP.i++;rpEnter();rpEnd();render()}
+function pickRP(k){var L=DLG[RP.d].l,ln=L[RP.i];
+if(RP.o[k]===ln){snd(true);if(!RP.mis&&!RP.hint)RP.sc++;RP.n++;var c=CHEER[Math.floor(Math.random()*CHEER.length)];toast(c[0]+' — '+c[2]);RP.i++;rpEnter();rpEnd();render();
+say(ln[0],function(){if(RP&&!RP.fin&&RP.i<L.length&&!rpMine(RP.i))say(L[RP.i][0])})}
+else{RP.mis++;snd(false);RP.bad[k]=true;STK=0;toast('ليس هذا هو الردّ المناسب، جرّب غيره 💪');render()}}
+function rpView(){var L=DLG[RP.d].l,h='<button class="back" onclick="RP=null;render()">› إنهاء التمثيل</button><h2>🎭 '+DLG[RP.d].t+'</h2><p class="mu">دورك: '+(RP.role==='A'?'الطرف الأول':'الطرف الثاني')+' · اختر الردّ المناسب في كل دور.</p>',j;
+for(j=0;j<RP.i&&j<L.length;j++)h+=bub(L[j],rpMine(j));
+if(RP.i>=L.length)return h+'<div class="det" style="margin-top:12px"><div class="big">'+RP.sc+' / '+RP.n+'</div><p>أحسنت! أتممت الحوار بدورك.</p><p class="mu">حصلت على '+(RP.sc*10+10)+' نقطة</p></div><div class="btns"><button class="btn alt" onclick="RP=null;render()">للمحادثة</button><button class="btn" onclick="startRP(\''+(RP.role==='A'?'B':'A')+'\')">بدّل الدور</button></div>';
+if(!rpMine(RP.i))return h+bub(L[RP.i],false)+'<div class="btns"><button class="btn" onclick="rpNext()">متابعة ▶</button></div>';
+var ln=L[RP.i];
+h+='<div class="det" style="margin-top:12px"><p class="mu">دورك الآن</p><div style="font-weight:700;font-size:18px">ماذا ستردّ؟ 💬</div>'+(RP.hint?'<div class="mu" style="margin-top:6px">💡 المعنى المطلوب: «'+ln[2]+'»</div>':'<button class="back" style="color:#fff;font-size:14px" onclick="RP.hint=true;render()">💡 تلميح</button>')+'</div>';
+RP.o.forEach(function(o,k){var b=RP.bad[k];h+='<button class="opt'+(b?' bad':'')+'" '+(b?'disabled':'')+' onclick="pickRP('+k+')"><span class="fa" style="font-size:20px">'+o[0]+'</span><br><span style="font-size:13px;opacity:.85;direction:ltr;display:inline-block">'+o[1]+'</span></button>'});
+return h}
+/* ===== games menu ===== */
+var MG=null,LG=null;
+function gamesCard(){return'<button class="row" onclick="go(\'games\')"><div><div style="font-weight:600">🎮 ألعاب وتحديات</div><div class="mu">بطاقات الذاكرة · الحروف · تركيب الكلمات</div></div><span class="mu">‹</span></button>'}
+function gamesView(){if(MG)return memView();if(LG)return lgView();
+return'<button class="back" onclick="go(\'home\')">› رجوع للدروس</button><h2>🎮 ألعاب</h2><p class="mu">استراحة ممتعة تثبّت ما تعلّمته وتمنحك نقاطاً.</p>'
++'<button class="row" onclick="startMem()"><div><div style="font-weight:600">🃏 بطاقات الذاكرة</div><div class="mu">طابق الكلمة الفارسية بمعناها بأقل حركات</div></div><span class="mu">‹</span></button>'
++'<button class="row" onclick="startLG(\'name\')"><div><div style="font-weight:600">🔤 ما هذا الحرف؟</div><div class="mu">تعرّف على الحروف الفارسية ونطقها</div></div><span class="mu">‹</span></button>'
++'<button class="row" onclick="startLG(\'spell\')"><div><div style="font-weight:600">🧩 ركّب الكلمة</div><div class="mu">رتّب الحروف لتكوّن الكلمة الفارسية</div></div><span class="mu">‹</span></button>'}
+/* ===== memory cards ===== */
+function startMem(){var seen={},ws=sh(ALL.filter(function(w){return unlocked(w.l)&&allowed('L',w.l)})).filter(function(w){if(seen[w.ar]||seen[w.fa])return false;seen[w.ar]=seen[w.fa]=1;return true}).slice(0,6),cs=[];
+ws.forEach(function(w){cs.push({k:w.id,t:'f',x:w.fa});cs.push({k:w.id,t:'a',x:w.ar})});
+MG={cards:sh(cs),open:[],done:{},moves:0,t0:Date.now(),fin:false,lock:false,np:ws.length};tab='games';render()}
+function memView(){var h='<button class="back" onclick="MG=null;render()">› رجوع للألعاب</button><h2>🃏 بطاقات الذاكرة</h2>';
+if(MG.fin)return h+'<div class="det" style="margin-top:12px"><div class="big">🎉</div><p>أنهيت اللعبة في <b>'+MG.moves+'</b> حركة و<b>'+MG.sec+'</b> ثانية.</p><p class="mu">حصلت على '+MG.xp+' نقطة</p></div><div class="btns"><button class="btn alt" onclick="MG=null;render()">للألعاب</button><button class="btn" onclick="startMem()">العب مجدداً</button></div>';
+h+='<p class="mu">الحركات: '+MG.moves+' · الأزواج: '+Object.keys(MG.done).length+' / '+MG.np+'</p><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">';
+MG.cards.forEach(function(c,i){var up=MG.open.indexOf(i)>=0||MG.done[c.k],cl='opt';if(MG.done[c.k])cl+=' good';
+h+='<button class="'+cl+'" style="min-height:76px;margin:0;display:grid;place-items:center;padding:6px" onclick="memTap('+i+')">'+(up?'<span class="'+(c.t==='f'?'fa':'')+'" style="font-size:'+(c.t==='f'?'20px':'16px')+'">'+c.x+'</span>':'<span style="font-size:26px">🌹</span>')+'</button>'});
+return h+'</div>'}
+function memTap(i){var c=MG.cards[i];if(MG.lock||MG.fin||MG.done[c.k]||MG.open.indexOf(i)>=0)return;MG.open.push(i);if(c.t==='f')say(c.x);
+if(MG.open.length<2){render();return}
+MG.moves++;var a=MG.cards[MG.open[0]],b=MG.cards[MG.open[1]];
+if(a.k===b.k){snd(true);MG.done[a.k]=true;MG.open=[];if(Object.keys(MG.done).length===MG.np)memEnd();else render()}
+else{snd(false);MG.lock=true;render();setTimeout(function(){if(MG){MG.open=[];MG.lock=false;render()}},900)}}
+function memEnd(){MG.fin=true;MG.sec=Math.round((Date.now()-MG.t0)/1000);MG.xp=MG.moves<=MG.np+2?30:MG.moves<=MG.np*2?20:10;S.gm=(S.gm||0)+1;gain(MG.xp);render()}
+/* ===== letter games ===== */
+var LDUP=null;
+function lgLetters(){if(!LDUP){var c={};LET.forEach(function(l){c[l[2]]=(c[l[2]]||0)+1});LDUP=LET.filter(function(l){return c[l[2]]===1})}return LDUP}
+function startLG(mode){LG={mode:mode,i:0,sc:0,fin:false,qs:[]};
+if(mode==='name'){LG.qs=sh(lgLetters()).slice(0,8).map(function(l){return{l:l,o:sh([l].concat(sh(lgLetters().filter(function(x){return x!==l})).slice(0,3))),a:null}})}
+else{var seen={};LG.qs=sh(ALL.filter(function(w){return/^[\u0622-\u06CC]+$/.test(w.fa)&&w.fa.length>=2&&w.fa.length<=5&&unlocked(w.l)&&allowed('L',w.l)})).filter(function(w){if(seen[w.fa])return false;seen[w.fa]=1;return true}).slice(0,5).map(function(w){var cs=w.fa.split(''),t=sh(cs.map(function(c,i){return{c:c,i:i}})),g=0;while(cs.length>1&&g++<20&&t.every(function(x,i){return x.c===cs[i]}))t=sh(t);return{w:w,t:t,p:[],err:null,mis:0,done:false}})}
+tab='games';render()}
+function lgView(){var h='<button class="back" onclick="LG=null;render()">› رجوع للألعاب</button><h2>'+(LG.mode==='name'?'🔤 ما هذا الحرف؟':'🧩 ركّب الكلمة')+'</h2>';
+if(LG.fin)return h+'<div class="det" style="margin-top:12px"><div class="big">'+LG.sc+' / '+LG.qs.length+'</div><p>'+(LG.sc===LG.qs.length?'ممتاز! بلا أخطاء.':'أحسنت! كرّر اللعبة لتتقنها أكثر.')+'</p><p class="mu">حصلت على '+LG.xp+' نقطة</p></div><div class="btns"><button class="btn alt" onclick="LG=null;render()">للألعاب</button><button class="btn" onclick="startLG(\''+LG.mode+'\')">العب مجدداً</button></div>';
+var q=LG.qs[LG.i];h+='<p class="mu">السؤال '+(LG.i+1)+' من '+LG.qs.length+'</p>';
+if(LG.mode==='name'){var rv=q.a!==null;h+='<div class="det"><p class="mu">ما اسم هذا الحرف أو نطقه؟</p><div class="fa" style="font-size:80px;line-height:1.1">'+q.l[0]+'</div></div>';
+q.o.forEach(function(o,k){var c='opt';if(rv){if(o===q.l)c+=' good';else if(k===q.a)c+=' bad'}h+='<button class="'+c+'" '+(rv?'disabled':'')+' onclick="lgPick('+k+')">'+o[2]+' <span style="font-size:13px;opacity:.85;direction:ltr;display:inline-block">('+o[1]+')</span></button>'});
+if(rv)h+=fb(q.o[q.a]===q.l,q,0)+'<div class="btns"><button class="btn" onclick="lgNext()">'+(LG.i===LG.qs.length-1?'النتيجة':'التالي')+'</button></div>';return h}
+var w=q.w,cs=w.fa.split(''),word=q.p.map(function(x){return x.c}).join('');
+h+='<div class="det" style="text-align:center"><p class="mu">رتّب الحروف لتكوين كلمة معناها:</p><div style="font-size:22px;font-weight:700">'+w.ar+'</div><div class="tr" style="font-size:14px">'+w.tr+'</div><div class="fa" style="font-size:42px;min-height:56px;margin-top:6px;letter-spacing:2px">'+(word||'<span class="mu">…</span>')+'</div></div>';
+if(!q.done){h+='<div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:10px 0">';
+q.t.forEach(function(x){if(q.p.indexOf(x)>=0)return;h+='<button class="opt'+(q.err===x.i?' bad':'')+'" style="width:64px;margin:0;font-size:28px;padding:8px" onclick="spTap('+x.i+')">'+x.c+'</button>'});
+h+='</div><div class="btns"><button class="btn alt" onclick="spReset()">↺ ابدأ الكلمة من جديد</button></div>'+(q.err!==null?'<div class="fbk no" style="margin-top:8px">ليس هذا الحرف التالي، جرّب غيره 💪</div>':'');return h}
+return h+fb(true,q,0)+'<div class="btns"><button class="btn" onclick="lgNext()">'+(LG.i===LG.qs.length-1?'النتيجة':'التالي')+'</button></div>'}
+function lgPick(k){var q=LG.qs[LG.i];if(q.a!==null)return;q.a=k;q.m=Math.random();var ok=q.o[k]===q.l;snd(ok);STK=ok?STK+1:0;q.s=STK;if(ok)LG.sc++;render()}
+function spTap(i){var q=LG.qs[LG.i],x=q.t.filter(function(y){return y.i===i})[0],cs=q.w.fa.split('');if(!x||q.done||q.p.indexOf(x)>=0)return;
+if(x.c===cs[q.p.length]){q.p.push(x);q.err=null;if(q.p.length===cs.length){q.done=true;snd(true);q.m=Math.random();if(!q.mis)LG.sc++;STK=q.mis?0:STK+1;q.s=STK;say(q.w.fa)}render()}
+else{q.mis++;snd(false);STK=0;q.err=i;render();setTimeout(function(){if(LG&&LG.qs[LG.i]===q){q.err=null;render()}},700)}}
+function spReset(){var q=LG.qs[LG.i];q.p=[];q.err=null;render()}
+function lgNext(){if(LG.i===LG.qs.length-1){LG.fin=true;LG.xp=LG.sc*(LG.mode==='name'?5:8)+5;S.gm=(S.gm||0)+1;gain(LG.xp)}else LG.i++;render()}
+
+/* ===== polish: robustness, sound, daily challenge, week chart, share ===== */
+function dayNo(t){return Math.floor((t-new Date(t).getTimezoneOffset()*60000)/DAY)}
+function resetVolatile(){Q=null;M=null;PL=null;RP=null;MG=null;LG=null;GQ=null;LQ=null;CQ=null;RC=null;RSQ=[];RQ=null;RV=false;sub=null;D=null;G=null;CV=null}
+function rescue(){try{resetVolatile();tab='home';render()}catch(e){location.reload()}}
+function render(){try{render0()}catch(e){try{console.error(e);document.getElementById('main').innerHTML='<div class="det"><div class="big">⚠️</div><p>حدث خطأ غير متوقع، وتقدّمك محفوظ.</p><div class="btns"><button class="btn" onclick="rescue()">العودة للرئيسية</button></div></div>'}catch(x){}}}
+window.onerror=function(){try{toast('حدث خطأ بسيط، حاول مرة أخرى')}catch(e){}return false};
+var AC=null;
+function sfx(k){try{if(S.sfx===0)return;if(!AC){var C=window.AudioContext||window.webkitAudioContext;if(!C)return;AC=new C()}if(AC.state==='suspended')AC.resume();
+var seq={ok:[[660,.09],[880,.13]],no:[[240,.18]],win:[[523,.1],[659,.1],[784,.1],[1047,.24]]}[k]||[],t=AC.currentTime;
+seq.forEach(function(n){var o=AC.createOscillator(),g=AC.createGain();o.type=k==='no'?'triangle':'sine';o.frequency.value=n[0];g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.16,t+.01);g.gain.exponentialRampToValueAtTime(.0001,t+n[1]);o.connect(g);g.connect(AC.destination);o.start(t);o.stop(t+n[1]+.02);t+=n[1]*.9});
+if(navigator.vibrate)navigator.vibrate(k==='no'?[40]:k==='win'?[20,40,20]:[12])}catch(e){}}
+function snd(ok){sfx(ok?'ok':'no')}
+function settingsBox(){return'<div class="det" style="text-align:start"><b>⚙️ الإعدادات</b><div class="btns"><button class="btn alt" onclick="S.sfx=S.sfx===0?1:0;save();render();sfx(\'ok\')">'+(S.sfx===0?'🔇 الأصوات والاهتزاز: متوقفة':'🔊 الأصوات والاهتزاز: تعمل')+'</button></div><div class="btns"><button class="btn alt" onclick="shareProg()">📣 شارك تقدّمك مع أصدقائك</button></div></div>'}
+function shareProg(){var l=lvl(S.xp),t='أتعلّم الفارسية مع تطبيق «تعلّم الفارسية للعرب» 🌹\nالمستوى '+(l+1)+' ('+LT[Math.min(l,LT.length-1)]+') · '+cnt(S.srs)+' كلمة · سلسلة '+(S.st||0)+' أيام 🔥\nجرّبه معي!';
+try{if(navigator.share){navigator.share({text:t}).catch(function(){});return}if(navigator.clipboard){navigator.clipboard.writeText(t).then(function(){toast('نُسخ النص، الصقه حيث تشاء')},function(){toast(t)});return}}catch(e){}toast('انسخ هذا النص: '+t)}
+function weekBox(){var dn=dayNo(Date.now()),nm=['ح','ن','ث','ر','خ','ج','س'],xs=[],mx=1,i,tot=0;
+for(i=6;i>=0;i--){var v=(S.hist&&S.hist[dn-i])||0;xs.push([dn-i,v]);if(v>mx)mx=v;tot+=v}
+return'<div class="det"><b>📈 نشاطك هذا الأسبوع</b><div class="mu">'+tot+' نقطة في ٧ أيام</div><div style="display:flex;align-items:flex-end;gap:6px;height:96px;margin-top:10px">'+xs.map(function(x){var h=Math.max(4,Math.round(x[1]/mx*64));return'<div style="flex:1;text-align:center"><div style="font-size:11px;min-height:16px">'+(x[1]||'')+'</div><div style="height:'+h+'px;background:var(--pr);border-radius:6px;opacity:'+(x[1]?1:.25)+'"></div><div class="mu" style="font-size:11px">'+nm[new Date(x[0]*DAY).getUTCDay()]+'</div></div>'}).join('')+'</div></div>'}
+function streakLine(){if(!S.st)return'';var t=ds(Date.now()),y=ds(Date.now()-DAY);
+if(S.last===t)return'<div style="margin-bottom:8px;font-weight:600">🔥 سلسلتك '+S.st+' أيام، رائع!</div>';
+if(S.last===y)return'<div style="margin-bottom:8px;font-weight:600;color:var(--ac)">⏳ سلسلتك '+S.st+' أيام، أنهِ نشاطاً اليوم لتحافظ عليها!</div>';
+return'<div class="mu" style="margin-bottom:8px">💤 انقطعت سلسلتك، ابدأ سلسلة جديدة اليوم.</div>'}
+function nextStep(){var sv=S.sv||{},k;for(k in sv)if(/^\d+-\d$/.test(k)){var a=k.split('-');return{l:+a[0],g:+a[1],r:1}}
+for(var l=0;l<LES.length;l++){if(!(S.pass&&S.pass[l])){if(unlocked(l)&&allowed('L',l))return{l:l,g:sp(l)};break}}return null}
+function goStep(l,g){tab='home';sub=l;startStage(l,g)}
+function stepBtn(){if(!S.xp)return'';var n=nextStep();if(!n)return'';return'<button class="btn" style="margin-top:10px;width:100%" onclick="goStep('+n.l+','+n.g+')">'+(n.r?'↻ تابع من حيث توقفت':'▶ تابع')+': '+LES[n.l].t+' · المرحلة '+(n.g+1)+'</button>'}
+function dailyCard(){if(!S.xp)return'';if(S.dc===ds(Date.now()))return'<div class="det" style="text-align:start;padding:10px 14px">⚡ تحدّي اليوم ✅ أنجزته! عد غداً لتحدٍّ جديد.</div>';
+return'<button class="row" style="border-color:var(--ac)" onclick="startDaily()"><div><div style="font-weight:600">⚡ تحدّي اليوم</div><div class="mu">٦ أسئلة سريعة من كلماتك · +٢٠ نقطة مكافأة</div></div><span class="mu">‹</span></button>'}
+function startDaily(){M=null;var pool=ALL.filter(function(w){return unlocked(w.l)&&allowed('L',w.l)}),ln=pool.filter(function(w){return S.srs[w.id]}),src=ln.length>=6?ln:pool,ws=sh(src).slice(0,6),md=['rec','aud','rev'];
+Q={l:-1,g:-1,daily:true,i:0,sc:0,n:ws.length,done:false,qs:ws.map(function(w,i){var d=sh(pool.filter(function(x){return x.ar!==w.ar&&x.fa!==w.fa})).slice(0,3);return{w:w,mode:md[i%3],o:sh([w].concat(d)),a:null}})};
+tab='home';sub=0;render();if(Q.qs[0].mode==='aud')say(Q.qs[0].w.fa)}
+
+/* progress saved before lesson 9 (prepositions) was inserted: shift lesson indexes >= 8 */
+function migrateV2(){var up=function(i){return i>=8?i+1:i},mv=function(o){if(!o)return o;var n={};Object.keys(o).forEach(function(k){n[up(+k)]=o[k]});return n};
+S.pass=mv(S.pass);S.sg=mv(S.sg);
+if(S.srs){var n={};Object.keys(S.srs).forEach(function(id){var a=id.split('-');n[up(+a[0])+'-'+a[1]]=S.srs[id]});S.srs=n}
+if(S.sv){var m={};Object.keys(S.sv).forEach(function(k){var a=/^(\d+)-(\d)$/.exec(k);if(a){if(+a[1]<8)m[k]=S.sv[k]}else m[k]=S.sv[k]});S.sv=m}
+if(S.unl){var u={};Object.keys(S.unl).forEach(function(k){var a=/^L(\d+)$/.exec(k);u[a?'L'+up(+a[1]):k]=S.unl[k]});S.unl=u}}
+render();
+</script>
+</body>
+</html>
