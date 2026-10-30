@@ -25,7 +25,7 @@ def fail(msg):
 
 def call(method, path, body=None):
     req = urllib.request.Request(API + path, method=method, data=None if body is None else json.dumps(body).encode(),
-                                 headers={'Authorization': 'Bearer ' + os.environ['CF_API_TOKEN'], 'Content-Type': 'application/json'})
+                                 headers={'Authorization': 'Bearer ' + os.environ['CF_API_TOKEN'].strip(), 'Content-Type': 'application/json'})
     try:
         with urllib.request.urlopen(req, timeout=30) as r:
             return json.load(r)['result']
@@ -35,6 +35,8 @@ def call(method, path, body=None):
         except Exception:
             errs = ''
         fail(f'Cloudflare API {method} {path.split("?")[0]} failed ({e.code}) {errs}')
+    except urllib.error.URLError as e:
+        fail(f'Could not reach the Cloudflare API: {e.reason}')
 
 
 def parse(text, today):
@@ -64,7 +66,11 @@ def main():
     for k in ('CF_API_TOKEN', 'CF_ACCOUNT_ID', 'ACCESS_LIST'):
         if not os.environ.get(k, '').strip():
             fail(f'Add the repository {"variable" if k == "ACCESS_LIST" else "secret"} {k} first')
+    if re.search(r'\s', os.environ['CF_API_TOKEN'].strip()):
+        fail('The CF_API_TOKEN secret has more than one line or a space in it. Save it again with only the token.')
     account = os.environ['CF_ACCOUNT_ID'].strip()
+    if not re.fullmatch(r'[0-9a-f]{32}', account):
+        fail('The CF_ACCOUNT_ID secret is not a 32-character account ID. Save it again with only the ID.')
     wanted_name = (os.environ.get('ACCESS_POLICY_NAME') or 'Farsi group').strip().rstrip('.').lower()
 
     keep, expired = parse(os.environ['ACCESS_LIST'], datetime.datetime.now(datetime.timezone.utc).date())
