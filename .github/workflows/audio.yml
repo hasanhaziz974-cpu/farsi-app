@@ -1,14 +1,14 @@
-name: Generate audio (Azure)
+name: Generate audio
 on:
   workflow_dispatch:
     inputs:
       voice:
-        description: Azure voice
+        description: Voice
         type: choice
         options: [fa-IR-DilaraNeural, fa-IR-FaridNeural]
         default: fa-IR-DilaraNeural
       rate:
-        description: Speaking rate (e.g. -10%, 0%, -20%)
+        description: Speaking rate (e.g. -10%, +0%, -20%)
         default: '-10%'
       force:
         description: Regenerate all files (needed after changing voice or rate)
@@ -20,26 +20,26 @@ jobs:
   audio:
     runs-on: ubuntu-latest
     env:
-      AZURE_SPEECH_KEY: ${{ secrets.AZURE_SPEECH_KEY }}
-      AZURE_SPEECH_REGION: ${{ secrets.AZURE_SPEECH_REGION }}
-      AZURE_VOICE: ${{ inputs.voice }}
-      AZURE_RATE: ${{ inputs.rate }}
+      VOICE: ${{ inputs.voice }}
+      RATE: ${{ inputs.rate }}
       FORCE: ${{ inputs.force && '1' || '0' }}
     steps:
       - uses: actions/checkout@v4
-      - name: Check Azure secrets
-        run: |
-          if [ -z "$AZURE_SPEECH_KEY" ] || [ -z "$AZURE_SPEECH_REGION" ]; then echo "::error::Add the repository secrets AZURE_SPEECH_KEY and AZURE_SPEECH_REGION first"; exit 1; fi
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
       - name: Generate audio files
-        run: node tools/gen-audio.js
+        run: |
+          pip install edge-tts
+          python3 tools/gen_audio.py
       - name: Commit audio files
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add audio
           if git diff --cached --quiet; then echo "No changes"; exit 0; fi
-          git commit -m "Update audio files (${AZURE_VOICE}, rate ${AZURE_RATE})"
+          git commit -m "Update audio files (${VOICE}, rate ${RATE})"
           git push
