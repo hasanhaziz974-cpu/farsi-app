@@ -115,7 +115,7 @@ chk().forEach(function(b){ms.push('🏅 إنجاز جديد: '+b.n)});
 save();top_();if(ms.length)celebrate(ms)}
 function top_(){var live=S.last===ds(Date.now())||S.last===ds(Date.now()-DAY);document.getElementById("st").innerHTML="🔥 <b>"+(live?S.st:0)+"</b> يوم";document.getElementById("xp").innerHTML="⭐ <b>"+S.xp+"</b>"}
 var AU=null;
-function hs(t){var h=5381;for(var i=0;i<t.length;i++)h=((h*33)^t.charCodeAt(i))>>>0;return h.toString(16)}
+function hs(t){var h=2166136261;for(var i=0;i<t.length;i++){h^=t.charCodeAt(i);h=Math.imul(h,16777619)>>>0}return h.toString(16)}
 function tts(t,cb){try{var u=new SpeechSynthesisUtterance(t);u.lang="fa-IR";u.rate=.85;if(cb)u.onend=cb;speechSynthesis.cancel();speechSynthesis.speak(u)}catch(e){}}
 function say(t,cb){try{speechSynthesis.cancel()}catch(e){}
 try{if(AU)AU.pause()}catch(e){}

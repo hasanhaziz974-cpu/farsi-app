@@ -36,6 +36,7 @@ jobs:
         if: env.KS_B64 != ''
         run: |
           mkdir -p www && cp index.html bridge.js www/
+          if [ -d audio ]; then cp -r audio www/; else echo "::warning::No audio folder, the app will use device text-to-speech"; fi
           npm install @capacitor/core @capacitor/cli @capacitor/android
           npx cap add android
           mkdir -p assets && cp icon-only.png assets/
