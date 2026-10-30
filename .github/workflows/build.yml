@@ -43,7 +43,7 @@ jobs:
           npx @capacitor/assets generate --android --iconBackgroundColor '#12807F' --iconBackgroundColorDark '#0B5E5E' || echo "icon step skipped"
           npx cap sync android
           sed -i "s/versionCode 1/versionCode ${{ github.run_number }}/" android/app/build.gradle
-          cd android && chmod +x gradlew && ./gradlew bundleRelease
+          cd android && chmod +x gradlew && ./gradlew bundleRelease assembleRelease
       - name: Sign the bundle
         if: env.KS_B64 != ''
         run: |
@@ -51,9 +51,22 @@ jobs:
           AAB=$(find android -name "*.aab" | head -1)
           cp "$AAB" farsi-app.aab
           jarsigner -keystore upload.jks -storepass "$KS_PASS" -keypass "$KS_PASS" -sigalg SHA256withRSA -digestalg SHA-256 farsi-app.aab upload
+      - name: Sign the test APK
+        if: env.KS_B64 != ''
+        run: |
+          BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          APK=$(find android -name "*release*.apk" | head -1)
+          "$BT/zipalign" -f -p 4 "$APK" aligned.apk
+          "$BT/apksigner" sign --ks upload.jks --ks-key-alias upload --ks-pass env:KS_PASS --key-pass env:KS_PASS --out farsi-app.apk aligned.apk
       - name: Publish the signed file
         if: env.KS_B64 != ''
         uses: actions/upload-artifact@v4
         with:
           name: farsi-app-aab
           path: farsi-app.aab
+      - name: Publish the test APK
+        if: env.KS_B64 != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: farsi-app-apk
+          path: farsi-app.apk
