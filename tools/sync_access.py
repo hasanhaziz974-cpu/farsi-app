@@ -10,7 +10,11 @@ with # are ignored. Example:
     owner@gmail.com
     ali@gmail.com 2026-11-07
 
-Env: CF_API_TOKEN, CF_ACCOUNT_ID, ACCESS_LIST, ACCESS_POLICY_NAME (default "Farsi group").
+When ACCESS_APP_DOMAIN is set (e.g. parsa-farsi.pages.dev), it also makes sure an Access
+application protects that hostname with the policy, creating one if needed.
+
+Env: CF_API_TOKEN, CF_ACCOUNT_ID, ACCESS_LIST, ACCESS_POLICY_NAME (default "Farsi group"),
+ACCESS_APP_DOMAIN.
 Emails are never printed, because Actions logs of a public repository are public. For the
 same reason ACCESS_LIST must be a secret: Actions prints variables passed to a step.
 """
@@ -100,6 +104,42 @@ def main():
 
     print(f'Access list synced: {len(keep)} allowed, {expired} expired in the list, '
           f'{len(removed)} removed and signed out, {len(set(keep) - before)} newly added.')
+
+    domain = (os.environ.get('ACCESS_APP_DOMAIN') or '').strip().lower()
+    if domain:
+        protect(account, domain, policy)
+
+
+def app_hosts(app):
+    hosts = {(app.get('domain') or '').lower()}
+    hosts.update(h.lower() for h in app.get('self_hosted_domains') or [])
+    hosts.update((d.get('uri') or '').lower() for d in app.get('destinations') or [] if d.get('type', 'public') == 'public')
+    return {h.rstrip('/') for h in hosts if h}
+
+
+def protect(account, domain, policy):
+    apps = call('GET', f'/accounts/{account}/access/apps?per_page=100')
+    app = next((a for a in apps if a.get('type') == 'self_hosted' and domain in app_hosts(a)), None)
+    if app is None:
+        call('POST', f'/accounts/{account}/access/apps', {
+            'type': 'self_hosted', 'name': domain, 'domain': domain,
+            'destinations': [{'type': 'public', 'uri': domain}],
+            'session_duration': policy.get('session_duration') or '6h',
+            'app_launcher_visible': False,
+            'policies': [{'id': policy['id'], 'precedence': 1}],
+        })
+        print(f'Created an Access application protecting {domain}.')
+        return
+    ids = [p['id'] for p in app.get('policies') or []]
+    if policy['id'] in ids:
+        print(f'{domain} is already protected by "{policy["name"]}".')
+        return
+    body = {k: v for k, v in app.items() if k not in ('id', 'uid', 'aud', 'created_at', 'updated_at', 'policies', 'scim_config')}
+    if body.get('destinations'):
+        body.pop('self_hosted_domains', None)
+    body['policies'] = [{'id': policy['id'], 'precedence': 1}] + [{'id': i, 'precedence': n + 2} for n, i in enumerate(ids)]
+    call('PUT', f'/accounts/{account}/access/apps/{app["id"]}', body)
+    print(f'Added "{policy["name"]}" to the Access application protecting {domain}.')
 
 
 if __name__ == '__main__':
