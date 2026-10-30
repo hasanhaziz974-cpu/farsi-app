@@ -16,4 +16,5 @@ jobs:
           CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
           ACCESS_LIST: ${{ secrets.ACCESS_LIST }}
           ACCESS_POLICY_NAME: ${{ vars.ACCESS_POLICY_NAME }}
+          ACCESS_APP_DOMAIN: parsa-farsi.pages.dev
         run: python3 tools/sync_access.py
