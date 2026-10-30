@@ -11,7 +11,8 @@ with # are ignored. Example:
     ali@gmail.com 2026-11-07
 
 Env: CF_API_TOKEN, CF_ACCOUNT_ID, ACCESS_LIST, ACCESS_POLICY_NAME (default "Farsi group").
-Emails are never printed, because Actions logs of a public repository are public.
+Emails are never printed, because Actions logs of a public repository are public. For the
+same reason ACCESS_LIST must be a secret: Actions prints variables passed to a step.
 """
 import datetime, json, os, re, sys, urllib.error, urllib.request
 
@@ -34,7 +35,8 @@ def call(method, path, body=None):
             errs = '; '.join(x.get('message', '') for x in json.load(e).get('errors', []))
         except Exception:
             errs = ''
-        fail(f'Cloudflare API {method} {path.split("?")[0]} failed ({e.code}) {errs}')
+        hint = ' Check that CF_ACCOUNT_ID is the account ID.' if e.code == 404 else ''
+        fail(f'Cloudflare API {method} {path.split("?")[0]} failed ({e.code}) {errs}{hint}')
     except urllib.error.URLError as e:
         fail(f'Could not reach the Cloudflare API: {e.reason}')
 
@@ -65,7 +67,7 @@ def parse(text, today):
 def main():
     for k in ('CF_API_TOKEN', 'CF_ACCOUNT_ID', 'ACCESS_LIST'):
         if not os.environ.get(k, '').strip():
-            fail(f'Add the repository {"variable" if k == "ACCESS_LIST" else "secret"} {k} first')
+            fail(f'Add the repository secret {k} first')
     if re.search(r'\s', os.environ['CF_API_TOKEN'].strip()):
         fail('The CF_API_TOKEN secret has more than one line or a space in it. Save it again with only the token.')
     account = os.environ['CF_ACCOUNT_ID'].strip()
