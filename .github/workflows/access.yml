@@ -17,6 +17,6 @@ jobs:
           ACCESS_LIST: ${{ secrets.ACCESS_LIST }}
           ACCESS_POLICY_NAME: ${{ vars.ACCESS_POLICY_NAME }}
           ACCESS_APP_DOMAIN: parsa-farsi.pages.dev
-          # Last day the site is open to everyone (UTC); after it only ACCESS_LIST gets in.
-          ACCESS_OPEN_UNTIL: '2026-11-06'
+          # Anyone may sign in and get a 7-day trial (functions/_middleware.js); remove to admit only the list.
+          TRIAL_PAGES_PROJECT: parsa-farsi
         run: python3 tools/sync_access.py

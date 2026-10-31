@@ -13,18 +13,22 @@ with # are ignored. Example:
 When ACCESS_APP_DOMAIN is set (e.g. parsa-farsi.pages.dev), it also makes sure an Access
 application protects that hostname with the policy, creating one if needed.
 
-Until ACCESS_OPEN_UNTIL (YYYY-MM-DD, UTC, inclusive) the hostname is open to everyone without
-sign-in through a temporary bypass policy, which is removed on the first run after that day.
+When TRIAL_PAGES_PROJECT is set (e.g. parsa-farsi), anyone may sign in with their email and
+gets a free trial counted from their first visit (enforced by functions/_middleware.js).
+For that the script keeps a "Trial" policy on the application, a KV namespace bound to the
+Pages project as TRIALS, and the allowlist in KV, so people on ACCESS_LIST are never limited.
 
 Env: CF_API_TOKEN, CF_ACCOUNT_ID, ACCESS_LIST, ACCESS_POLICY_NAME (default "Farsi group"),
-ACCESS_APP_DOMAIN, ACCESS_OPEN_UNTIL.
+ACCESS_APP_DOMAIN, TRIAL_PAGES_PROJECT.
 Emails are never printed, because Actions logs of a public repository are public. For the
 same reason ACCESS_LIST must be a secret: Actions prints variables passed to a step.
 """
 import datetime, json, os, re, sys, urllib.error, urllib.request
 
 API = os.environ.get('CF_API_BASE', 'https://api.cloudflare.com/client/v4')
-OPEN_POLICY_NAME = 'Open to everyone (temporary)'
+OLD_OPEN_POLICY_NAME = 'Open to everyone (temporary)'
+TRIAL_POLICY_NAME = 'Trial: anyone who signs in'
+KV_TITLE = 'farsi-trials'
 
 
 def fail(msg):
@@ -109,16 +113,12 @@ def main():
     print(f'Access list synced: {len(keep)} allowed, {expired} expired in the list, '
           f'{len(removed)} removed and signed out, {len(set(keep) - before)} newly added.')
 
+    project = (os.environ.get('TRIAL_PAGES_PROJECT') or '').strip()
+    if project:
+        trials(account, project, keep)
     domain = (os.environ.get('ACCESS_APP_DOMAIN') or '').strip().lower()
     if domain:
-        open_until = (os.environ.get('ACCESS_OPEN_UNTIL') or '').strip()
-        if open_until:
-            try:
-                open_until = datetime.date.fromisoformat(open_until)
-            except ValueError:
-                fail('ACCESS_OPEN_UNTIL is not a date like YYYY-MM-DD')
-        protect(account, domain, policy, open_until or None, datetime.datetime.now(datetime.timezone.utc).date())
-
+        protect(account, domain, policy, bool(project))
 
 def app_hosts(app):
     hosts = {(app.get('domain') or '').lower()}
@@ -135,45 +135,64 @@ def set_app_policies(account, app, ids):
     call('PUT', f'/accounts/{account}/access/apps/{app["id"]}', body)
 
 
-def open_policy(account, open_now):
-    """The temporary "everyone, no sign-in" policy: created while the site is open, deleted after."""
-    found = [p for p in call('GET', f'/accounts/{account}/access/policies?per_page=100') if p.get('name') == OPEN_POLICY_NAME]
-    if open_now and not found:
-        return call('POST', f'/accounts/{account}/access/policies',
-                    {'name': OPEN_POLICY_NAME, 'decision': 'bypass', 'include': [{'everyone': {}}]})
+def named_policy(account, name):
+    found = [p for p in call('GET', f'/accounts/{account}/access/policies?per_page=100') if p.get('name') == name]
     return found[0] if found else None
 
 
-def protect(account, domain, policy, open_until, today):
-    open_now = bool(open_until) and today <= open_until
-    bypass = open_policy(account, open_now)
+def trials(account, project, keep):
+    spaces = call('GET', f'/accounts/{account}/storage/kv/namespaces?per_page=100')
+    ns = next((n for n in spaces if n.get('title') == KV_TITLE), None) or \
+        call('POST', f'/accounts/{account}/storage/kv/namespaces', {'title': KV_TITLE})
+    kv = f'/accounts/{account}/storage/kv/namespaces/{ns["id"]}'
+    call('PUT', f'{kv}/values/allowlist', keep)
+
+    proj = call('GET', f'/accounts/{account}/pages/projects/{project}')
+    configs = proj.get('deployment_configs') or {}
+    bound = ((configs.get('production') or {}).get('kv_namespaces') or {}).get('TRIALS', {}).get('namespace_id')
+    if bound != ns['id']:
+        binding = {'kv_namespaces': {'TRIALS': {'namespace_id': ns['id']}}}
+        call('PATCH', f'/accounts/{account}/pages/projects/{project}',
+             {'deployment_configs': {'production': binding, 'preview': binding}})
+        call('POST', f'/accounts/{account}/pages/projects/{project}/deployments')
+        print('Linked the trial storage to the site and started a new deployment.')
+
+    started = len(call('GET', f'{kv}/keys?prefix=trial:&limit=1000'))
+    print(f'Trial: {started} people have signed in for a trial so far.')
+
+
+def protect(account, domain, policy, trial_on):
+    old_open = named_policy(account, OLD_OPEN_POLICY_NAME)
+    trial = named_policy(account, TRIAL_POLICY_NAME)
+    if trial_on and not trial:
+        trial = call('POST', f'/accounts/{account}/access/policies', {
+            'name': TRIAL_POLICY_NAME, 'decision': 'allow', 'include': [{'everyone': {}}],
+            'session_duration': policy.get('session_duration') or '6h'})
+
     apps = call('GET', f'/accounts/{account}/access/apps?per_page=100')
     app = next((a for a in apps if a.get('type') == 'self_hosted' and domain in app_hosts(a)), None)
+    wanted = [policy['id']] + ([trial['id']] if trial_on else [])
     if app is None:
         call('POST', f'/accounts/{account}/access/apps', {
             'type': 'self_hosted', 'name': domain, 'domain': domain,
             'destinations': [{'type': 'public', 'uri': domain}],
             'session_duration': policy.get('session_duration') or '6h',
             'app_launcher_visible': False,
-            'policies': ([{'id': bypass['id'], 'precedence': 1}] if open_now else []) +
-                        [{'id': policy['id'], 'precedence': 2 if open_now else 1}],
+            'policies': [{'id': i, 'precedence': n + 1} for n, i in enumerate(wanted)],
         })
         print(f'Created an Access application protecting {domain}.')
-        app = None
     else:
+        managed = {policy['id']} | {p['id'] for p in (old_open, trial) if p}
         ids = [p['id'] for p in app.get('policies') or []]
-        others = [i for i in ids if i not in (policy['id'], bypass and bypass['id'])]
-        wanted = ([bypass['id']] if open_now else []) + [policy['id']] + others
+        wanted += [i for i in ids if i not in managed]
         if wanted != ids:
             set_app_policies(account, app, wanted)
-    if open_now:
-        print(f'{domain} is open to everyone without sign-in through {open_until} (UTC), then only the list.')
-    else:
-        if bypass:
-            call('DELETE', f'/accounts/{account}/access/policies/{bypass["id"]}')
-            print(f'The open period has ended; {domain} now admits only the list.')
-        else:
-            print(f'{domain} admits only the list.')
+
+    for p in (old_open, None if trial_on else trial):
+        if p:
+            call('DELETE', f'/accounts/{account}/access/policies/{p["id"]}')
+    print(f'{domain}: ' + ('anyone can sign in for a trial; the list has no limit.' if trial_on
+                           else 'only the list can sign in.'))
 
 if __name__ == '__main__':
     main()
