@@ -93,7 +93,7 @@ async function view(kv, msg) {
 <form method="post" class="row"><input type="hidden" name="email" value="${esc(email)}">${periodSelect()}
 <button name="action" value="add" class="alt">أضفه</button></form></div>`).join('') || '<p class="mu">لم يجرّب أحد بعد.</p>';
 
-  return page(`<h1>إدارة المشتركين</h1><p class="mu">التغييرات تعمل خلال دقيقة تقريباً.</p>
+  return page(`<h1>إدارة المشتركين</h1><p class="mu">التغييرات تعمل خلال دقيقة تقريباً. · <a href="/cdn-cgi/access/logout">خروج</a></p>
 ${msg ? `<div class="msg">${esc(msg)}</div>` : ''}
 <h2>إضافة شخص</h2><form method="post" class="card"><input type="email" name="email" placeholder="name@gmail.com" required>
 <div class="row">${periodSelect()}<button name="action" value="add">إضافة</button></div>
@@ -107,7 +107,10 @@ export async function onRequest({ request, env }) {
   const email = accessEmail(request);
   const admins = kv ? (await kv.get('admins', 'json')) || [] : [];
   if (!email || !admins.includes(email)) {
-    return page('<h1>هذه الصفحة للمدير فقط</h1><p class="mu">سجّل الدخول بحساب المدير.</p>', 403);
+    return page(`<h1>هذه الصفحة للمدير فقط</h1>
+<p>أنت مسجّل الدخول بالبريد: <span class="e">${esc(email || 'غير معروف')}</span></p>
+<p class="mu">إن كان هذا ليس بريد المدير، اخرج ثم ادخل ببريد المدير.</p>
+<p><a href="/cdn-cgi/access/logout"><button type="button">تسجيل الخروج</button></a></p>`, 403);
   }
 
   const url = new URL(request.url);
