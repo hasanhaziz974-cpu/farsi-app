@@ -17,4 +17,6 @@ jobs:
           ACCESS_LIST: ${{ secrets.ACCESS_LIST }}
           ACCESS_POLICY_NAME: ${{ vars.ACCESS_POLICY_NAME }}
           ACCESS_APP_DOMAIN: parsa-farsi.pages.dev
+          # Anyone may sign in and get a 7-day trial (functions/_middleware.js); remove to admit only the list.
+          TRIAL_PAGES_PROJECT: parsa-farsi
         run: python3 tools/sync_access.py
