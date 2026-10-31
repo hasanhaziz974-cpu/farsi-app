@@ -5,29 +5,7 @@
 // last day of access (YYYY-MM-DD, UTC, Arabic or Persian digits accepted) or any other
 // text for no end date. Only page loads are checked;
 // audio, font and script requests pass straight through.
-const TRIAL_DAYS = 7;
-const DAY = 864e5;
-const CONTACT = 'languageparsa777@gmail.com';
-
-function lastDay(value) {
-  const v = value.trim()
-    .replace(/[\u0660-\u0669]/g, (d) => d.charCodeAt(0) - 0x660)
-    .replace(/[\u06f0-\u06f9]/g, (d) => d.charCodeAt(0) - 0x6f0);
-  return /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : null;
-}
-
-function accessEmail(request) {
-  const direct = request.headers.get('Cf-Access-Authenticated-User-Email');
-  if (direct) return direct.trim().toLowerCase();
-  const jwt = request.headers.get('Cf-Access-Jwt-Assertion');
-  if (!jwt) return '';
-  try {
-    const part = jwt.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
-    return (JSON.parse(atob(part)).email || '').trim().toLowerCase();
-  } catch (e) {
-    return '';
-  }
-}
+import { TRIAL_DAYS, DAY, CONTACT, accessEmail, lastDay, today } from '../lib/trial.js';
 
 const ENDED = `<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><title>انتهت الفترة التجريبية</title>
@@ -51,7 +29,7 @@ export async function onRequest({ request, env, next }) {
   const allow = await env.TRIALS.get('allow:' + email);
   if (allow !== null) {
     const until = lastDay(allow);
-    if (!until || new Date().toISOString().slice(0, 10) <= until) return next();
+    if (!until || today() <= until) return next();
     return ended();
   }
 
