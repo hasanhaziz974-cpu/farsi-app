@@ -32,6 +32,9 @@ API = os.environ.get('CF_API_BASE', 'https://api.cloudflare.com/client/v4')
 OLD_OPEN_POLICY_NAME = 'Open to everyone (temporary)'
 TRIAL_POLICY_NAME = 'Trial: anyone who signs in'
 KV_TITLE = 'farsi-trials'
+# How long a sign-in lasts before Cloudflare asks for the email again (its maximum is a month).
+# Access periods are enforced on every page load by functions/_middleware.js, not by this.
+SESSION = os.environ.get('ACCESS_SESSION') or '720h'
 
 
 def fail(msg):
@@ -106,7 +109,8 @@ def main():
     removed = sorted(before - set(keep))
 
     body = {'name': policy['name'], 'decision': policy['decision'], 'include': [{'email': {'email': e}} for e in keep]}
-    for k in ('exclude', 'require', 'session_duration', 'approval_required', 'approval_groups',
+    body['session_duration'] = SESSION
+    for k in ('exclude', 'require', 'approval_required', 'approval_groups',
               'isolation_required', 'purpose_justification_required', 'purpose_justification_prompt'):
         if policy.get(k) not in (None, []):
             body[k] = policy[k]
@@ -194,7 +198,11 @@ def protect(account, domain, policy, trial_on):
     if trial_on and not trial:
         trial = call('POST', f'/accounts/{account}/access/policies', {
             'name': TRIAL_POLICY_NAME, 'decision': 'allow', 'include': [{'everyone': {}}],
-            'session_duration': policy.get('session_duration') or '6h'})
+            'session_duration': SESSION})
+    elif trial_on and trial.get('session_duration') != SESSION:
+        call('PUT', f'/accounts/{account}/access/policies/{trial["id"]}', {
+            'name': TRIAL_POLICY_NAME, 'decision': 'allow', 'include': trial.get('include') or [{'everyone': {}}],
+            'session_duration': SESSION})
 
     apps = call('GET', f'/accounts/{account}/access/apps?per_page=100')
     app = next((a for a in apps if a.get('type') == 'self_hosted' and domain in app_hosts(a)), None)
@@ -203,7 +211,7 @@ def protect(account, domain, policy, trial_on):
         call('POST', f'/accounts/{account}/access/apps', {
             'type': 'self_hosted', 'name': domain, 'domain': domain,
             'destinations': [{'type': 'public', 'uri': domain}],
-            'session_duration': policy.get('session_duration') or '6h',
+            'session_duration': SESSION,
             'app_launcher_visible': False,
             'policies': [{'id': i, 'precedence': n + 1} for n, i in enumerate(wanted)],
         })
@@ -212,7 +220,8 @@ def protect(account, domain, policy, trial_on):
         managed = {policy['id']} | {p['id'] for p in (old_open, trial) if p}
         ids = [p['id'] for p in app.get('policies') or []]
         wanted += [i for i in ids if i not in managed]
-        if wanted != ids:
+        if wanted != ids or app.get('session_duration') != SESSION:
+            app['session_duration'] = SESSION
             set_app_policies(account, app, wanted)
 
     for p in (old_open, None if trial_on else trial):
