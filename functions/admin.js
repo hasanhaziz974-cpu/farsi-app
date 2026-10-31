@@ -4,7 +4,7 @@
 // the same ones the trial check in _middleware.js reads.
 import { TRIAL_DAYS, DAY, accessEmail, lastDay, today } from '../lib/trial.js';
 
-const PERIODS = { week: ['أسبوع', 7], month: ['شهر', 30], quarter: ['3 أشهر', 90], forever: ['دائم', 0] };
+const PERIODS = { week: ['أسبوع', 7], month: ['شهر', 30], quarter: ['3 أشهر', 90], half: ['6 أشهر', 180], year: ['سنة', 365], forever: ['دائم', 0] };
 const FOREVER = 'دائم';
 
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
