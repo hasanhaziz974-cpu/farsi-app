@@ -118,9 +118,6 @@ def main():
     print(f'Access list synced: {len(keep)} allowed, {expired} expired in the list, '
           f'{len(removed)} removed and signed out, {len(set(keep) - before)} newly added.')
 
-    header, footer = (os.environ.get('LOGIN_HEADER') or '').strip(), (os.environ.get('LOGIN_FOOTER') or '').strip()
-    if header or footer:
-        login_page(account, header, footer)
     project = (os.environ.get('TRIAL_PAGES_PROJECT') or '').strip()
     if project:
         trials(account, project, keep)
@@ -128,15 +125,22 @@ def main():
     if domain:
         protect(account, domain, policy, bool(project))
 
+    header, footer = (os.environ.get('LOGIN_HEADER') or '').strip(), (os.environ.get('LOGIN_FOOTER') or '').strip()
+    if header or footer:
+        try:
+            login_page(account, header, footer)
+        except SystemExit:
+            print('::warning::Could not update the sign-in page message; access was still synced.')
+
 
 def login_page(account, header, footer):
     org = call('GET', f'/accounts/{account}/access/organizations')
     design = dict(org.get('login_design') or {})
     if design.get('header_text') == header and design.get('footer_text') == footer:
         return
+    design = {k: v for k, v in design.items() if v}
     design.update(header_text=header, footer_text=footer)
-    body = {k: v for k, v in org.items() if k not in ('created_at', 'updated_at')}
-    body['login_design'] = design
+    body = {'name': org['name'], 'auth_domain': org['auth_domain'], 'login_design': design}
     call('PUT', f'/accounts/{account}/access/organizations', body)
     print('Updated the message on the sign-in page.')
 
