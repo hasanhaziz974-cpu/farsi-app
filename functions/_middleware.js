@@ -1,9 +1,9 @@
 // Free trial for the web version: anyone who signs in through Cloudflare Access gets
-// TRIAL_MS from their first visit. People on the allowlist (written to KV by
+// TRIAL_DAYS from their first visit. People on the allowlist (written to KV by
 // tools/sync_access.py from ACCESS_LIST) are never limited. Only page loads are checked;
 // audio, font and script requests pass straight through.
-// TEMPORARY for testing: 2 minutes. Restore to 7 * 864e5 (7 days).
-const TRIAL_MS = 2 * 60 * 1000;
+const TRIAL_DAYS = 7;
+const DAY = 864e5;
 const CONTACT = 'languageparsa777@gmail.com';
 
 function accessEmail(request) {
@@ -24,7 +24,7 @@ const ENDED = `<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="utf
 <style>body{font:17px/1.9 Tahoma,Arial,sans-serif;max-width:520px;margin:0 auto;padding:40px 20px;text-align:center;color:#14263A;background:#EEF4F3}
 h1{color:#12807F;font-size:24px}a{color:#12807F}</style></head><body>
 <h1>انتهت فترتك التجريبية</h1>
-<p>شكراً لتجربتك تطبيق «تعلّم الفارسية للعرب». انتهت مدة التجربة المجانية.</p>
+<p>شكراً لتجربتك تطبيق «تعلّم الفارسية للعرب». انتهت مدة التجربة المجانية (${TRIAL_DAYS} أيام).</p>
 <p>للاستمرار تواصل معنا: <a href="mailto:${CONTACT}" dir="ltr">${CONTACT}</a></p>
 </body></html>`;
 
@@ -44,7 +44,7 @@ export async function onRequest({ request, env, next }) {
     start = Date.now();
     await env.TRIALS.put(key, String(start));
   }
-  if (Date.now() - start < TRIAL_MS) return next();
+  if (Date.now() - start < TRIAL_DAYS * DAY) return next();
 
   return new Response(ENDED, {
     status: 403,
