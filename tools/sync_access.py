@@ -170,6 +170,7 @@ def trials(account, project, keep):
         call('POST', f'/accounts/{account}/storage/kv/namespaces', {'title': KV_TITLE})
     kv = f'/accounts/{account}/storage/kv/namespaces/{ns["id"]}'
     call('PUT', f'{kv}/values/allowlist', keep)
+    call('PUT', f'{kv}/values/admins', keep[:1])  # the first line of ACCESS_LIST can open /admin
 
     proj = call('GET', f'/accounts/{account}/pages/projects/{project}')
     configs = proj.get('deployment_configs') or {}
