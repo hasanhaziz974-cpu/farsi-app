@@ -24,7 +24,7 @@ const ENDED = `<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="utf
 <style>body{font:17px/1.9 Tahoma,Arial,sans-serif;max-width:520px;margin:0 auto;padding:40px 20px;text-align:center;color:#14263A;background:#EEF4F3}
 h1{color:#12807F;font-size:24px}a{color:#12807F}</style></head><body>
 <h1>انتهت فترتك التجريبية</h1>
-<p>شكراً لتجربتك تطبيق «تعلّم الفارسية للعرب». انتهت مدة التجربة المجانية (${TRIAL_DAYS} أيام).</p>
+<p>شكراً لتجربتك تطبيق «الفارسية من الصفر». انتهت مدة التجربة المجانية (${TRIAL_DAYS} أيام).</p>
 <p>للاستمرار تواصل معنا: <a href="mailto:${CONTACT}" dir="ltr">${CONTACT}</a></p>
 </body></html>`;
 
