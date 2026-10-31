@@ -41,8 +41,8 @@ jobs:
           if [ -d audio ]; then cp -r audio www/; else echo "::warning::No audio folder, the app will use device text-to-speech"; fi
           npm ci
           npx cap add android
-          mkdir -p assets && cp icon-only.png icon-foreground.png icon-background.png assets/
-          npx capacitor-assets generate --android
+          mkdir -p assets && cp icon-only.png assets/
+          npx capacitor-assets generate --android --iconBackgroundColor '#12807F' --iconBackgroundColorDark '#0B5E5E'
           npx cap sync android
           VERSION_NAME="$(node -p "require('./package.json').version.split('.').slice(0, 2).join('.')").${{ github.run_number }}"
           echo "VERSION_NAME=$VERSION_NAME" >> "$GITHUB_ENV"
