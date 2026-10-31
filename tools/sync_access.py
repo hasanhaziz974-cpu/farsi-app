@@ -13,14 +13,18 @@ with # are ignored. Example:
 When ACCESS_APP_DOMAIN is set (e.g. parsa-farsi.pages.dev), it also makes sure an Access
 application protects that hostname with the policy, creating one if needed.
 
+Until ACCESS_OPEN_UNTIL (YYYY-MM-DD, UTC, inclusive) the hostname is open to everyone without
+sign-in through a temporary bypass policy, which is removed on the first run after that day.
+
 Env: CF_API_TOKEN, CF_ACCOUNT_ID, ACCESS_LIST, ACCESS_POLICY_NAME (default "Farsi group"),
-ACCESS_APP_DOMAIN.
+ACCESS_APP_DOMAIN, ACCESS_OPEN_UNTIL.
 Emails are never printed, because Actions logs of a public repository are public. For the
 same reason ACCESS_LIST must be a secret: Actions prints variables passed to a step.
 """
 import datetime, json, os, re, sys, urllib.error, urllib.request
 
 API = os.environ.get('CF_API_BASE', 'https://api.cloudflare.com/client/v4')
+OPEN_POLICY_NAME = 'Open to everyone (temporary)'
 
 
 def fail(msg):
@@ -107,7 +111,13 @@ def main():
 
     domain = (os.environ.get('ACCESS_APP_DOMAIN') or '').strip().lower()
     if domain:
-        protect(account, domain, policy)
+        open_until = (os.environ.get('ACCESS_OPEN_UNTIL') or '').strip()
+        if open_until:
+            try:
+                open_until = datetime.date.fromisoformat(open_until)
+            except ValueError:
+                fail('ACCESS_OPEN_UNTIL is not a date like YYYY-MM-DD')
+        protect(account, domain, policy, open_until or None, datetime.datetime.now(datetime.timezone.utc).date())
 
 
 def app_hosts(app):
@@ -117,7 +127,26 @@ def app_hosts(app):
     return {h.rstrip('/') for h in hosts if h}
 
 
-def protect(account, domain, policy):
+def set_app_policies(account, app, ids):
+    body = {k: v for k, v in app.items() if k not in ('id', 'uid', 'aud', 'created_at', 'updated_at', 'policies', 'scim_config')}
+    if body.get('destinations'):
+        body.pop('self_hosted_domains', None)
+    body['policies'] = [{'id': i, 'precedence': n + 1} for n, i in enumerate(ids)]
+    call('PUT', f'/accounts/{account}/access/apps/{app["id"]}', body)
+
+
+def open_policy(account, open_now):
+    """The temporary "everyone, no sign-in" policy: created while the site is open, deleted after."""
+    found = [p for p in call('GET', f'/accounts/{account}/access/policies?per_page=100') if p.get('name') == OPEN_POLICY_NAME]
+    if open_now and not found:
+        return call('POST', f'/accounts/{account}/access/policies',
+                    {'name': OPEN_POLICY_NAME, 'decision': 'bypass', 'include': [{'everyone': {}}]})
+    return found[0] if found else None
+
+
+def protect(account, domain, policy, open_until, today):
+    open_now = bool(open_until) and today <= open_until
+    bypass = open_policy(account, open_now)
     apps = call('GET', f'/accounts/{account}/access/apps?per_page=100')
     app = next((a for a in apps if a.get('type') == 'self_hosted' and domain in app_hosts(a)), None)
     if app is None:
@@ -126,21 +155,25 @@ def protect(account, domain, policy):
             'destinations': [{'type': 'public', 'uri': domain}],
             'session_duration': policy.get('session_duration') or '6h',
             'app_launcher_visible': False,
-            'policies': [{'id': policy['id'], 'precedence': 1}],
+            'policies': ([{'id': bypass['id'], 'precedence': 1}] if open_now else []) +
+                        [{'id': policy['id'], 'precedence': 2 if open_now else 1}],
         })
         print(f'Created an Access application protecting {domain}.')
-        return
-    ids = [p['id'] for p in app.get('policies') or []]
-    if policy['id'] in ids:
-        print(f'{domain} is already protected by "{policy["name"]}".')
-        return
-    body = {k: v for k, v in app.items() if k not in ('id', 'uid', 'aud', 'created_at', 'updated_at', 'policies', 'scim_config')}
-    if body.get('destinations'):
-        body.pop('self_hosted_domains', None)
-    body['policies'] = [{'id': policy['id'], 'precedence': 1}] + [{'id': i, 'precedence': n + 2} for n, i in enumerate(ids)]
-    call('PUT', f'/accounts/{account}/access/apps/{app["id"]}', body)
-    print(f'Added "{policy["name"]}" to the Access application protecting {domain}.')
-
+        app = None
+    else:
+        ids = [p['id'] for p in app.get('policies') or []]
+        others = [i for i in ids if i not in (policy['id'], bypass and bypass['id'])]
+        wanted = ([bypass['id']] if open_now else []) + [policy['id']] + others
+        if wanted != ids:
+            set_app_policies(account, app, wanted)
+    if open_now:
+        print(f'{domain} is open to everyone without sign-in through {open_until} (UTC), then only the list.')
+    else:
+        if bypass:
+            call('DELETE', f'/accounts/{account}/access/policies/{bypass["id"]}')
+            print(f'The open period has ended; {domain} now admits only the list.')
+        else:
+            print(f'{domain} admits only the list.')
 
 if __name__ == '__main__':
     main()
