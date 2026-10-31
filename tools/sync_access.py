@@ -18,8 +18,11 @@ gets a free trial counted from their first visit (enforced by functions/_middlew
 For that the script keeps a "Trial" policy on the application, a KV namespace bound to the
 Pages project as TRIALS, and the allowlist in KV, so people on ACCESS_LIST are never limited.
 
+LOGIN_HEADER and LOGIN_FOOTER, when set, are shown on the Cloudflare sign-in page where
+visitors type their email.
+
 Env: CF_API_TOKEN, CF_ACCOUNT_ID, ACCESS_LIST, ACCESS_POLICY_NAME (default "Farsi group"),
-ACCESS_APP_DOMAIN, TRIAL_PAGES_PROJECT.
+ACCESS_APP_DOMAIN, TRIAL_PAGES_PROJECT, LOGIN_HEADER, LOGIN_FOOTER.
 Emails are never printed, because Actions logs of a public repository are public. For the
 same reason ACCESS_LIST must be a secret: Actions prints variables passed to a step.
 """
@@ -115,12 +118,27 @@ def main():
     print(f'Access list synced: {len(keep)} allowed, {expired} expired in the list, '
           f'{len(removed)} removed and signed out, {len(set(keep) - before)} newly added.')
 
+    header, footer = (os.environ.get('LOGIN_HEADER') or '').strip(), (os.environ.get('LOGIN_FOOTER') or '').strip()
+    if header or footer:
+        login_page(account, header, footer)
     project = (os.environ.get('TRIAL_PAGES_PROJECT') or '').strip()
     if project:
         trials(account, project, keep)
     domain = (os.environ.get('ACCESS_APP_DOMAIN') or '').strip().lower()
     if domain:
         protect(account, domain, policy, bool(project))
+
+
+def login_page(account, header, footer):
+    org = call('GET', f'/accounts/{account}/access/organizations')
+    design = dict(org.get('login_design') or {})
+    if design.get('header_text') == header and design.get('footer_text') == footer:
+        return
+    design.update(header_text=header, footer_text=footer)
+    body = {k: v for k, v in org.items() if k not in ('created_at', 'updated_at')}
+    body['login_design'] = design
+    call('PUT', f'/accounts/{account}/access/organizations', body)
+    print('Updated the message on the sign-in page.')
 
 def app_hosts(app):
     hosts = {(app.get('domain') or '').lower()}

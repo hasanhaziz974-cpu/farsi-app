@@ -19,4 +19,7 @@ jobs:
           ACCESS_APP_DOMAIN: parsa-farsi.pages.dev
           # Anyone may sign in and get a 7-day trial (functions/_middleware.js); remove to admit only the list.
           TRIAL_PAGES_PROJECT: parsa-farsi
+          # Shown on the sign-in page where visitors type their email.
+          LOGIN_HEADER: 'تعلّم الفارسية للعرب: لديك أسبوع فترة تجريبية مجانية'
+          LOGIN_FOOTER: 'أدخل بريدك ليصلك رمز الدخول. تبدأ فترتك التجريبية (٧ أيام) من أول دخول.'
         run: python3 tools/sync_access.py
