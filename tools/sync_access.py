@@ -36,13 +36,15 @@ def fail(msg):
     sys.exit(1)
 
 
-def call(method, path, body=None):
+def call(method, path, body=None, allow=()):
     req = urllib.request.Request(API + path, method=method, data=None if body is None else json.dumps(body).encode(),
                                  headers={'Authorization': 'Bearer ' + os.environ['CF_API_TOKEN'].strip(), 'Content-Type': 'application/json'})
     try:
         with urllib.request.urlopen(req, timeout=30) as r:
             return json.load(r)['result']
     except urllib.error.HTTPError as e:
+        if e.code in allow:
+            return None
         try:
             errs = '; '.join(x.get('message', '') for x in json.load(e).get('errors', []))
         except Exception:
@@ -154,8 +156,10 @@ def trials(account, project, keep):
         binding = {'kv_namespaces': {'TRIALS': {'namespace_id': ns['id']}}}
         call('PATCH', f'/accounts/{account}/pages/projects/{project}',
              {'deployment_configs': {'production': binding, 'preview': binding}})
-        call('POST', f'/accounts/{account}/pages/projects/{project}/deployments')
-        print('Linked the trial storage to the site and started a new deployment.')
+        # 304 means Cloudflare is already building the latest commit; the next push redeploys anyway.
+        started = call('POST', f'/accounts/{account}/pages/projects/{project}/deployments', allow=(304,))
+        print('Linked the trial storage to the site' +
+              (' and started a new deployment.' if started is not None else '; it takes effect with the next deployment.'))
 
     started = len(call('GET', f'{kv}/keys?prefix=trial:&limit=1000'))
     print(f'Trial: {started} people have signed in for a trial so far.')
