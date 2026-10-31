@@ -1,10 +1,20 @@
 // Free trial for the web version: anyone who signs in through Cloudflare Access gets
 // TRIAL_DAYS from their first visit. People on the allowlist (written to KV by
-// tools/sync_access.py from ACCESS_LIST) are never limited. Only page loads are checked;
+// tools/sync_access.py from ACCESS_LIST) are never limited. A KV entry "allow:<email>"
+// added by hand in the Cloudflare dashboard also admits that person: its value is the
+// last day of access (YYYY-MM-DD, UTC, Arabic or Persian digits accepted) or any other
+// text for no end date. Only page loads are checked;
 // audio, font and script requests pass straight through.
 const TRIAL_DAYS = 7;
 const DAY = 864e5;
 const CONTACT = 'languageparsa777@gmail.com';
+
+function lastDay(value) {
+  const v = value.trim()
+    .replace(/[\u0660-\u0669]/g, (d) => d.charCodeAt(0) - 0x660)
+    .replace(/[\u06f0-\u06f9]/g, (d) => d.charCodeAt(0) - 0x6f0);
+  return /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : null;
+}
 
 function accessEmail(request) {
   const direct = request.headers.get('Cf-Access-Authenticated-User-Email');
@@ -38,6 +48,13 @@ export async function onRequest({ request, env, next }) {
   const allowed = (await env.TRIALS.get('allowlist', 'json')) || [];
   if (allowed.includes(email)) return next();
 
+  const allow = await env.TRIALS.get('allow:' + email);
+  if (allow !== null) {
+    const until = lastDay(allow);
+    if (!until || new Date().toISOString().slice(0, 10) <= until) return next();
+    return ended();
+  }
+
   const key = 'trial:' + email;
   let start = Number(await env.TRIALS.get(key));
   if (!start) {
@@ -45,7 +62,10 @@ export async function onRequest({ request, env, next }) {
     await env.TRIALS.put(key, String(start));
   }
   if (Date.now() - start < TRIAL_DAYS * DAY) return next();
+  return ended();
+}
 
+function ended() {
   return new Response(ENDED, {
     status: 403,
     headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' },
