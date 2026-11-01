@@ -22,11 +22,14 @@ PUBLIC_PATHS (e.g. "welcome fonts") lists paths on ACCESS_APP_DOMAIN that open w
 signing in, such as the welcome page. They get their own Access application with a bypass
 policy, which Cloudflare applies before the application protecting the whole hostname.
 
+GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET, when set, add "Sign in with Google" next to the
+emailed code. Until they are set, the script prints the redirect URI to give Google.
+
 LOGIN_HEADER and LOGIN_FOOTER, when set, are shown on the Cloudflare sign-in page where
 visitors type their email.
 
 Env: CF_API_TOKEN, CF_ACCOUNT_ID, ACCESS_LIST, ACCESS_POLICY_NAME (default "Farsi group"),
-ACCESS_APP_DOMAIN, PUBLIC_PATHS, TRIAL_PAGES_PROJECT, LOGIN_HEADER, LOGIN_FOOTER.
+ACCESS_APP_DOMAIN, PUBLIC_PATHS, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, TRIAL_PAGES_PROJECT, LOGIN_HEADER, LOGIN_FOOTER.
 Emails are never printed, because Actions logs of a public repository are public. For the
 same reason ACCESS_LIST must be a secret: Actions prints variables passed to a step.
 """
@@ -135,6 +138,8 @@ def main():
         protect(account, domain, policy, bool(project))
         public(account, domain, (os.environ.get('PUBLIC_PATHS') or '').split())
 
+    google(account, domain)
+
     header, footer = (os.environ.get('LOGIN_HEADER') or '').strip(), (os.environ.get('LOGIN_FOOTER') or '').strip()
     if header or footer:
         try:
@@ -235,6 +240,39 @@ def protect(account, domain, policy, trial_on):
             call('DELETE', f'/accounts/{account}/access/policies/{p["id"]}')
     print(f'{domain}: ' + ('anyone can sign in for a trial; the list has no limit.' if trial_on
                            else 'only the list can sign in.'))
+
+def google(account, domain):
+    """Adds Google as a sign-in option, or prints what Google needs while it is not set up."""
+    cid, secret = (os.environ.get('GOOGLE_CLIENT_ID') or '').strip(), (os.environ.get('GOOGLE_CLIENT_SECRET') or '').strip()
+    org = call('GET', f'/accounts/{account}/access/organizations')
+    team = org.get('auth_domain', '')
+    if not (cid and secret):
+        print('Google sign-in is not set up. In Google Cloud use:')
+        print(f'  Authorized JavaScript origin: https://{team}')
+        print(f'  Authorized redirect URI: https://{team}/cdn-cgi/access/callback')
+        return
+    if re.search(r'\s', cid + secret) or not cid.endswith('.apps.googleusercontent.com'):
+        print('::warning::GOOGLE_CLIENT_ID must end with .apps.googleusercontent.com, and neither secret may contain '
+              'spaces or extra lines. Save them again; Google sign-in was not changed.')
+        return
+    idps = call('GET', f'/accounts/{account}/access/identity_providers?per_page=100')
+    idp = next((i for i in idps if i.get('type') == 'google'), None)
+    body = {'name': 'Google', 'type': 'google', 'config': {'client_id': cid, 'client_secret': secret}}
+    if idp is None:
+        idp = call('POST', f'/accounts/{account}/access/identity_providers', body)
+        print('Added Google sign-in.')
+    else:
+        call('PUT', f'/accounts/{account}/access/identity_providers/{idp["id"]}', body)
+        print('Google sign-in is on.')
+    # An application lists its sign-in options only when it limits them; then Google must be among them.
+    if domain:
+        for app in call('GET', f'/accounts/{account}/access/apps?per_page=100'):
+            allowed = app.get('allowed_idps') or []
+            if app.get('type') == 'self_hosted' and domain in app_hosts(app) and allowed and idp['id'] not in allowed:
+                app['allowed_idps'] = allowed + [idp['id']]
+                set_app_policies(account, app, [p['id'] for p in app.get('policies') or []])
+                print('Added Google to the sign-in options of ' + domain + '.')
+
 
 def public(account, domain, paths):
     """Lets anyone open domain/<path> for each path, without the sign-in page."""

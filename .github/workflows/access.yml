@@ -15,6 +15,8 @@ jobs:
           CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
           ACCESS_LIST: ${{ secrets.ACCESS_LIST }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
           ACCESS_POLICY_NAME: ${{ vars.ACCESS_POLICY_NAME }}
           ACCESS_APP_DOMAIN: parsa-farsi.pages.dev
           # Anyone may sign in and get a 7-day trial (functions/_middleware.js); remove to admit only the list.
