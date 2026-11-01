@@ -23,7 +23,7 @@ jobs:
           ACCESS_APP_DOMAIN: parsa-farsi.pages.dev
           # Anyone may sign in and get a 7-day trial (functions/_middleware.js); remove to admit only the list.
           TRIAL_PAGES_PROJECT: parsa-farsi
-          PUBLIC_PATHS: welcome fonts
+          PUBLIC_PATHS: welcome fonts pwa
           # Shown on the sign-in page where visitors type their email.
           LOGIN_HEADER: 'الفارسية من الصفر: لديك أسبوع فترة تجريبية مجانية'
           LOGIN_FOOTER: 'أدخل بريدك ليصلك رمز الدخول. تبدأ فترتك التجريبية (٧ أيام) من أول دخول.'
@@ -33,11 +33,11 @@ jobs:
         run: |
           S=https://parsa-farsi.pages.dev
           bad=0
-          for p in / /index.html /admin /welcome /welcome/ /welcome/x /fonts/x /fonts/Vazirmatn-Regular.woff2 /store/listing.md /audio/x.mp3; do
+          for p in / /index.html /admin /sw.js /welcome /welcome/ /welcome/x /fonts/x /fonts/Vazirmatn-Regular.woff2 /pwa/manifest.webmanifest /pwa/x /store/listing.md /audio/x.mp3; do
             out=$(curl -s -o body.txt -w '%{http_code} %{redirect_url}' "$S$p")
             title=$(grep -o '<title>[^<]*' body.txt | head -1 | sed 's/<title>//')
             echo "$p -> $out ${title:+[$title]}"
-            case "$p" in /welcome*|/fonts*) ;; *)
+            case "$p" in /welcome*|/fonts*|/pwa*) ;; *)
               if [ "${out%% *}" = 200 ]; then echo "::error::$p opens without signing in"; bad=1; fi;; esac
             if grep -q 'id="main"' body.txt && [ "$p" != / ] && [ "$p" != /index.html ]; then echo "::error::$p serves the app"; bad=1; fi
           done
