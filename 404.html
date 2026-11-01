@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<!-- Its presence stops Cloudflare Pages from serving index.html for unknown paths (its single-page-app
+     fallback). Without it, an unknown address under a public path such as /welcome/x or /fonts/x
+     would open the whole app without signing in. -->
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>الصفحة غير موجودة</title>
+<style>
+:root{--bg:#EEF4F3;--tx:#14263A;--pr:#12807F;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--bg:#0E1A24;--tx:#E8F1F0;--pr:#3FB8B5;color-scheme:dark}}
+body{margin:0;background:var(--bg);color:var(--tx);font:17px/1.9 Tahoma,Arial,sans-serif;text-align:center;padding:60px 16px}
+h1{color:var(--pr);font-size:24px}a{color:var(--pr)}
+</style>
+</head>
+<body>
+<h1>الصفحة غير موجودة</h1>
+<p><a href="/welcome/">اذهب إلى صفحة «الفارسية من الصفر»</a></p>
+</body>
+</html>
