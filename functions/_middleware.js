@@ -3,8 +3,8 @@
 // tools/sync_access.py from ACCESS_LIST) are never limited. A KV entry "allow:<email>"
 // added by hand in the Cloudflare dashboard also admits that person: its value is the
 // last day of access (YYYY-MM-DD, UTC, Arabic or Persian digits accepted) or any other
-// text for no end date. Only page loads are checked;
-// audio, font and script requests pass straight through.
+// text for no end date. Signed-in requests are checked only on page loads; audio, font and script
+// requests pass straight through. Requests without a verified sign-in get only the public pages.
 import { TRIAL_DAYS, DAY, CONTACT, accessEmail, lastDay, today } from '../lib/trial.js';
 
 const ENDED = `<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="utf-8">
@@ -18,10 +18,29 @@ h1{color:#12807F;font-size:24px}a{color:#12807F}</style></head><body>
 
 const PAGES = new Set(['/', '/index', '/index.html']);
 
+// Without a verified sign-in only the public pages may be served. They carry data-public on their
+// <html> tag; anything else (the app, or the app served as a fallback for an unknown path) is refused.
+// This also covers hosts Access does not cover, like a deployment's own *.pages.dev address.
+const PUBLIC = ['/welcome', '/fonts/'];
+
+async function publicOnly(request, next) {
+  const url = new URL(request.url);
+  if (!PUBLIC.some((p) => url.pathname.startsWith(p))) return Response.redirect(url.origin + '/welcome/', 302);
+  const res = await next();
+  if (res.status >= 300 && res.status < 400) return res; // e.g. /welcome -> /welcome/
+  if (!(res.headers.get('Content-Type') || '').includes('text/html')) return res; // images and fonts
+  const html = await res.text();
+  if (!/<html[^>]*\bdata-public\b/.test(html)) return new Response('Not found', { status: 404 });
+  const headers = new Headers(res.headers);
+  headers.delete('Content-Encoding');
+  headers.delete('Content-Length');
+  return new Response(html, { status: res.status, headers });
+}
+
 export async function onRequest({ request, env, next }) {
-  if (!PAGES.has(new URL(request.url).pathname)) return next();
-  const email = accessEmail(request);
-  if (!email || !env.TRIALS) return next();
+  const email = await accessEmail(request);
+  if (!email) return publicOnly(request, next);
+  if (!PAGES.has(new URL(request.url).pathname) || !env.TRIALS) return next();
 
   const allowed = (await env.TRIALS.get('allowlist', 'json')) || [];
   if (allowed.includes(email)) return next();
