@@ -18,11 +18,21 @@ gets a free trial counted from their first visit (enforced by functions/_middlew
 For that the script keeps a "Trial" policy on the application, a KV namespace bound to the
 Pages project as TRIALS, and the allowlist in KV, so people on ACCESS_LIST are never limited.
 
+PUBLIC_PATHS (e.g. "welcome fonts") lists paths on ACCESS_APP_DOMAIN that open without
+signing in, such as the welcome page. They get their own Access application with a bypass
+policy, which Cloudflare applies before the application protecting the whole hostname.
+
+GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET, or FACEBOOK_APP_ID and FACEBOOK_APP_SECRET, when set,
+add one-click sign-in with Google or Facebook next to the emailed code. Until they are set,
+the script prints the redirect URI to give them.
+
 LOGIN_HEADER and LOGIN_FOOTER, when set, are shown on the Cloudflare sign-in page where
-visitors type their email.
+visitors type their email. LOGIN_FOOTER_SOCIAL replaces the footer once Google or Facebook sign-in is on; {options}
+in it becomes their names.
 
 Env: CF_API_TOKEN, CF_ACCOUNT_ID, ACCESS_LIST, ACCESS_POLICY_NAME (default "Farsi group"),
-ACCESS_APP_DOMAIN, TRIAL_PAGES_PROJECT, LOGIN_HEADER, LOGIN_FOOTER.
+ACCESS_APP_DOMAIN, PUBLIC_PATHS, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, FACEBOOK_APP_ID,
+FACEBOOK_APP_SECRET, TRIAL_PAGES_PROJECT, LOGIN_HEADER, LOGIN_FOOTER, LOGIN_FOOTER_SOCIAL.
 Emails are never printed, because Actions logs of a public repository are public. For the
 same reason ACCESS_LIST must be a secret: Actions prints variables passed to a step.
 """
@@ -31,6 +41,7 @@ import datetime, json, os, re, sys, urllib.error, urllib.request
 API = os.environ.get('CF_API_BASE', 'https://api.cloudflare.com/client/v4')
 OLD_OPEN_POLICY_NAME = 'Open to everyone (temporary)'
 TRIAL_POLICY_NAME = 'Trial: anyone who signs in'
+PUBLIC_POLICY_NAME = 'Public pages: no sign-in'
 KV_TITLE = 'farsi-trials'
 # How long a sign-in lasts before Cloudflare asks for the email again (its maximum is a month).
 # Access periods are enforced on every page load by functions/_middleware.js, not by this.
@@ -128,8 +139,13 @@ def main():
     domain = (os.environ.get('ACCESS_APP_DOMAIN') or '').strip().lower()
     if domain:
         protect(account, domain, policy, bool(project))
+        public(account, domain, (os.environ.get('PUBLIC_PATHS') or '').split())
+
+    social_on = social(account, domain)
 
     header, footer = (os.environ.get('LOGIN_HEADER') or '').strip(), (os.environ.get('LOGIN_FOOTER') or '').strip()
+    if social_on and (os.environ.get('LOGIN_FOOTER_SOCIAL') or '').strip():
+        footer = os.environ['LOGIN_FOOTER_SOCIAL'].strip().replace('{options}', ' أو '.join(social_on))
     if header or footer:
         try:
             login_page(account, header, footer)
@@ -229,6 +245,82 @@ def protect(account, domain, policy, trial_on):
             call('DELETE', f'/accounts/{account}/access/policies/{p["id"]}')
     print(f'{domain}: ' + ('anyone can sign in for a trial; the list has no limit.' if trial_on
                            else 'only the list can sign in.'))
+
+# One-click sign-in options shown next to the emailed code: (Cloudflare type, label, id secret, secret secret,
+# a check on the id). Each turns on once both of its secrets are set.
+SOCIAL = [
+    ('google', 'Google', 'GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', lambda v: v.endswith('.apps.googleusercontent.com')),
+    ('facebook', 'Facebook', 'FACEBOOK_APP_ID', 'FACEBOOK_APP_SECRET', lambda v: v.isdigit()),
+]
+
+
+def social(account, domain):
+    """Adds Google and Facebook sign-in when their secrets are set. Returns the labels that are on."""
+    team = call('GET', f'/accounts/{account}/access/organizations').get('auth_domain', '')
+    idps = call('GET', f'/accounts/{account}/access/identity_providers?per_page=100')
+    on = []
+    for kind, label, id_env, secret_env, valid in SOCIAL:
+        cid, secret = (os.environ.get(id_env) or '').strip(), (os.environ.get(secret_env) or '').strip()
+        if not (cid and secret):
+            print(f'{label} sign-in is not set up. Its redirect URI is https://{team}/cdn-cgi/access/callback')
+            continue
+        if re.search(r'\s', cid + secret) or not valid(cid):
+            print(f'::warning::The {id_env} or {secret_env} secret looks wrong (check the value and remove spaces '
+                  f'or extra lines), so {label} sign-in was not changed.')
+            continue
+        idp = next((i for i in idps if i.get('type') == kind), None)
+        body = {'name': label, 'type': kind, 'config': {'client_id': cid, 'client_secret': secret}}
+        if idp is None:
+            idp = call('POST', f'/accounts/{account}/access/identity_providers', body)
+            print(f'Added {label} sign-in.')
+        else:
+            call('PUT', f'/accounts/{account}/access/identity_providers/{idp["id"]}', body)
+            print(f'{label} sign-in is on.')
+        on.append(label)
+        # An application lists its sign-in options only when it limits them; then this one must be among them.
+        if domain:
+            for app in call('GET', f'/accounts/{account}/access/apps?per_page=100'):
+                allowed = app.get('allowed_idps') or []
+                if app.get('type') == 'self_hosted' and domain in app_hosts(app) and allowed and idp['id'] not in allowed:
+                    app['allowed_idps'] = allowed + [idp['id']]
+                    set_app_policies(account, app, [p['id'] for p in app.get('policies') or []])
+                    print(f'Added {label} to the sign-in options of {domain}.')
+    return on
+
+
+def public(account, domain, paths):
+    """Lets anyone open domain/<path> for each path, without the sign-in page."""
+    name = f'{domain} (public pages)'
+    apps = call('GET', f'/accounts/{account}/access/apps?per_page=100')
+    app = next((a for a in apps if a.get('name') == name), None)
+    pol = named_policy(account, PUBLIC_POLICY_NAME)
+    if not paths:
+        if app:
+            call('DELETE', f'/accounts/{account}/access/apps/{app["id"]}')
+            print('Removed the public pages; the whole site needs signing in again.')
+        if pol:
+            call('DELETE', f'/accounts/{account}/access/policies/{pol["id"]}')
+        return
+    if not pol:
+        pol = call('POST', f'/accounts/{account}/access/policies', {
+            'name': PUBLIC_POLICY_NAME, 'decision': 'bypass', 'include': [{'everyone': {}}]})
+    uris = [f'{domain}/{p.strip("/")}' for p in paths]
+    body = {
+        'type': 'self_hosted', 'name': name, 'domain': uris[0],
+        'destinations': [{'type': 'public', 'uri': u} for u in uris],
+        'app_launcher_visible': False,
+        'policies': [{'id': pol['id'], 'precedence': 1}],
+    }
+    current = sorted((d.get('uri') or '').lower() for d in (app or {}).get('destinations') or [])
+    if app is None:
+        call('POST', f'/accounts/{account}/access/apps', body)
+    elif current != sorted(u.lower() for u in uris) or [p['id'] for p in app.get('policies') or []] != [pol['id']]:
+        call('PUT', f'/accounts/{account}/access/apps/{app["id"]}', body)
+    else:
+        print('Public pages unchanged: ' + ', '.join('/' + p.strip('/') for p in paths))
+        return
+    print('Open without signing in: ' + ', '.join('https://' + u for u in uris))
+
 
 if __name__ == '__main__':
     main()
