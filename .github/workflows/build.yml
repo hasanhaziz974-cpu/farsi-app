@@ -43,7 +43,8 @@ jobs:
           npx cap add android
           mkdir -p assets && cp icon-only.png assets/
           npx capacitor-assets generate --android --iconBackgroundColor '#12807F' --iconBackgroundColorDark '#0B5E5E'
-          cp -r android-icon/mipmap-* android-icon/values android/app/src/main/res/  # adaptive icon, see android-icon/README.md
+          # Legacy icon only: HONOR phones (MagicOS) rejected every build whose adaptive icon was not Capacitor's default.
+          rm -rf android/app/src/main/res/mipmap-anydpi-v26
           npx cap sync android
           VERSION_NAME="$(node -p "require('./package.json').version.split('.').slice(0, 2).join('.')").${{ github.run_number }}"
           echo "VERSION_NAME=$VERSION_NAME" >> "$GITHUB_ENV"
