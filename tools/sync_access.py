@@ -237,9 +237,10 @@ def protect(account, domain, policy, trial_on):
     # Each deployment also has its own address (<id>.<project>.pages.dev); those need signing in too.
     wildcard = '*.' + domain
     if app is None:
+        covered = any(wildcard in app_hosts(a) for a in apps)
         call('POST', f'/accounts/{account}/access/apps', {
             'type': 'self_hosted', 'name': domain, 'domain': domain,
-            'destinations': [{'type': 'public', 'uri': domain}, {'type': 'public', 'uri': wildcard}],
+            'destinations': [{'type': 'public', 'uri': domain}] + ([] if covered else [{'type': 'public', 'uri': wildcard}]),
             'session_duration': SESSION,
             'app_launcher_visible': False,
             'policies': [{'id': i, 'precedence': n + 1} for n, i in enumerate(wanted)],
@@ -249,7 +250,10 @@ def protect(account, domain, policy, trial_on):
         managed = {policy['id']} | {p['id'] for p in (old_open, trial) if p}
         ids = [p['id'] for p in app.get('policies') or []]
         wanted += [i for i in ids if i not in managed]
-        missing = wildcard not in app_hosts(app)
+        other = next((a for a in apps if a['id'] != app['id'] and wildcard in app_hosts(a)), None)
+        if other:
+            print(f'Deployment addresses ({wildcard}) are covered by the Access application "{other.get("name")}".')
+        missing = wildcard not in app_hosts(app) and not other
         if missing:
             app['destinations'] = (app.get('destinations') or [{'type': 'public', 'uri': domain}]) + \
                 [{'type': 'public', 'uri': wildcard}]
