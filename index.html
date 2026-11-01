@@ -76,6 +76,10 @@ nav button.on{color:var(--pr);border-top-color:var(--pr)}
 .srch{width:100%;padding:12px;border:1.5px solid var(--bd);border-radius:12px;background:var(--sf);color:var(--tx);font:inherit}
 :focus-visible{outline:3px solid var(--ac);outline-offset:2px}
 .big{font-size:40px;font-weight:800;color:var(--pr)}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.tile{background:var(--sf);border:1px solid var(--bd);border-radius:14px;padding:12px;text-align:center}
+.tv{font-size:22px;font-weight:800;color:var(--pr)}
+.lnk-no{background:none;border:0;color:var(--no);font:inherit;font-size:14px;text-decoration:underline;cursor:pointer;padding:8px}
 </style>
 </head>
 <body>
@@ -255,8 +259,13 @@ return h}
 function pickRv(k){if(RC.a!==null)return;var ok=RC.o[k].id===RC.id;snd(ok);RC.a=k;RC.m=Math.random();STK=ok?STK+1:0;RC.s=STK;srsRate(RC.id,ok,RC.retry);if(!ok)RSQ.push({id:RC.id,at:RN+3});RN++;render();if(RC.mode==='rev')say(RC.w.fa)}
 function rvNext(){RC=null;render();if(RC&&RC.mode==='aud'&&RC.a===null)say(RC.w.fa)}
 function rate(id,ok){var c=S.srs[id],b=c?c.b:0;if(ok){b=Math.min(b+1,5);S.srs[id]={b:b,d:Date.now()+[1,2,4,8,16][b-1]*DAY}}else S.srs[id]={b:1,d:Date.now()+6e4};R.show=false;RC=null;if(!ok)RSQ.push({id:id,at:RN+3});RN++;gain(ok?3:1);render();var c=ok?CHEER[Math.floor(Math.random()*CHEER.length)]:TRYP[Math.floor(Math.random()*TRYP.length)];toast(c[0]+' — '+c[2])}
-function me(){var k=Object.keys(S.srs).length,m=Object.keys(S.srs).filter(function(i){return S.srs[i].b>=4}).length;
-return '<h2>تقدّمي</h2>'+installBox()+reminderBox()+plBox()+weekBox()+badgeBox()+settingsBox()+backupBox()+premBox()+packBox()+audBox()+'<div class="det"><div class="big">'+S.xp+'</div><div class="mu">نقطة خبرة</div></div><div class="row" style="cursor:default"><span>كلمات بدأت تعلّمها</span><b>'+k+' / '+ALL.length+'</b></div><div class="row" style="cursor:default"><span>كلمات ثبتت في ذاكرتك</span><b>'+m+'</b></div><div class="row" style="cursor:default"><span>أطول سلسلة أيام</span><b>'+S.st+'</b></div><p class="mu">إن لم تسمع النطق، ثبّت صوتاً فارسياً من إعدادات تحويل النص إلى كلام في هاتفك.</p><div class="btns"><button class="btn alt" onclick="if(confirm(\'حذف كل التقدم؟\')){S={xp:0,st:0,last:\'\',srs:{},v:2,prem:S.prem};resetVolatile();save();render()}">إعادة تعيين التقدم</button></div>'}
+function me(){var k=Object.keys(S.srs).length,m=Object.keys(S.srs).filter(function(i){return S.srs[i].b>=4}).length,live=S.last===ds(Date.now())||S.last===ds(Date.now()-DAY);
+function tile(ic,v,t){return '<div class="tile"><div class="tv">'+ic+' '+v+'</div><div class="mu">'+t+'</div></div>'}
+return '<h2>تقدّمي</h2><div class="stats">'+tile('🔥',live?S.st:0,'أيام متتالية')+tile('📚',k+' / '+ALL.length,'كلمات بدأتها')+tile('🧠',m,'كلمات ثبتت في ذاكرتك')+tile('🏆',S.dgn||0,'أهداف يومية حققتها')+'</div>'
++weekBox()+plBox()+badgeBox()+premBox()
++'<h2>الإعدادات</h2>'+reminderBox()+backupBox()+settingsBox()+installBox()+packBox()
++'<div style="text-align:center;margin:4px 0 8px"><button class="lnk-no" onclick="resetAll()">إعادة تعيين التقدّم</button></div>'}
+function resetAll(){if(!confirm('سيُحذف كل تقدّمك في هذا الجهاز ولا يمكن التراجع. هل أنت متأكد؟'))return;S={xp:0,st:0,last:'',srs:{},v:2,prem:S.prem,rem:S.rem,remDay:S.remDay,sfx:S.sfx};resetVolatile();save();render();top_()}
 
 var DLG=[
 {t:"التعارف",l:[["سلام! حال شما چطور است؟","salām! hāl-e shomā chetor ast?","مرحباً! كيف حالك؟"],["خوبم، ممنون. شما چطورید؟","khubam, mamnun. shomā chetorid?","بخير، شكراً. وأنت؟"],["من هم خوبم. اسم من علی است.","man ham khubam. esm-e man Ali ast.","وأنا بخير أيضاً. اسمي علي."],["خوشبختم. اسم من سارا است.","khoshbakhtam. esm-e man Sārā ast.","تشرفت بمعرفتك. اسمي سارا."],["شما اهل کجا هستید؟","shomā ahl-e kojā hastid?","من أين أنت؟"],["من اهل ایران هستم. شما چطور؟","man ahl-e irān hastam. shomā chetor?","أنا من إيران. وأنت؟"],["من عربی هستم.","man arabi hastam.","أنا عربي."]]},
@@ -507,7 +516,6 @@ return '<div class="fbk ok"><div style="display:flex;justify-content:center;alig
 var t=TRYM[Math.floor(m*TRYM.length)],p=TRYP[Math.floor(m*TRYP.length)];
 return '<div class="fbk no"><div>'+t+'</div><div class="fa" style="font-size:20px;margin-top:4px">'+p[0]+'</div><div style="opacity:.85;font-size:14px">'+p[2]+' · <span style="direction:ltr;display:inline-block">'+p[1]+'</span></div>'+(note?'<div style="font-size:14px;margin-top:4px">سنعيد هذا السؤال لاحقاً لتتقنه 🔁</div>':'')+'</div>'}
 
-function audBox(){return '<div class="det"><b>🔊 اختبار الصوت</b><p class="mu">اضغط لتسمع كلمة «سلام» وتعرف أي صوت يعمل على جهازك.</p><button class="btn alt" onclick="testAudio()">اختبر الصوت</button><div id="aud" style="margin-top:10px;text-align:start;line-height:1.9"></div></div>'}
 function testAudio(){var t=LES[0].w[0][0],o=document.getElementById('aud'),done=false,file=!!S.packOk;
 say(t);
 function fin(){if(done)return;done=true;var v=[];try{v=speechSynthesis.getVoices().filter(function(x){return /^fa/i.test(x.lang)})}catch(e){}
@@ -654,7 +662,10 @@ function firstWin(){if(S.xp>0||S.fw)return '';
 return '<div class="det" style="border-color:var(--ac)"><div class="mu">🌹 أول جملة لك بالفارسية، في ١٠ ثوانٍ!</div><div class="fa" style="font-size:28px;margin-top:6px">سلام! حال شما چطور است؟</div><div class="tr" style="font-size:15px">salām! hāl-e shomā chetor ast?</div><div class="ar" style="font-size:18px">مرحباً! كيف حالك؟</div><div class="btns"><button class="spk" style="flex:none" aria-label="استمع" onclick="say(\'سلام! حال شما چطور است؟\')">🔊</button><button class="btn" onclick="fwDone()">تعلّمتها! +١٠ نقاط</button></div></div>'}
 function fwDone(){S.fw=1;gain(10);render()}
 function badgeBox(){var n=0;BD.forEach(function(b){if(S.bd&&S.bd[b.id])n++});
-return '<div class="det"><b>🏅 إنجازاتي ('+n+' من '+BD.length+')</b><div class="bdg">'+BD.map(function(b){var u=S.bd&&S.bd[b.id];return'<div class="'+(u?'':'lk')+'"><i>'+b.i+'</i><b>'+b.n+'</b><div class="mu" style="font-size:11px">'+b.d+'</div></div>'}).join('')+'</div></div>'}
+// Earned badges first; only the first six are shown until the learner asks for all of them.
+var got=BD.filter(function(b){return S.bd&&S.bd[b.id]}),rest=BD.filter(function(b){return !(S.bd&&S.bd[b.id])}),list=got.concat(rest),shown=BDALL?list:list.slice(0,6);
+return '<div class="det"><b>🏅 إنجازاتي ('+n+' من '+BD.length+')</b><div class="bdg">'+shown.map(function(b){var u=S.bd&&S.bd[b.id];return'<div class="'+(u?'':'lk')+'"><i>'+b.i+'</i><b>'+b.n+'</b><div class="mu" style="font-size:11px">'+b.d+'</div></div>'}).join('')+'</div>'+(list.length>6?'<div class="btns"><button class="btn alt" onclick="BDALL=!BDALL;render()">'+(BDALL?'عرض أقل':'عرض كل الإنجازات ('+BD.length+')')+'</button></div>':'')+'</div>'}
+var BDALL=false;
 
 var AR={
 'رفتن':['ذهب',0,0,'ذهب',0,0,'اذهب','اذهبوا'],
@@ -862,7 +873,7 @@ function bkFile(){try{var a=document.createElement('a');a.href=URL.createObjectU
 function bkCheck(t){if(t===undefined)t=document.getElementById('bki').value;var o=bkRead(t);if(!o){toast('هذا الرمز غير صحيح، تأكد أنك نسخته كاملاً');return}BK={o:o,t:String(t).replace(/[<>&"]/g,'')};render()}
 function bkLoad(inp){var f=inp.files&&inp.files[0];if(!f)return;var r=new FileReader();r.onload=function(){bkCheck(String(r.result))};r.onerror=function(){toast('تعذّرت قراءة الملف')};r.readAsText(f)}
 function bkApply(){var o=BK&&BK.o;if(!o)return;o.prem=S.prem;o.rem=S.rem;o.remDay=S.remDay;S=o;S.srs=S.srs||{};S.xp=S.xp||0;S.st=S.st||0;S.last=S.last||'';if(S.v!==2){try{migrateV2()}catch(e){}S.v=2}resetVolatile();BK=null;save();render();toast('✅ استُعيد تقدّمك')}
-function settingsBox(){return'<div class="det" style="text-align:start"><b>⚙️ الإعدادات</b><div class="btns"><button class="btn alt" onclick="S.sfx=S.sfx===0?1:0;save();render();sfx(\'ok\')">'+(S.sfx===0?'🔇 الأصوات والاهتزاز: متوقفة':'🔊 الأصوات والاهتزاز: تعمل')+'</button></div><div class="btns"><button class="btn alt" onclick="shareProg()">📣 شارك تقدّمك مع أصدقائك</button></div></div>'}
+function settingsBox(){return'<div class="det" style="text-align:start"><b>⚙️ عام</b><div class="btns"><button class="btn alt" onclick="S.sfx=S.sfx===0?1:0;save();render();sfx(\'ok\')">'+(S.sfx===0?'🔇 الأصوات والاهتزاز: متوقفة':'🔊 الأصوات والاهتزاز: تعمل')+'</button></div><div class="btns"><button class="btn alt" onclick="testAudio()">🔈 اختبر الصوت</button><button class="btn alt" onclick="shareProg()">📣 شارك تقدّمك</button></div><div id="aud" style="margin-top:8px;line-height:1.9"></div></div>'}
 function shareProg(){var l=lvl(S.xp),t='أتعلّم الفارسية مع تطبيق «الفارسية من الصفر» 🌹\nالمستوى '+(l+1)+' ('+LT[Math.min(l,LT.length-1)]+') · '+cnt(S.srs)+' كلمة · سلسلة '+(S.st||0)+' أيام 🔥\nجرّبه معي!';
 try{if(navigator.share){navigator.share({text:t}).catch(function(){});return}if(navigator.clipboard){navigator.clipboard.writeText(t).then(function(){toast('نُسخ النص، الصقه حيث تشاء')},function(){toast(t)});return}}catch(e){}toast('انسخ هذا النص: '+t)}
 function weekBox(){var dn=dayNo(Date.now()),nm=['ح','ن','ث','ر','خ','ج','س'],xs=[],mx=1,i,tot=0;
