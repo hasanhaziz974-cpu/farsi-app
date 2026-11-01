@@ -193,6 +193,8 @@ def trials(account, project, keep):
     call('PUT', f'{kv}/values/admins', keep[:1])  # the first line of ACCESS_LIST can open /admin
 
     proj = call('GET', f'/accounts/{account}/pages/projects/{project}')
+    bc = proj.get('build_config') or {}
+    print(f"Pages build: command={bc.get('build_command')!r}, output={bc.get('destination_dir')!r}, root={bc.get('root_dir')!r}")
     configs = proj.get('deployment_configs') or {}
     bound = ((configs.get('production') or {}).get('kv_namespaces') or {}).get('TRIALS', {}).get('namespace_id')
     if bound != ns['id']:
