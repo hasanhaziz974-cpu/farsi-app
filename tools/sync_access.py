@@ -26,10 +26,10 @@ GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET, when set, add "Sign in with Google" n
 emailed code. Until they are set, the script prints the redirect URI to give Google.
 
 LOGIN_HEADER and LOGIN_FOOTER, when set, are shown on the Cloudflare sign-in page where
-visitors type their email.
+visitors type their email. LOGIN_FOOTER_GOOGLE replaces the footer once Google sign-in is on.
 
 Env: CF_API_TOKEN, CF_ACCOUNT_ID, ACCESS_LIST, ACCESS_POLICY_NAME (default "Farsi group"),
-ACCESS_APP_DOMAIN, PUBLIC_PATHS, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, TRIAL_PAGES_PROJECT, LOGIN_HEADER, LOGIN_FOOTER.
+ACCESS_APP_DOMAIN, PUBLIC_PATHS, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, TRIAL_PAGES_PROJECT, LOGIN_HEADER, LOGIN_FOOTER, LOGIN_FOOTER_GOOGLE.
 Emails are never printed, because Actions logs of a public repository are public. For the
 same reason ACCESS_LIST must be a secret: Actions prints variables passed to a step.
 """
@@ -138,9 +138,11 @@ def main():
         protect(account, domain, policy, bool(project))
         public(account, domain, (os.environ.get('PUBLIC_PATHS') or '').split())
 
-    google(account, domain)
+    google_on = google(account, domain)
 
     header, footer = (os.environ.get('LOGIN_HEADER') or '').strip(), (os.environ.get('LOGIN_FOOTER') or '').strip()
+    if google_on and (os.environ.get('LOGIN_FOOTER_GOOGLE') or '').strip():
+        footer = os.environ['LOGIN_FOOTER_GOOGLE'].strip()
     if header or footer:
         try:
             login_page(account, header, footer)
@@ -250,11 +252,11 @@ def google(account, domain):
         print('Google sign-in is not set up. In Google Cloud use:')
         print(f'  Authorized JavaScript origin: https://{team}')
         print(f'  Authorized redirect URI: https://{team}/cdn-cgi/access/callback')
-        return
+        return False
     if re.search(r'\s', cid + secret) or not cid.endswith('.apps.googleusercontent.com'):
         print('::warning::GOOGLE_CLIENT_ID must end with .apps.googleusercontent.com, and neither secret may contain '
               'spaces or extra lines. Save them again; Google sign-in was not changed.')
-        return
+        return False
     idps = call('GET', f'/accounts/{account}/access/identity_providers?per_page=100')
     idp = next((i for i in idps if i.get('type') == 'google'), None)
     body = {'name': 'Google', 'type': 'google', 'config': {'client_id': cid, 'client_secret': secret}}
@@ -272,6 +274,7 @@ def google(account, domain):
                 app['allowed_idps'] = allowed + [idp['id']]
                 set_app_policies(account, app, [p['id'] for p in app.get('policies') or []])
                 print('Added Google to the sign-in options of ' + domain + '.')
+    return True
 
 
 def public(account, domain, paths):
