@@ -17,6 +17,8 @@ jobs:
           ACCESS_LIST: ${{ secrets.ACCESS_LIST }}
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          FACEBOOK_APP_ID: ${{ secrets.FACEBOOK_APP_ID }}
+          FACEBOOK_APP_SECRET: ${{ secrets.FACEBOOK_APP_SECRET }}
           ACCESS_POLICY_NAME: ${{ vars.ACCESS_POLICY_NAME }}
           ACCESS_APP_DOMAIN: parsa-farsi.pages.dev
           # Anyone may sign in and get a 7-day trial (functions/_middleware.js); remove to admit only the list.
@@ -25,5 +27,5 @@ jobs:
           # Shown on the sign-in page where visitors type their email.
           LOGIN_HEADER: 'الفارسية من الصفر: لديك أسبوع فترة تجريبية مجانية'
           LOGIN_FOOTER: 'أدخل بريدك ليصلك رمز الدخول. تبدأ فترتك التجريبية (٧ أيام) من أول دخول.'
-          LOGIN_FOOTER_GOOGLE: 'ادخل بحساب Google بضغطة واحدة، أو أدخل بريدك ليصلك رمز الدخول. تبدأ فترتك التجريبية (٧ أيام) من أول دخول.'
+          LOGIN_FOOTER_SOCIAL: 'ادخل بحساب {options} بضغطة واحدة، أو أدخل بريدك ليصلك رمز الدخول. تبدأ فترتك التجريبية (٧ أيام) من أول دخول.'
         run: python3 tools/sync_access.py
