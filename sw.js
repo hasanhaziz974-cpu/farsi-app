@@ -2,6 +2,7 @@
 // - The app page: network first, so the sign-in and trial checks in functions/_middleware.js still run
 //   whenever there is a connection. The last good copy is used only when the phone is offline.
 // - Fonts, scripts, icons and audio: cached on first use, so lessons heard once also play offline.
+// - Daily reminder: tools/send_reminders.py sends an empty push; the text is chosen here.
 const APP = 'parsa-app-v1';
 const MEDIA = 'parsa-media-v1';
 const PAGE = '/';
@@ -66,4 +67,29 @@ self.addEventListener('fetch', (e) => {
       return res;
     })());
   }
+});
+
+const REMINDERS = [
+  ['🔥 حافظ على سلسلتك', 'خمس دقائق من الفارسية اليوم تكفي. هيا نراجع!'],
+  ['📚 حان وقت درسك', 'كلماتك تنتظر المراجعة قبل أن تنساها.'],
+  ['🌷 سلام! وقت الفارسية', 'درس قصير الآن يقرّبك من المحادثة.'],
+  ['⭐ هدفك اليومي', 'أكمل هدف اليوم واجمع نقاطك.'],
+];
+
+self.addEventListener('push', (e) => {
+  const [title, body] = REMINDERS[Math.floor(Math.random() * REMINDERS.length)];
+  e.waitUntil(self.registration.showNotification(title, {
+    body, lang: 'ar', dir: 'rtl', tag: 'daily-reminder',
+    icon: '/pwa/icon-192.png', badge: '/pwa/icon-192.png',
+  }));
+});
+
+self.addEventListener('notificationclick', (e) => {
+  e.notification.close();
+  e.waitUntil((async () => {
+    const wins = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    const open = wins.find((w) => new URL(w.url).origin === self.location.origin);
+    if (open) return open.focus();
+    return self.clients.openWindow('/');
+  })());
 });

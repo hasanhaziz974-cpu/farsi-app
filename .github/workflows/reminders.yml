@@ -1,0 +1,23 @@
+name: Send daily reminders
+# Every hour: sends the daily reminder to learners whose chosen local hour has come and who have
+# not studied yet that day (tools/send_reminders.py). GitHub may start scheduled runs a little late.
+on:
+  schedule:
+    - cron: '23 * * * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install cryptography==46.0.3
+      - name: Send the reminders
+        env:
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+        run: python3 tools/send_reminders.py
