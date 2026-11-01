@@ -1,0 +1,50 @@
+name: Check APK downloads
+# Temporary diagnostic: build 15 installs on the HONOR phone, build 16 is rejected as an invalid
+# package. Compares the two APKs (artifacts and the draft release files) to find the difference.
+on:
+  push:
+    branches: [claude/project-files-review-lcyij6]
+    paths: [.github/workflows/check-apk.yml]
+permissions:
+  actions: read
+  contents: write
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REPO: ${{ github.repository }}
+    steps:
+      - name: Inspect the APKs
+        run: |
+          BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          for N in 15 16; do
+            echo "::group::Build $N"
+            RUN=$(gh api "repos/$REPO/actions/workflows/build.yml/runs?per_page=10" --jq ".workflow_runs[] | select(.run_number==$N) | .id")
+            ID=$(gh api "repos/$REPO/actions/runs/$RUN/artifacts" --jq '.artifacts[] | select(.name=="farsi-app-apk") | .id')
+            gh api "repos/$REPO/actions/artifacts/$ID/zip" > "a$N.zip"
+            mkdir -p "a$N" && unzip -o -q "a$N.zip" -d "a$N"
+            APK="a$N/farsi-app.apk"
+            ls -l "$APK"; sha256sum "$APK"
+            REL=$(gh api "repos/$REPO/releases?per_page=20" --jq ".[] | select(.tag_name==\"v1.0.$N\") | .id")
+            if [ -n "$REL" ]; then
+              gh api "repos/$REPO/releases/$REL/assets" --jq '.[] | "release asset: \(.name) \(.size) \(.content_type) \(.state)"'
+              AID=$(gh api "repos/$REPO/releases/$REL/assets" --jq '.[] | select(.name=="farsi-app.apk") | .id')
+              gh api -H "Accept: application/octet-stream" "repos/$REPO/releases/assets/$AID" > "r$N.apk"
+              ls -l "r$N.apk"; sha256sum "r$N.apk"
+            else
+              echo "no release v1.0.$N"
+            fi
+            echo "--- apk integrity"
+            unzip -tq "$APK"
+            "$BT/zipalign" -c -P 16 4 "$APK" && echo "zipalign ok"
+            "$BT/apksigner" verify --verbose --print-certs "$APK" | head -12
+            "$BT/aapt2" dump badging "$APK" | grep -E "^package|^application-label|^application-icon|^sdkVersion|^targetSdkVersion|native-code" || true
+            "$BT/aapt2" dump xmltree --file AndroidManifest.xml "$APK" > "m$N.txt"
+            unzip -lv "$APK" | awk 'NR>3 && $8 != "" {print $8, $2, $1}' | sort > "$N.list"
+            echo "entries: $(wc -l < "$N.list")"
+            echo "::endgroup::"
+          done
+          echo "::group::Manifest diff"; diff m15.txt m16.txt || true; echo "::endgroup::"
+          echo "::group::Entries that differ (name method size)"; diff 15.list 16.list | grep -v '^[<>] audio/' | head -80 || true; echo "::endgroup::"
+          echo "::group::Biggest entries in 16"; sort -k3 -n -r 16.list | head -5; echo "::endgroup::"
