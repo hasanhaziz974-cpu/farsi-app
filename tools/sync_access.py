@@ -44,7 +44,7 @@ TRIAL_POLICY_NAME = 'Trial: anyone who signs in'
 PUBLIC_POLICY_NAME = 'Public pages: no sign-in'
 KV_TITLE = 'farsi-trials'
 # What Cloudflare Pages copies into the site. Every file the web version serves must be listed here.
-BUILD_COMMAND = 'mkdir -p www && cp -r index.html bridge.js fonts audio welcome 404.html www/'
+BUILD_COMMAND = 'mkdir -p www && cp -r index.html bridge.js sw.js fonts audio welcome pwa 404.html www/'
 # How long a sign-in lasts before Cloudflare asks for the email again (its maximum is a month).
 # Access periods are enforced on every page load by functions/_middleware.js, not by this.
 SESSION = os.environ.get('ACCESS_SESSION') or '720h'

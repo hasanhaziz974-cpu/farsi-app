@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>الفارسية من الصفر</title>
+<link rel="manifest" href="/pwa/manifest.webmanifest">
+<meta name="theme-color" content="#12807F">
+<link rel="apple-touch-icon" href="/pwa/icon-192.png">
 <style>
 @font-face{font-family:'Vazirmatn';src:url(fonts/Vazirmatn-Regular.woff2) format('woff2');font-weight:400;font-style:normal;font-display:swap}
 @font-face{font-family:'Vazirmatn';src:url(fonts/Vazirmatn-SemiBold.woff2) format('woff2');font-weight:600;font-style:normal;font-display:swap}
@@ -142,7 +145,7 @@ else if(tab==="review")m.innerHTML=review();
 else m.innerHTML=me();
 window.scrollTo(0,0)}
 function known(l){return ALL.filter(function(w){return w.l===l&&S.srs[w.id]}).length}
-function home(){var fw=firstWin(),h=fw+(fw?'':heroPanel()+dailyCard()+proverbCard())+'<h2>اختر درساً</h2><p class="mu">أنهِ المراحل الخمس لكل درس بإجابات صحيحة لتفتح الدرس التالي.</p>'+packHint()+plCard()+lettersCard()+gamesCard();
+function home(){var fw=firstWin(),h=fw+(fw?'':(INST?installBox():'')+heroPanel()+dailyCard()+proverbCard())+'<h2>اختر درساً</h2><p class="mu">أنهِ المراحل الخمس لكل درس بإجابات صحيحة لتفتح الدرس التالي.</p>'+packHint()+plCard()+lettersCard()+gamesCard();
 LES.forEach(function(l,i){var k=known(i),p=sp(i)*20;
 var lk=!unlocked(i),pm=!lk&&!allowed('L',i);h+='<button class="row" style="'+(lk||pm?'opacity:.6':'')+'" onclick="'+(lk?'locked()':pm?'gate(\'L\','+i+')':'sub='+i+';render()')+'"><div style="flex:1"><div style="font-weight:600">'+(lk?'🔒 ':pm?'⭐ ':(S.pass&&S.pass[i]?'✅ ':''))+l.t+'</div><div class="mu">'+(lk?'أنهِ مراحل الدرس السابق لفتحه':pm?'Premium أو شاهد إعلاناً':l.w.length+' كلمات · '+sp(i)+' من 5 مراحل')+'</div><div class="bar"><i style="width:'+p+'%"></i></div></div><span class="mu">‹</span></button>'});
 return h+bannerSlot()}
@@ -253,7 +256,7 @@ function pickRv(k){if(RC.a!==null)return;var ok=RC.o[k].id===RC.id;snd(ok);RC.a=
 function rvNext(){RC=null;render();if(RC&&RC.mode==='aud'&&RC.a===null)say(RC.w.fa)}
 function rate(id,ok){var c=S.srs[id],b=c?c.b:0;if(ok){b=Math.min(b+1,5);S.srs[id]={b:b,d:Date.now()+[1,2,4,8,16][b-1]*DAY}}else S.srs[id]={b:1,d:Date.now()+6e4};R.show=false;RC=null;if(!ok)RSQ.push({id:id,at:RN+3});RN++;gain(ok?3:1);render();var c=ok?CHEER[Math.floor(Math.random()*CHEER.length)]:TRYP[Math.floor(Math.random()*TRYP.length)];toast(c[0]+' — '+c[2])}
 function me(){var k=Object.keys(S.srs).length,m=Object.keys(S.srs).filter(function(i){return S.srs[i].b>=4}).length;
-return '<h2>تقدّمي</h2>'+plBox()+weekBox()+badgeBox()+settingsBox()+backupBox()+premBox()+packBox()+audBox()+'<div class="det"><div class="big">'+S.xp+'</div><div class="mu">نقطة خبرة</div></div><div class="row" style="cursor:default"><span>كلمات بدأت تعلّمها</span><b>'+k+' / '+ALL.length+'</b></div><div class="row" style="cursor:default"><span>كلمات ثبتت في ذاكرتك</span><b>'+m+'</b></div><div class="row" style="cursor:default"><span>أطول سلسلة أيام</span><b>'+S.st+'</b></div><p class="mu">إن لم تسمع النطق، ثبّت صوتاً فارسياً من إعدادات تحويل النص إلى كلام في هاتفك.</p><div class="btns"><button class="btn alt" onclick="if(confirm(\'حذف كل التقدم؟\')){S={xp:0,st:0,last:\'\',srs:{},v:2,prem:S.prem};resetVolatile();save();render()}">إعادة تعيين التقدم</button></div>'}
+return '<h2>تقدّمي</h2>'+installBox()+plBox()+weekBox()+badgeBox()+settingsBox()+backupBox()+premBox()+packBox()+audBox()+'<div class="det"><div class="big">'+S.xp+'</div><div class="mu">نقطة خبرة</div></div><div class="row" style="cursor:default"><span>كلمات بدأت تعلّمها</span><b>'+k+' / '+ALL.length+'</b></div><div class="row" style="cursor:default"><span>كلمات ثبتت في ذاكرتك</span><b>'+m+'</b></div><div class="row" style="cursor:default"><span>أطول سلسلة أيام</span><b>'+S.st+'</b></div><p class="mu">إن لم تسمع النطق، ثبّت صوتاً فارسياً من إعدادات تحويل النص إلى كلام في هاتفك.</p><div class="btns"><button class="btn alt" onclick="if(confirm(\'حذف كل التقدم؟\')){S={xp:0,st:0,last:\'\',srs:{},v:2,prem:S.prem};resetVolatile();save();render()}">إعادة تعيين التقدم</button></div>'}
 
 var DLG=[
 {t:"التعارف",l:[["سلام! حال شما چطور است؟","salām! hāl-e shomā chetor ast?","مرحباً! كيف حالك؟"],["خوبم، ممنون. شما چطورید؟","khubam, mamnun. shomā chetorid?","بخير، شكراً. وأنت؟"],["من هم خوبم. اسم من علی است.","man ham khubam. esm-e man Ali ast.","وأنا بخير أيضاً. اسمي علي."],["خوشبختم. اسم من سارا است.","khoshbakhtam. esm-e man Sārā ast.","تشرفت بمعرفتك. اسمي سارا."],["شما اهل کجا هستید؟","shomā ahl-e kojā hastid?","من أين أنت؟"],["من اهل ایران هستم. شما چطور؟","man ahl-e irān hastam. shomā chetor?","أنا من إيران. وأنت؟"],["من عربی هستم.","man arabi hastam.","أنا عربي."]]},
@@ -801,6 +804,19 @@ var seq={ok:[[660,.09],[880,.13]],no:[[240,.18]],win:[[523,.1],[659,.1],[784,.1]
 seq.forEach(function(n){var o=AC.createOscillator(),g=AC.createGain();o.type=k==='no'?'triangle':'sine';o.frequency.value=n[0];g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.16,t+.01);g.gain.exponentialRampToValueAtTime(.0001,t+n[1]);o.connect(g);g.connect(AC.destination);o.start(t);o.stop(t+n[1]+.02);t+=n[1]*.9});
 if(navigator.vibrate)navigator.vibrate(k==='no'?[40]:k==='win'?[20,40,20]:[12])}catch(e){}}
 function snd(ok){sfx(ok?'ok':'no')}
+// Installing the web version as an app (Chrome's "Install app"). Not used inside the Android app.
+var INST=null;
+function webApp(){return !bkNative()&&(location.protocol==='https:'||location.hostname==='localhost')}
+function installed(){try{return matchMedia('(display-mode: standalone)').matches||navigator.standalone===true}catch(e){return false}}
+if(webApp()){
+if('serviceWorker' in navigator)window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){})});
+window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();INST=e;try{render()}catch(x){}});
+window.addEventListener('appinstalled',function(){INST=null;toast('✅ ثُبّت التطبيق، ستجده بين تطبيقات هاتفك');try{render()}catch(x){}});
+}
+function installBox(){if(!webApp()||installed())return'';
+if(INST)return'<div class="det" style="text-align:start"><b>📲 ثبّت التطبيق على هاتفك</b><p class="mu" style="margin:6px 0 0">يظهر بأيقونة بين تطبيقاتك، ويفتح بملء الشاشة، والدروس التي سمعتها تعمل دون إنترنت.</p><div class="btns"><button class="btn" onclick="doInstall()">تثبيت</button></div></div>';
+return'<div class="det" style="text-align:start"><b>📲 ثبّت التطبيق على هاتفك</b><p class="mu" style="margin:6px 0 0">في Chrome اضغط ⋮ في الأعلى ثم «تثبيت التطبيق» أو «إضافة إلى الشاشة الرئيسية». وفي iPhone من Safari: زر المشاركة ثم «إضافة إلى الشاشة الرئيسية».</p></div>'}
+function doInstall(){if(!INST)return;var e=INST;INST=null;e.prompt();e.userChoice.then(function(c){if(c&&c.outcome!=='accepted')INST=e;render()},function(){render()})}
 // Progress backup: the whole state S as a text code the learner can copy, save as a file and restore on a new phone.
 var BK=null,BKP='PARSA1:';
 function bkCode(){var o={};for(var k in S)if(k!=='prem')o[k]=S[k];return BKP+btoa(unescape(encodeURIComponent(JSON.stringify(o))))}

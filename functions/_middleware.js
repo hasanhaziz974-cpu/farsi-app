@@ -21,7 +21,7 @@ const PAGES = new Set(['/', '/index', '/index.html']);
 // Without a verified sign-in only the public pages may be served. They carry data-public on their
 // <html> tag; anything else (the app, or the app served as a fallback for an unknown path) is refused.
 // This also covers hosts Access does not cover, like a deployment's own *.pages.dev address.
-const PUBLIC = ['/welcome', '/fonts/'];
+const PUBLIC = ['/welcome', '/fonts/', '/pwa/'];
 
 async function publicOnly(request, next) {
   const url = new URL(request.url);
