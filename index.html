@@ -82,6 +82,8 @@ nav button.on{color:var(--pr);border-top-color:var(--pr)}
 .prow{display:flex;align-items:center;gap:10px;width:100%;background:none;border:0;border-top:1px solid var(--bd);padding:10px 2px;margin-top:8px;font:inherit;color:inherit;text-align:start;cursor:pointer}
 .prow.dn{opacity:.6}
 .pi{width:28px;height:28px;border-radius:50%;background:var(--bg);display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--pr);flex:none}
+.spk.star{font-size:17px}
+.spk.star.on{border-color:var(--ac)}
 .row.lkd{padding:10px 14px;margin-bottom:6px;opacity:.55;font-weight:600;justify-content:flex-start}
 .stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
 .tile{background:var(--sf);border:1px solid var(--bd);border-radius:14px;padding:12px;text-align:center}
@@ -147,7 +149,7 @@ function esc(s){return s.replace(/'/g,"&#39;")}
 var tab="home",sub=null,Q=null,R={show:false},selL=null;
 var TABS=[["home","الدروس"],["verbs","الأفعال"],["gram","قواعد"],["talk","محادثات"],["review","المراجعة"],["me","تقدّمي"]];
 function nav(){document.getElementById("nav").innerHTML=TABS.map(function(t){return '<button class="'+(t[0]===tab||(t[0]==="home"&&(tab==="letters"||tab==="games"))?"on":"")+'" onclick="go(\''+t[0]+'\')">'+t[1]+'</button>'}).join("")}
-function go(t){tab=t;BK=null;sub=null;Q=null;M=null;PL=null;RP=null;MG=null;LG=null;D=null;LQ=null;G=null;GQ=null;CV=null;CQ=null;RV=false;R.show=false;render()}
+function go(t){tab=t;BK=null;SSV=false;sub=null;Q=null;M=null;PL=null;RP=null;MG=null;LG=null;D=null;LQ=null;G=null;GQ=null;CV=null;CQ=null;RV=false;R.show=false;render()}
 function render0(){nav();top_();var m=document.getElementById("main");if(PL){m.innerHTML=plView();window.scrollTo(0,0);return}
 if(tab==="home")m.innerHTML=sub===null?home():(M?matchView():Q?quiz():lesson());
 else if(tab==="games")m.innerHTML=gamesView();
@@ -231,44 +233,44 @@ if(selL!==null){var L=LET[selL];h+='<div class="det"><div class="fa" style="font
 else h+='<p class="mu">اضغط على أي حرف لترى نطقه.</p>';
 h+='<div class="grid">';LET.forEach(function(l,i){h+='<button class="lt'+(i===selL?" sel":"")+'" onclick="selL='+i+';render()"><div class="fa">'+l[0]+'</div><div class="mu">'+l[1]+'</div></button>'});
 return h+'</div><p class="mu" style="margin-top:14px">ملاحظة: الحروف ث ص ض ط ظ ذ ح ع ق تأتي في الكلمات المأخوذة من العربية.</p>'}
-function queue(){var n=Date.now(),due=ALL.filter(function(w){return S.srs[w.id]&&S.srs[w.id].d<=n}).sort(function(a,b){return S.srs[a.id].d-S.srs[b.id].d});
+function queue(){var n=Date.now(),due=ALL.filter(function(w){return S.srs[w.id]&&S.srs[w.id].d<=n}).concat(Object.keys(S.ssr||{}).filter(function(id){return S.ssr[id].d<=n&&senById(id)}).map(senById)).sort(function(a,b){return srsOf(a.id).d-srsOf(b.id).d});
 var nw=ALL.filter(function(w){return!S.srs[w.id]&&unlocked(w.l)&&allowed('L',w.l)}).slice(0,5);return{due:due,nw:nw,q:due.concat(due.length?[]:nw)}}
 var RC=null,RSQ=[],RN=0;
 function pickNext(){var r=queue(),i;
-for(i=0;i<RSQ.length;i++){if(RSQ[i].at<=RN||!r.q.length){var id=RSQ.splice(i,1)[0].id;return{w:ALL.filter(function(x){return x.id===id})[0],retry:true}}}
+for(i=0;i<RSQ.length;i++){if(RSQ[i].at<=RN||!r.q.length){var id=RSQ.splice(i,1)[0].id;return{w:itemById(id),retry:true}}}
 return r.q.length?{w:r.q[0],retry:false}:null}
-function makeRC(p){var w=p.w,c=S.srs[w.id],b=c?c.b:0,ms=!c?['flip']:b<=1?['rec']:b===2?['aud','rev']:b===3?['rev','aud','rec']:['rec','aud','rev','flip'];
-var mode=ms[Math.floor(Math.random()*ms.length)],pool=ALL.filter(function(x){return x.l===w.l&&x.ar!==w.ar&&x.fa!==w.fa}),oth=ALL.filter(function(x){return x.l!==w.l&&x.ar!==w.ar&&x.fa!==w.fa});
+function makeRC(p){var w=p.w,c=srsOf(w.id),b=c?c.b:0,ms=!c?['flip']:b<=1?['rec']:b===2?['aud','rev']:b===3?['rev','aud','rec']:['rec','aud','rev','flip'];
+var mode=ms[Math.floor(Math.random()*ms.length)],src=w.sent?senAll():ALL,key=w.sent?'src':'l',pool=src.filter(function(x){return x[key]===w[key]&&x.ar!==w.ar&&x.fa!==w.fa}),oth=src.filter(function(x){return x[key]!==w[key]&&x.ar!==w.ar&&x.fa!==w.fa});
 var d=(b>=3?sh(pool).concat(sh(oth)):sh(oth).concat(sh(pool))).slice(0,3);
 return{id:w.id,w:w,b:b,isNew:!c,retry:p.retry,mode:mode,tr:b<=2,o:sh([w].concat(d)),a:null}}
-function srsRate(id,ok,retry){planReviewed();var c=S.srs[id],b=c?c.b:0;
-if(ok){if(retry)S.srs[id]={b:Math.max(1,b),d:Date.now()+DAY};else{b=Math.min(b+1,5);S.srs[id]={b:b,d:Date.now()+[1,2,4,8,16][b-1]*DAY}}}else S.srs[id]={b:1,d:Date.now()+6e4};
+function srsRate(id,ok,retry){planReviewed();var c=srsOf(id),b=c?c.b:0;
+if(ok){if(retry)srsPut(id,{b:Math.max(1,b),d:Date.now()+DAY});else{b=Math.min(b+1,5);srsPut(id,{b:b,d:Date.now()+[1,2,4,8,16][b-1]*DAY})}}else srsPut(id,{b:1,d:Date.now()+6e4});
 gain(ok?3:1)}
-function review(){var h='<h2>المراجعة اليومية</h2>';
+function review(){if(SSV)return savedView();var nss=Object.keys(S.ss||{}).filter(senById).length,h='<div class="rowf"><h2>المراجعة اليومية</h2>'+(nss?'<button class="back" onclick="SSV=true;render()">⭐ جملي ('+nss+')</button>':'')+'</div>';
 if(!RC){var p=pickNext();if(!p)return h+'<div class="det"><div class="big">✓</div><p>لا توجد كلمات مستحقة الآن. عد لاحقاً أو ابدأ درساً جديداً.</p></div>';RC=makeRC(p);R.show=false}
 var w=RC.w,rv=RC.a!==null,left=queue().q.length+RSQ.length,
 lab={flip:'تذكّر المعنى',rec:'اختر المعنى',aud:'استمع واختر المعنى',rev:'اختر الكلمة الفارسية'}[RC.mode],
 sk='<button class="spk" style="margin:10px 0" aria-label="استمع" onclick="say(\''+esc(w.fa)+'\')">🔊</button>';
-h+='<p class="mu">'+(RC.isNew?'كلمة جديدة · ':'')+(RC.retry?'🔁 إعادة · ':'')+lab+' · متبقٍ '+cw(left,'بطاقات','بطاقة')+'</p>';
-if(RC.mode==='flip'){h+='<div class="card"><div class="fa">'+w.fa+'</div>'+sk;
+var big=w.sent?24:42;h+='<p class="mu">'+(w.sent?'⭐ جملة محفوظة · ':RC.isNew?'كلمة جديدة · ':'')+(RC.retry?'🔁 إعادة · ':'')+lab+' · متبقٍ '+cw(left,'بطاقات','بطاقة')+'</p>';
+if(RC.mode==='flip'){h+='<div class="card"><div class="fa"'+(w.sent?' style="font-size:26px"':'')+'>'+w.fa+'</div>'+sk;
 if(R.show)h+='<div class="tr">'+w.tr+'</div><div class="ar">'+w.ar+'</div>';else h+='<div class="mu">فكّر في المعنى ثم اكشفه</div>';
 h+='</div>';
 if(!R.show)h+='<div class="btns"><button class="btn" onclick="R.show=true;render()">اكشف المعنى</button></div>';
 else h+='<div class="btns"><button class="btn no" onclick="rate(\''+w.id+'\',0)">لم أعرفها</button><button class="btn ok" onclick="rate(\''+w.id+'\',1)">عرفتها</button></div>';
 return h}
 h+='<div class="det">';
-if(RC.mode==='rec')h+='<div class="fa" style="font-size:42px">'+w.fa+'</div>'+((RC.tr||rv)?'<div class="tr">'+w.tr+'</div>':'')+sk;
-else if(RC.mode==='aud')h+=rv?'<div class="fa" style="font-size:36px">'+w.fa+'</div><div class="tr">'+w.tr+'</div>'+sk:'<p class="mu">استمع ثم اختر المعنى</p><button class="spk" style="width:72px;height:72px;font-size:32px" aria-label="استمع" onclick="say(\''+esc(w.fa)+'\')">🔊</button>';
-else h+='<p class="mu">كيف تقولها بالفارسية؟</p><div class="ar" style="font-size:30px">'+w.ar+'</div>';
+if(RC.mode==='rec')h+='<div class="fa" style="font-size:'+big+'px">'+w.fa+'</div>'+((RC.tr||rv)?'<div class="tr">'+w.tr+'</div>':'')+sk;
+else if(RC.mode==='aud')h+=rv?'<div class="fa" style="font-size:'+(w.sent?22:36)+'px">'+w.fa+'</div><div class="tr">'+w.tr+'</div>'+sk:'<p class="mu">استمع ثم اختر المعنى</p><button class="spk" style="width:72px;height:72px;font-size:32px" aria-label="استمع" onclick="say(\''+esc(w.fa)+'\')">🔊</button>';
+else h+='<p class="mu">كيف تقولها بالفارسية؟</p><div class="ar" style="font-size:'+(w.sent?22:30)+'px">'+w.ar+'</div>';
 h+='</div>';
 RC.o.forEach(function(o,k){var c='opt';if(rv){if(o.id===RC.id)c+=' good';else if(k===RC.a)c+=' bad'}
-var lb=RC.mode==='rev'?'<span class="fa" style="font-size:24px">'+o.fa+'</span>'+(rv?'<br><span style="font-size:13px;opacity:.85;direction:ltr;display:inline-block">'+o.tr+'</span>':''):o.ar;
+var lb=RC.mode==='rev'?'<span class="fa" style="font-size:'+(w.sent?18:24)+'px">'+o.fa+'</span>'+(rv?'<br><span style="font-size:13px;opacity:.85;direction:ltr;display:inline-block">'+o.tr+'</span>':''):o.ar;
 h+='<button class="'+c+'" '+(rv?'disabled':'')+' onclick="pickRv('+k+')">'+lb+'</button>'});
 if(rv)h+=fb(RC.o[RC.a].id===RC.id,RC,0)+'<div class="btns"><button class="btn" onclick="rvNext()">التالي</button></div>';
 return h}
 function pickRv(k){if(RC.a!==null)return;var ok=RC.o[k].id===RC.id;snd(ok);RC.a=k;RC.m=Math.random();STK=ok?STK+1:0;RC.s=STK;srsRate(RC.id,ok,RC.retry);if(!ok)RSQ.push({id:RC.id,at:RN+3});RN++;render();if(RC.mode==='rev')say(RC.w.fa)}
 function rvNext(){RC=null;render();if(RC&&RC.mode==='aud'&&RC.a===null)say(RC.w.fa)}
-function rate(id,ok){planReviewed();var c=S.srs[id],b=c?c.b:0;if(ok){b=Math.min(b+1,5);S.srs[id]={b:b,d:Date.now()+[1,2,4,8,16][b-1]*DAY}}else S.srs[id]={b:1,d:Date.now()+6e4};R.show=false;RC=null;if(!ok)RSQ.push({id:id,at:RN+3});RN++;gain(ok?3:1);render();var c=ok?CHEER[Math.floor(Math.random()*CHEER.length)]:TRYP[Math.floor(Math.random()*TRYP.length)];toast(c[0]+' — '+c[2])}
+function rate(id,ok){planReviewed();var c=srsOf(id),b=c?c.b:0;if(ok){b=Math.min(b+1,5);srsPut(id,{b:b,d:Date.now()+[1,2,4,8,16][b-1]*DAY})}else srsPut(id,{b:1,d:Date.now()+6e4});R.show=false;RC=null;if(!ok)RSQ.push({id:id,at:RN+3});RN++;gain(ok?3:1);render();var c=ok?CHEER[Math.floor(Math.random()*CHEER.length)]:TRYP[Math.floor(Math.random()*TRYP.length)];toast(c[0]+' — '+c[2])}
 function me(){var k=Object.keys(S.srs).length,m=Object.keys(S.srs).filter(function(i){return S.srs[i].b>=4}).length,live=S.last===ds(Date.now())||S.last===ds(Date.now()-DAY);
 function tile(ic,v,t){return '<div class="tile"><div class="tv">'+ic+' '+v+'</div><div class="mu">'+t+'</div></div>'}
 return '<h2>تقدّمي</h2><div class="stats">'+tile('🔥',live?S.st:0,'أيام متتالية')+tile('📚',k+' من '+ALL.length,'كلمات بدأتها')+tile('🧠',m,'كلمات ثبتت في ذاكرتك')+tile('🏆',S.dgn||0,'أهداف يومية حققتها')+'</div>'
@@ -292,8 +294,8 @@ if(RV&&D!==null)return reading();
 if(D===null){h='<h2>محادثات قصيرة</h2><p class="mu">استمع للمحادثة ثم جرّب تمرين الاستماع. تُفتح كل محادثة بعد اجتياز تمرين الاستماع في التي قبلها. 📖 النسبة: كم تعرف من كلمات الدروس فيها، وترتفع كلما تعلّمت.</p>';
 DLG.forEach(function(d,i){var lk=i>0&&!(S.dp&&S.dp[i-1]),pm=!lk&&!allowed('D',i);var cv=dCov(i);if(lk){h+='<button class="row lkd" onclick="lockD()">🔒 '+d.t+(cv.n?'<span class="mu" style="margin-inline-start:auto">📖 '+cv.p+'%</span>':'')+'</button>';return}h+='<button class="row" style="'+(pm?'opacity:.6':'')+'" onclick="'+(pm?'gate(\'D\','+i+')':'D='+i+';render()')+'"><div><div style="font-weight:600">'+(lk?'🔒 ':pm?'⭐ ':(S.dp&&S.dp[i]?'✅ ':''))+d.t+'</div><div class="mu">'+(lk?'اجتز تمرين الاستماع السابق لفتحها':pm?'Premium أو شاهد إعلاناً':cw(d.l.length,'جمل','جملة')+(cv.n?' · 📖 تعرف '+cv.p+'% من كلماتها':''))+'</div></div><span class="mu">‹</span></button>'});return h+bannerSlot()}
 var d=DLG[D];
-h='<button class="back" onclick="D=null;render()">› رجوع</button><h2>'+d.t+'</h2><div class="btns" style="margin:0 0 10px"><button class="btn" onclick="playAll()">▶ استمع</button><button class="btn alt" onclick="startLQ()">'+(S.sv&&S.sv['D'+D]?'↻ متابعة تمرين الاستماع':'تمرين استماع')+'</button></div><div class="btns" style="margin:0 0 10px"><button class="btn alt" onclick="RV=true;RQ=null;render()">📖 اقرأ نصاً قصيراً'+(S.rd&&S.rd[D]?' ✅':'')+'</button></div><div class="btns" style="margin:0 0 10px"><button class="btn alt" onclick="rpChoose()">🎭 مثّل الحوار'+(S.rpd&&S.rpd[D]?' ✅':'')+'</button></div>'+covBox(D)+'<button class="back" onclick="TR=!TR;render()">'+(TR?'إخفاء':'إظهار')+' الترجمة</button><div style="margin-top:8px">';
-d.l.forEach(function(l,i){h+='<div class="bub'+(i%2?' b':'')+'"><div style="flex:1"><div class="fa" style="font-size:22px">'+l[0]+'</div>'+(TR?'<div class="tr" style="font-size:14px">'+l[1]+'</div><div class="mu">'+l[2]+'</div>':'')+'</div><button class="spk" aria-label="استمع" onclick="say(\''+esc(l[0])+'\')">🔊</button></div>'});
+h='<button class="back" onclick="D=null;render()">› رجوع</button><h2>'+d.t+'</h2><div class="btns" style="margin:0 0 10px"><button class="btn" onclick="playAll()">▶ استمع</button><button class="btn alt" onclick="startLQ()">'+(S.sv&&S.sv['D'+D]?'↻ متابعة تمرين الاستماع':'تمرين استماع')+'</button></div><div class="btns" style="margin:0 0 10px"><button class="btn alt" onclick="RV=true;RQ=null;render()">📖 اقرأ نصاً قصيراً'+(S.rd&&S.rd[D]?' ✅':'')+'</button></div><div class="btns" style="margin:0 0 10px"><button class="btn alt" onclick="rpChoose()">🎭 مثّل الحوار'+(S.rpd&&S.rpd[D]?' ✅':'')+'</button></div>'+covBox(D)+ssHint()+'<button class="back" onclick="TR=!TR;render()">'+(TR?'إخفاء':'إظهار')+' الترجمة</button><div style="margin-top:8px">';
+d.l.forEach(function(l,i){h+='<div class="bub'+(i%2?' b':'')+'"><div style="flex:1"><div class="fa" style="font-size:22px">'+l[0]+'</div>'+(TR?'<div class="tr" style="font-size:14px">'+l[1]+'</div><div class="mu">'+l[2]+'</div>':'')+'</div><div style="display:flex;flex-direction:column;gap:6px"><button class="spk" aria-label="استمع" onclick="say(\''+esc(l[0])+'\')">🔊</button>'+star(l[0])+'</div></div>'});
 return h+'</div>'}
 function playAll(){var ls=DLG[D].l,i=0;(function n(){if(i>=ls.length)return;say(ls[i++][0],n)})()}
 function startLQ(fresh){if(fresh)lClear();if(!fresh&&lLoad()){render();var rq=LQ.qs[LQ.i];if(rq&&rq.a===null)say(rq.l[0]);return}var all=[];DLG.forEach(function(x){x.l.forEach(function(l){all.push(l)})});
@@ -305,7 +307,7 @@ var q=LQ.qs[LQ.i];
 if(LQ.resumed)h+='<div class="mu" style="margin:4px 0">↻ تابعت من حيث توقفت. <button class="back" style="font-size:14px" onclick="startLQ(true)">ابدأ التمرين من جديد</button></div>';
 h+='<p class="mu">'+(q.r?'🔁 إعادة سؤال أخطأت فيه':'الاستماع '+(LQ.i+1)+' من '+LQ.n)+'</p><div class="det"><button class="spk" style="width:72px;height:72px;font-size:32px" aria-label="استمع" onclick="say(\''+esc(q.l[0])+'\')">🔊</button><p class="mu">ماذا سمعت؟ اختر المعنى</p>'+(q.a!==null?'<div class="fa" style="font-size:24px">'+q.l[0]+'</div><div class="tr" style="font-size:16px">'+q.l[1]+'</div>':'')+'</div>';
 q.o.forEach(function(o,k){var c='opt';if(q.a!==null){if(o[2]===q.l[2])c+=' good';else if(o[2]===q.a)c+=' bad'}h+='<button class="'+c+'" '+(q.a!==null?'disabled':'')+' onclick="pickL('+k+')">'+o[2]+'</button>'});
-if(q.a!==null)h+=fb(q.a===q.l[2],q,1)+'<div class="btns"><button class="btn" onclick="nextL()">'+(LQ.i===LQ.qs.length-1?'النتيجة':'التالي')+'</button></div>';
+if(q.a!==null)h+=fb(q.a===q.l[2],q,1)+(q.a!==q.l[2]?'<div class="btns"><button class="btn alt" onclick="ssTog(\''+senId(q.l[0])+'\')">'+(S.ss&&S.ss[senId(q.l[0])]?'⭐ محفوظة في مراجعتك':'☆ احفظ هذه الجملة لمراجعتها')+'</button></div>':'')+'<div class="btns"><button class="btn" onclick="nextL()">'+(LQ.i===LQ.qs.length-1?'النتيجة':'التالي')+'</button></div>';
 return h}
 function pickL(k){var q=LQ.qs[LQ.i];if(q.a!==null)return;q.a=q.o[k][2];q.m=Math.random();snd(q.a===q.l[2]);STK=q.a===q.l[2]?STK+1:0;q.s=STK;if(q.a===q.l[2]){if(!q.r)LQ.sc++}else LQ.qs.push({l:q.l,o:sh(q.o),a:null,r:true});lSave();render()}
 function nextL(){if(LQ.i===LQ.qs.length-1){LQ.fin=true;S.dp=S.dp||{};S.dp[D]=true;save();gain(LQ.sc*10);quizDone();lClear()}else{LQ.i++;lSave()}render();if(!LQ.fin)say(LQ.qs[LQ.i].l[0])}
@@ -510,7 +512,7 @@ var RD=[{"s": [["اسم من علی است.", "esm-e man Ali ast.", "اسمي ع
 var RV=false,RQ=null;
 function reading(){var t=RD[D],d=DLG[D];
 var h='<button class="back" onclick="RV=false;render()">› رجوع للمحادثة</button><h2>📖 نص قصير: '+d.t+'</h2><div class="btns" style="margin:0 0 10px"><button class="btn" onclick="playText()">▶ استمع للنص</button><button class="btn alt" onclick="TR=!TR;render()">'+(TR?'إخفاء':'إظهار')+' الترجمة</button></div><div class="det" style="text-align:start">';
-t.s.forEach(function(l){h+='<div style="display:flex;gap:8px;align-items:center;margin-bottom:12px"><div style="flex:1"><div class="fa" style="font-size:22px">'+l[0]+'</div>'+(TR?'<div class="tr" style="font-size:14px">'+l[1]+'</div><div class="mu">'+l[2]+'</div>':'')+'</div><button class="spk" aria-label="استمع" onclick="say(\''+esc(l[0])+'\')">🔊</button></div>'});
+t.s.forEach(function(l){h+='<div style="display:flex;gap:8px;align-items:center;margin-bottom:12px"><div style="flex:1"><div class="fa" style="font-size:22px">'+l[0]+'</div>'+(TR?'<div class="tr" style="font-size:14px">'+l[1]+'</div><div class="mu">'+l[2]+'</div>':'')+'</div><div style="display:flex;flex-direction:column;gap:6px"><button class="spk" aria-label="استمع" onclick="say(\''+esc(l[0])+'\')">🔊</button>'+star(l[0])+'</div></div>'});
 h+='</div><h2>اختبر فهمك</h2><div class="det" style="text-align:start"><b>'+t.q+'</b></div>';
 if(!RQ)RQ={a:null};
 t.o.forEach(function(o,k){var c='opt';if(RQ.a!==null){if(k===t.a)c+=' good';else if(k===RQ.a)c+=' bad'}h+='<button class="'+c+'" '+(RQ.a!==null?'disabled':'')+' onclick="pickR('+k+')">'+o+'</button>'});
@@ -880,14 +882,36 @@ function planCheck(){var p=S.plan;if(!p||p.ok||p.d!==ds(Date.now())||!p.it.lengt
 function planReviewed(){if(S.plan&&S.plan.d===ds(Date.now()))S.plan.rv=(S.plan.rv||0)+1}
 
 // Weekly summary: progress counts are snapshotted once a day and compared with the oldest of the last 7 days.
-function snapTake(){var dn=dayNo(Date.now());S.snap=S.snap||{};if(!S.snap[dn])S.snap[dn]={w:cnt(S.srs),g:cnt(S.gp),d:cnt(S.dp),c:cnt(S.cov)};Object.keys(S.snap).forEach(function(k){if(+k<dn-14)delete S.snap[k]})}
+function snapTake(){var dn=dayNo(Date.now());S.snap=S.snap||{};if(!S.snap[dn])S.snap[dn]={w:cnt(S.srs),g:cnt(S.gp),d:cnt(S.dp),c:cnt(S.cov),s:cnt(S.ss)};Object.keys(S.snap).forEach(function(k){if(+k<dn-14)delete S.snap[k]})}
 function weekSum(){var dn=dayNo(Date.now()),b=null,i;for(i=6;i>=0&&!b;i--)b=S.snap&&S.snap[dn-i];if(!b)return'';
 var w=cnt(S.srs)-b.w,g=cnt(S.gp)-b.g,d=cnt(S.dp)-b.d,c=cnt(S.cov),dc=c-b.c,ls=[];
-if(w>0)ls.push('📚 +'+cw(w,'كلمات جديدة','كلمة جديدة'));if(g>0)ls.push('✍️ +'+cw(g,'قواعد','قاعدة'));if(d>0)ls.push('💬 +'+cw(d,'محادثات','محادثة'));
+if(w>0)ls.push('📚 +'+cw(w,'كلمات جديدة','كلمة جديدة'));if(g>0)ls.push('✍️ +'+cw(g,'قواعد','قاعدة'));if(d>0)ls.push('💬 +'+cw(d,'محادثات','محادثة'));var sv=cnt(S.ss)-(b.s||0);if(sv>0)ls.push('⭐ +'+cw(sv,'جمل محفوظة','جملة محفوظة'));
 var h='<div class="det" style="text-align:start"><b>🗓️ أسبوعك</b>';
 h+=ls.length?'<div style="margin-top:6px;line-height:2">'+ls.join('<br>')+'</div>':'<div class="mu" style="margin-top:6px">ابدأ أسبوعك بدرس قصير، وستظهر هنا إنجازاتك.</div>';
 if(c)h+='<div style="margin-top:6px">📖 تعرف أغلب كلمات '+cw(c,'محادثات','محادثة','محادثتين')+' من 20'+(dc>0?' <b style="color:var(--ok)">(+'+dc+' هذا الأسبوع)</b>':'')+'</div>';
 return h+'</div>'}
+
+// ---- Saved sentences: from conversations, reading texts and listening mistakes into the daily review ----
+// S.ss[id] = day saved; S.ssr[id] = {b,d} review state, kept apart from S.srs so word counts stay words.
+// id = 's' + hash of the Persian sentence; the text comes from the conversations and readings.
+var SEN=null,SSV=false;
+function senAll(){if(SEN)return SEN.list;SEN={by:{},list:[]};function add(l,src){var id='s'+hs(l[0]);if(SEN.by[id])return;var o={id:id,fa:l[0],tr:l[1],ar:l[2],l:-1,sent:true,src:src};SEN.by[id]=o;SEN.list.push(o)}
+DLG.forEach(function(d,i){d.l.forEach(function(l){add(l,'D'+i)})});RD.forEach(function(r,i){r.s.forEach(function(l){add(l,'R'+i)})});return SEN.list}
+function senById(id){senAll();return SEN.by[id]||null}
+function senId(fa){return's'+hs(fa)}
+function isSent(id){return id.charAt(0)==='s'}
+function srsOf(id){return isSent(id)?(S.ssr||{})[id]:S.srs[id]}
+function srsPut(id,v){if(isSent(id)){S.ssr=S.ssr||{};S.ssr[id]=v}else S.srs[id]=v}
+function itemById(id){return isSent(id)?senById(id):ALL.filter(function(x){return x.id===id})[0]}
+function senSrc(o){var i=+o.src.slice(1);return(o.src.charAt(0)==='D'?'محادثة':'نص')+' «'+DLG[i].t+'»'}
+function ssTog(id){S.ss=S.ss||{};S.ssr=S.ssr||{};if(S.ss[id]){delete S.ss[id];delete S.ssr[id];toast('أُزيلت الجملة من مراجعتك')}else{S.ss[id]=dayNo(Date.now());S.ssr[id]={b:1,d:Date.now()};toast('⭐ حُفظت الجملة، ستظهر في مراجعتك اليومية')}save();render()}
+function star(fa){var id=senId(fa),on=!!(S.ss&&S.ss[id]);return'<button class="spk star'+(on?' on':'')+'" aria-label="'+(on?'إزالة الجملة من المراجعة':'احفظ الجملة للمراجعة')+'" onclick="ssTog(\''+id+'\')">'+(on?'⭐':'☆')+'</button>'}
+function ssHint(){return cnt(S.ss)?'':'<p class="mu">☆ اضغط النجمة بجانب أي جملة لتحفظها، فتظهر لك في المراجعة اليومية مع كلماتك.</p>'}
+function savedView(){var ids=Object.keys(S.ss||{}).filter(senById).sort(function(a,b){return S.ss[b]-S.ss[a]}),h='<button class="back" onclick="SSV=false;render()">› رجوع للمراجعة</button><h2>⭐ جملي المحفوظة ('+ids.length+')</h2>';
+if(!ids.length)return h+'<div class="det"><p>لم تحفظ جملاً بعد.</p><p class="mu">اضغط ☆ بجانب أي جملة في المحادثات أو نصوص القراءة، أو بعد خطأ في تمرين الاستماع.</p></div>';
+h+='<p class="mu">تظهر في مراجعتك اليومية مع كلماتك. اضغط ⭐ لإزالة جملة.</p>';
+ids.forEach(function(id){var o=senById(id),r=srsOf(id)||{};h+='<div class="row" style="cursor:default"><div style="flex:1"><div class="fa" style="font-size:20px">'+o.fa+'</div><div class="tr" style="font-size:13px">'+o.tr+'</div><div class="mu">'+o.ar+'</div><div class="mu" style="font-size:12px">من '+senSrc(o)+(r.b>=4?' · ثبتت في ذاكرتك 🧠':'')+'</div></div><div style="display:flex;flex-direction:column;gap:6px"><button class="spk" aria-label="استمع" onclick="say(\''+esc(o.fa)+'\')">🔊</button>'+star(o.fa)+'</div></div>'});
+return h}
 
 // Installing the web version as an app (Chrome's "Install app"). Not used inside the Android app.
 var INST=null;
