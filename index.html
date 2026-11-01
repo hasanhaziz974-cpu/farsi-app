@@ -76,6 +76,12 @@ nav button.on{color:var(--pr);border-top-color:var(--pr)}
 .srch{width:100%;padding:12px;border:1.5px solid var(--bd);border-radius:12px;background:var(--sf);color:var(--tx);font:inherit}
 :focus-visible{outline:3px solid var(--ac);outline-offset:2px}
 .big{font-size:40px;font-weight:800;color:var(--pr)}
+.chip{display:inline-block;margin-block-start:6px;margin-inline-end:6px;padding:6px 12px;border-radius:999px;border:1px solid var(--pr);background:transparent;color:var(--pr);font:inherit;font-size:14px;cursor:pointer}
+.chip.off{border-color:var(--bd);color:var(--mu)}
+.links{margin:0 0 12px}
+.prow{display:flex;align-items:center;gap:10px;width:100%;background:none;border:0;border-top:1px solid var(--bd);padding:10px 2px;margin-top:8px;font:inherit;color:inherit;text-align:start;cursor:pointer}
+.prow.dn{opacity:.6}
+.pi{width:28px;height:28px;border-radius:50%;background:var(--bg);display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--pr);flex:none}
 .row.lkd{padding:10px 14px;margin-bottom:6px;opacity:.55;font-weight:600;justify-content:flex-start}
 .stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
 .tile{background:var(--sf);border:1px solid var(--bd);border-radius:14px;padding:12px;text-align:center}
@@ -124,6 +130,7 @@ var dg=S.dg;if(!dg||dg.d!==t)dg=S.dg={d:t,x:0,ok:0};dg.x+=n;var dn=dayNo(Date.no
 var ms=[];if(hit)ms.push('🏆 حققت هدفك اليومي! +10 نقاط');var nl=lvl(S.xp);if(nl>ol)ms.push('🎉 ارتقيت إلى المستوى '+(nl+1)+': '+LT[Math.min(nl,LT.length-1)]);
 if(nd&&MS.indexOf(S.st)>=0)ms.push('🔥 '+cw(S.st,'أيام','يوماً','يومان')+' متتالية، استمر!');
 chk().forEach(function(b){ms.push('🏅 إنجاز جديد: '+b.n)});
+covNew().forEach(function(i){ms.push('📖 صرت تعرف أغلب كلمات محادثة «'+DLG[i].t+'»، جرّبها!')});
 save();top_();try{remStudied()}catch(e){}if(ms.length)celebrate(ms)}
 function top_(){var live=S.last===ds(Date.now())||S.last===ds(Date.now()-DAY);document.getElementById("st").innerHTML="🔥 <b>"+(live?S.st:0)+"</b> يوم";document.getElementById("xp").innerHTML="⭐ <b>"+S.xp+"</b>"}
 var AU=null;
@@ -152,7 +159,7 @@ else if(tab==="review")m.innerHTML=review();
 else m.innerHTML=me();
 window.scrollTo(0,0)}
 function known(l){return ALL.filter(function(w){return w.l===l&&S.srs[w.id]}).length}
-function home(){var fw=firstWin(),h=fw+(fw?'':(INST?installBox():'')+heroPanel()+dailyCard()+proverbCard())+'<h2>اختر درساً</h2><p class="mu">أنهِ المراحل الخمس لكل درس بإجابات صحيحة لتفتح الدرس التالي.</p>'+packHint()+plCard()+lettersCard()+gamesCard();
+function home(){var fw=firstWin(),h=fw+(fw?'':(INST?installBox():'')+heroPanel()+planCard()+proverbCard())+'<h2>اختر درساً</h2><p class="mu">أنهِ المراحل الخمس لكل درس بإجابات صحيحة لتفتح الدرس التالي.</p>'+packHint()+plCard()+lettersCard()+gamesCard();
 LES.forEach(function(l,i){var k=known(i),p=sp(i)*20;
 var lk=!unlocked(i),pm=!lk&&!allowed('L',i);if(lk){h+='<button class="row lkd" onclick="locked()">🔒 '+l.t+'</button>';return}h+='<button class="row" style="'+(pm?'opacity:.6':'')+'" onclick="'+(pm?'gate(\'L\','+i+')':'sub='+i+';render()')+'"><div style="flex:1"><div style="font-weight:600">'+(lk?'🔒 ':pm?'⭐ ':(S.pass&&S.pass[i]?'✅ ':''))+l.t+'</div><div class="mu">'+(lk?'أنهِ مراحل الدرس السابق لفتحه':pm?'Premium أو شاهد إعلاناً':cw(l.w.length,'كلمات','كلمة')+' · '+sp(i)+' من 5 مراحل')+'</div><div class="bar"><i style="width:'+p+'%"></i></div></div><span class="mu">‹</span></button>'});
 return h+bannerSlot()}
@@ -164,7 +171,7 @@ var STG=[
 {t:'الاختبار النهائي',d:'أسئلة مختلطة من كل الأنواع، وبها يُفتح الدرس التالي'}];
 function sp(l){return S.pass&&S.pass[l]?5:Math.min(4,(S.sg&&S.sg[l])||0)}
 function goLesson(i){if(allowed('L',i)){sub=i;render()}else{sub=null;render();gate('L',i)}}
-function lesson(){var l=LES[sub],c=sp(sub),h='<button class="back" onclick="sub=null;render()">› رجوع</button><h2>'+l.t+'</h2><p class="mu">5 مراحل من الأسهل إلى الأصعب. أنهِ كل مرحلة بإجابات صحيحة لتفتح التي بعدها.</p>';
+function lesson(){var l=LES[sub],c=sp(sub),h='<button class="back" onclick="sub=null;render()">› رجوع</button><h2>'+l.t+'</h2><p class="mu">5 مراحل من الأسهل إلى الأصعب. أنهِ كل مرحلة بإجابات صحيحة لتفتح التي بعدها.</p>'+linksHtml('مرتبط بهذا الدرس:',[],[LINK[sub][0]],LINK[sub][1]);
 STG.forEach(function(g,i){var lk=i>c,dn=i<c;h+='<button class="row" style="'+(lk?'opacity:.55':'')+'" onclick="'+(lk?'toast(\'أنهِ المرحلة السابقة أولاً\')':'startStage('+sub+','+i+')')+'"><div style="flex:1"><div style="font-weight:600">'+(lk?'🔒 ':dn?'✅ ':'▶️ ')+'المرحلة '+(i+1)+': '+g.t+'</div><div class="mu">'+g.d+'</div>'+(!lk&&S.sv&&S.sv[sub+'-'+i]?'<div class="mu" style="color:var(--pr);font-weight:600">↻ متابعة'+(S.sv[sub+'-'+i].t==='q'?': سؤال '+Math.min(S.sv[sub+'-'+i].i+1,S.sv[sub+'-'+i].n)+' من '+S.sv[sub+'-'+i].n:' (لعبة المطابقة)')+'</div>':'')+'</div><span class="mu">‹</span></button>'});
 h+='<h2>كلمات الدرس</h2>';
 l.w.forEach(function(w){h+='<div class="row" style="cursor:default"><div><div class="fa">'+w[0]+'</div><div class="tr" style="font-size:16px">'+w[1]+'</div><div class="mu">'+w[2]+'</div></div><button class="spk" aria-label="استمع" onclick="say(\''+esc(w[0])+'\')">🔊</button></div>'});
@@ -186,7 +193,7 @@ if(sc===n)S.pf=1;if(Q.daily){S.dc=ds(Date.now());S.dcn=(S.dcn||0)+1}gain(Q.sc*10
 Q.qs.forEach(function(q){var c=q.a===q.w.id;if(c&&!S.srs[q.w.id])S.srs[q.w.id]={b:1,d:Date.now()+DAY};if(!c)S.srs[q.w.id]={b:1,d:Date.now()}});
 if(!Q.daily){S.sg=S.sg||{};S.sg[Q.l]=Math.max(S.sg[Q.l]||0,Q.g+1);if(last){S.pass=S.pass||{};S.pass[Q.l]=true}}save();
 if(sc===n)S.pf=1;var msg=(sc<n?'أحسنت، صحّحت كل أخطائك! ':'ممتاز! ')+(last?(nx&&!was?'فُتح الدرس التالي.':'أنهيت الدرس!'):'فُتحت المرحلة '+(Q.g+2)+'.');
-Q.res='<div class="det" style="margin-top:20px"><div class="big">'+sc+' من '+n+'</div><p>'+msg+'</p><p class="mu">حصلت على '+cw(sc*10,'نقاط','نقطة')+'</p></div><div class="btns"><button class="btn alt" onclick="Q=null;render()">للدرس</button>'+(last?(nx?'<button class="btn" onclick="Q=null;goLesson('+(Q.l+1)+')">الدرس التالي</button>':''):'<button class="btn" onclick="startStage('+Q.l+','+(Q.g+1)+')">المرحلة التالية</button>')+'</div>';
+Q.res='<div class="det" style="margin-top:20px"><div class="big">'+sc+' من '+n+'</div><p>'+msg+'</p><p class="mu">حصلت على '+cw(sc*10,'نقاط','نقطة')+'</p>'+(last?linksHtml('💡 طبّق ما تعلّمته:',[],[LINK[Q.l][0]],LINK[Q.l][1]):'')+'</div><div class="btns"><button class="btn alt" onclick="Q=null;render()">للدرس</button>'+(last?(nx?'<button class="btn" onclick="Q=null;goLesson('+(Q.l+1)+')">الدرس التالي</button>':''):'<button class="btn" onclick="startStage('+Q.l+','+(Q.g+1)+')">المرحلة التالية</button>')+'</div>';
 if(Q.daily)Q.res='<div class="det" style="margin-top:20px"><div class="big">'+sc+' من '+n+'</div><p>'+(sc<n?'أحسنت، صحّحت كل أخطائك! ':'ممتاز! ')+'أنجزت تحدّي اليوم ⚡ ومعك +20 نقطة مكافأة.</p><p class="mu">حصلت على '+cw((sc*10+20),'نقاط','نقطة')+'</p></div><div class="btns"><button class="btn" onclick="Q=null;sub=null;render()">للرئيسية</button></div>';
 Q.done=2;return h+Q.res}
 var q=Q.qs[Q.i],rv=q.a!==null,w=q.w;
@@ -234,7 +241,7 @@ function makeRC(p){var w=p.w,c=S.srs[w.id],b=c?c.b:0,ms=!c?['flip']:b<=1?['rec']
 var mode=ms[Math.floor(Math.random()*ms.length)],pool=ALL.filter(function(x){return x.l===w.l&&x.ar!==w.ar&&x.fa!==w.fa}),oth=ALL.filter(function(x){return x.l!==w.l&&x.ar!==w.ar&&x.fa!==w.fa});
 var d=(b>=3?sh(pool).concat(sh(oth)):sh(oth).concat(sh(pool))).slice(0,3);
 return{id:w.id,w:w,b:b,isNew:!c,retry:p.retry,mode:mode,tr:b<=2,o:sh([w].concat(d)),a:null}}
-function srsRate(id,ok,retry){var c=S.srs[id],b=c?c.b:0;
+function srsRate(id,ok,retry){planReviewed();var c=S.srs[id],b=c?c.b:0;
 if(ok){if(retry)S.srs[id]={b:Math.max(1,b),d:Date.now()+DAY};else{b=Math.min(b+1,5);S.srs[id]={b:b,d:Date.now()+[1,2,4,8,16][b-1]*DAY}}}else S.srs[id]={b:1,d:Date.now()+6e4};
 gain(ok?3:1)}
 function review(){var h='<h2>المراجعة اليومية</h2>';
@@ -261,11 +268,11 @@ if(rv)h+=fb(RC.o[RC.a].id===RC.id,RC,0)+'<div class="btns"><button class="btn" o
 return h}
 function pickRv(k){if(RC.a!==null)return;var ok=RC.o[k].id===RC.id;snd(ok);RC.a=k;RC.m=Math.random();STK=ok?STK+1:0;RC.s=STK;srsRate(RC.id,ok,RC.retry);if(!ok)RSQ.push({id:RC.id,at:RN+3});RN++;render();if(RC.mode==='rev')say(RC.w.fa)}
 function rvNext(){RC=null;render();if(RC&&RC.mode==='aud'&&RC.a===null)say(RC.w.fa)}
-function rate(id,ok){var c=S.srs[id],b=c?c.b:0;if(ok){b=Math.min(b+1,5);S.srs[id]={b:b,d:Date.now()+[1,2,4,8,16][b-1]*DAY}}else S.srs[id]={b:1,d:Date.now()+6e4};R.show=false;RC=null;if(!ok)RSQ.push({id:id,at:RN+3});RN++;gain(ok?3:1);render();var c=ok?CHEER[Math.floor(Math.random()*CHEER.length)]:TRYP[Math.floor(Math.random()*TRYP.length)];toast(c[0]+' — '+c[2])}
+function rate(id,ok){planReviewed();var c=S.srs[id],b=c?c.b:0;if(ok){b=Math.min(b+1,5);S.srs[id]={b:b,d:Date.now()+[1,2,4,8,16][b-1]*DAY}}else S.srs[id]={b:1,d:Date.now()+6e4};R.show=false;RC=null;if(!ok)RSQ.push({id:id,at:RN+3});RN++;gain(ok?3:1);render();var c=ok?CHEER[Math.floor(Math.random()*CHEER.length)]:TRYP[Math.floor(Math.random()*TRYP.length)];toast(c[0]+' — '+c[2])}
 function me(){var k=Object.keys(S.srs).length,m=Object.keys(S.srs).filter(function(i){return S.srs[i].b>=4}).length,live=S.last===ds(Date.now())||S.last===ds(Date.now()-DAY);
 function tile(ic,v,t){return '<div class="tile"><div class="tv">'+ic+' '+v+'</div><div class="mu">'+t+'</div></div>'}
 return '<h2>تقدّمي</h2><div class="stats">'+tile('🔥',live?S.st:0,'أيام متتالية')+tile('📚',k+' من '+ALL.length,'كلمات بدأتها')+tile('🧠',m,'كلمات ثبتت في ذاكرتك')+tile('🏆',S.dgn||0,'أهداف يومية حققتها')+'</div>'
-+weekBox()+plBox()+badgeBox()+premBox()
++weekSum()+weekBox()+plBox()+badgeBox()+premBox()
 +'<h2>الإعدادات</h2>'+reminderBox()+backupBox()+settingsBox()+installBox()+packBox()
 +'<div style="text-align:center;margin:4px 0 8px"><button class="lnk-no" onclick="resetAll()">إعادة تعيين التقدّم</button></div>'}
 function resetAll(){if(!confirm('سيُحذف كل تقدّمك في هذا الجهاز ولا يمكن التراجع. هل أنت متأكد؟'))return;S={xp:0,st:0,last:'',srs:{},v:2,prem:S.prem,rem:S.rem,remDay:S.remDay,sfx:S.sfx};resetVolatile();save();render();top_()}
@@ -282,10 +289,10 @@ function talk(){var h;
 if(RP)return rpView();
 if(LQ)return lq();
 if(RV&&D!==null)return reading();
-if(D===null){h='<h2>محادثات قصيرة</h2><p class="mu">استمع للمحادثة ثم جرّب تمرين الاستماع. تُفتح كل محادثة بعد اجتياز تمرين الاستماع في التي قبلها.</p>';
-DLG.forEach(function(d,i){var lk=i>0&&!(S.dp&&S.dp[i-1]),pm=!lk&&!allowed('D',i);if(lk){h+='<button class="row lkd" onclick="lockD()">🔒 '+d.t+'</button>';return}h+='<button class="row" style="'+(pm?'opacity:.6':'')+'" onclick="'+(pm?'gate(\'D\','+i+')':'D='+i+';render()')+'"><div><div style="font-weight:600">'+(lk?'🔒 ':pm?'⭐ ':(S.dp&&S.dp[i]?'✅ ':''))+d.t+'</div><div class="mu">'+(lk?'اجتز تمرين الاستماع السابق لفتحها':pm?'Premium أو شاهد إعلاناً':cw(d.l.length,'جمل','جملة'))+'</div></div><span class="mu">‹</span></button>'});return h+bannerSlot()}
+if(D===null){h='<h2>محادثات قصيرة</h2><p class="mu">استمع للمحادثة ثم جرّب تمرين الاستماع. تُفتح كل محادثة بعد اجتياز تمرين الاستماع في التي قبلها. 📖 النسبة: كم تعرف من كلمات الدروس فيها، وترتفع كلما تعلّمت.</p>';
+DLG.forEach(function(d,i){var lk=i>0&&!(S.dp&&S.dp[i-1]),pm=!lk&&!allowed('D',i);var cv=dCov(i);if(lk){h+='<button class="row lkd" onclick="lockD()">🔒 '+d.t+(cv.n?'<span class="mu" style="margin-inline-start:auto">📖 '+cv.p+'%</span>':'')+'</button>';return}h+='<button class="row" style="'+(pm?'opacity:.6':'')+'" onclick="'+(pm?'gate(\'D\','+i+')':'D='+i+';render()')+'"><div><div style="font-weight:600">'+(lk?'🔒 ':pm?'⭐ ':(S.dp&&S.dp[i]?'✅ ':''))+d.t+'</div><div class="mu">'+(lk?'اجتز تمرين الاستماع السابق لفتحها':pm?'Premium أو شاهد إعلاناً':cw(d.l.length,'جمل','جملة')+(cv.n?' · 📖 تعرف '+cv.p+'% من كلماتها':''))+'</div></div><span class="mu">‹</span></button>'});return h+bannerSlot()}
 var d=DLG[D];
-h='<button class="back" onclick="D=null;render()">› رجوع</button><h2>'+d.t+'</h2><div class="btns" style="margin:0 0 10px"><button class="btn" onclick="playAll()">▶ استمع</button><button class="btn alt" onclick="startLQ()">'+(S.sv&&S.sv['D'+D]?'↻ متابعة تمرين الاستماع':'تمرين استماع')+'</button></div><div class="btns" style="margin:0 0 10px"><button class="btn alt" onclick="RV=true;RQ=null;render()">📖 اقرأ نصاً قصيراً'+(S.rd&&S.rd[D]?' ✅':'')+'</button></div><div class="btns" style="margin:0 0 10px"><button class="btn alt" onclick="rpChoose()">🎭 مثّل الحوار'+(S.rpd&&S.rpd[D]?' ✅':'')+'</button></div><button class="back" onclick="TR=!TR;render()">'+(TR?'إخفاء':'إظهار')+' الترجمة</button><div style="margin-top:8px">';
+h='<button class="back" onclick="D=null;render()">› رجوع</button><h2>'+d.t+'</h2><div class="btns" style="margin:0 0 10px"><button class="btn" onclick="playAll()">▶ استمع</button><button class="btn alt" onclick="startLQ()">'+(S.sv&&S.sv['D'+D]?'↻ متابعة تمرين الاستماع':'تمرين استماع')+'</button></div><div class="btns" style="margin:0 0 10px"><button class="btn alt" onclick="RV=true;RQ=null;render()">📖 اقرأ نصاً قصيراً'+(S.rd&&S.rd[D]?' ✅':'')+'</button></div><div class="btns" style="margin:0 0 10px"><button class="btn alt" onclick="rpChoose()">🎭 مثّل الحوار'+(S.rpd&&S.rpd[D]?' ✅':'')+'</button></div>'+covBox(D)+'<button class="back" onclick="TR=!TR;render()">'+(TR?'إخفاء':'إظهار')+' الترجمة</button><div style="margin-top:8px">';
 d.l.forEach(function(l,i){h+='<div class="bub'+(i%2?' b':'')+'"><div style="flex:1"><div class="fa" style="font-size:22px">'+l[0]+'</div>'+(TR?'<div class="tr" style="font-size:14px">'+l[1]+'</div><div class="mu">'+l[2]+'</div>':'')+'</div><button class="spk" aria-label="استمع" onclick="say(\''+esc(l[0])+'\')">🔊</button></div>'});
 return h+'</div>'}
 function playAll(){var ls=DLG[D].l,i=0;(function n(){if(i>=ls.length)return;say(ls[i++][0],n)})()}
@@ -321,7 +328,7 @@ if(GQ)return gq();
 if(G===null){h='<h2>قواعد مبسطة</h2><p class="mu">قاعدة قصيرة في كل درس مع أمثلة تسمعها. تُفتح كل قاعدة بعد اجتياز تمرين التي قبلها.</p>'+(S.gp&&S.gp[6]?'':'<p class="mu">💡 بعد إنهاء تمارين القواعد السبع الأولى يُفتح تبويب «الأفعال».</p>');
 GR.forEach(function(g,i){var lk=i>0&&!(S.gp&&S.gp[i-1]),pm=!lk&&!allowed('G',i);if(lk){h+='<button class="row lkd" onclick="lockG()">🔒 '+g.t+'</button>';return}h+='<button class="row" style="'+(pm?'opacity:.6':'')+'" onclick="'+(pm?'gate(\'G\','+i+')':'G='+i+';render()')+'"><div><div style="font-weight:600">'+(lk?'🔒 ':pm?'⭐ ':(S.gp&&S.gp[i]?'✅ ':'▶️ '))+g.t+'</div><div class="mu">'+(lk?'اجتز تمرين القاعدة السابقة لفتحها':pm?'Premium أو شاهد إعلاناً':g.s)+'</div></div><span class="mu">‹</span></button>'});if(GR.every(function(g,i){return S.gp&&S.gp[i]}))h+='<div class="btns"><button class="btn alt" onclick="startGQ()">تمرين شامل على كل القواعد</button></div>';else h+='<p class="mu">🔒 التمرين الشامل يُفتح بعد اجتياز تمارين كل القواعد.</p>';return h+bannerSlot()}
 var g=GR[G];
-h='<button class="back" onclick="G=null;render()">› رجوع</button><h2>'+g.t+'</h2><div class="det" style="text-align:start;line-height:1.9">'+g.n+'</div><h2>أمثلة</h2>';
+var gl=lesFor('g',G);h='<button class="back" onclick="G=null;render()">› رجوع</button><h2>'+g.t+'</h2><div class="det" style="text-align:start;line-height:1.9">'+g.n+'</div>'+linksHtml('تراها في:',gl,[],uniq([].concat.apply([],gl.map(function(l){return LINK[l][1]}))).slice(0,3))+'<h2>أمثلة</h2>';
 g.e.forEach(function(w){h+='<div class="row" style="cursor:default"><div><div class="fa" style="font-size:24px">'+w[0]+'</div><div class="tr" style="font-size:15px">'+w[1]+'</div><div class="mu">'+w[2]+'</div></div><button class="spk" aria-label="استمع" onclick="say(\''+esc(w[0])+'\')">🔊</button></div>'});
 h+='<div class="btns"><button class="btn" onclick="startGQ()">'+(S.sv&&S.sv['G'+G]?'↻ متابعة التمرين ('+Math.min(S.sv['G'+G].i+1,S.sv['G'+G].n)+' من '+S.sv['G'+G].n+')':'تمرين على هذه القاعدة')+'</button></div><div class="btns">'+(G>0?'<button class="btn alt" onclick="G--;render()">السابقة</button>':'')+(G<GR.length-1?'<button class="btn" onclick="nextRule()">القاعدة التالية</button>':'<button class="btn" onclick="G=null;render()">كل القواعد</button>')+'</div>';
 return h}
@@ -658,7 +665,7 @@ if(!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches))
 for(var i=0;i<38;i++){var e=document.createElement('i');e.style.left=Math.random()*100+'%';e.style.background=cl[i%5];e.style.animationDelay=Math.random()*.5+'s';e.style.animationDuration=(1.6+Math.random()*1.3)+'s';c.appendChild(e)}document.body.appendChild(c);setTimeout(function(){c.remove()},3400)}
 setTimeout(function(){d.remove()},3600)}catch(e){}}
 function heroPanel(){var l=lvl(S.xp),cur=LV[l],nx=LV[l+1],pc=nx?Math.round((S.xp-cur)/(nx-cur)*100):100,t=ds(Date.now()),dg=S.dg&&S.dg.d===t?S.dg:{x:0,ok:0},gp=Math.min(100,Math.round(dg.x/GOAL*100)),due=queue().due.length;
-return '<div class="det" style="text-align:start">'+streakLine()+'<div class="rowf"><div><div class="mu">مستواك</div><div style="font-size:19px;font-weight:800">المستوى '+(l+1)+' · '+LT[Math.min(l,LT.length-1)]+'</div></div><div class="ring" style="--p:'+gp+'"><b>'+(dg.ok?'✓':dg.x)+'</b></div></div><div class="bar"><i style="width:'+pc+'%"></i></div><div class="mu" style="margin-top:4px">'+(nx?cw(nx-S.xp,'نقاط','نقطة')+' للمستوى التالي':'وصلت لأعلى مستوى 👑')+' · هدف اليوم '+Math.min(dg.x,GOAL)+' من '+GOAL+(dg.ok?' ✅':'')+'</div>'+stepBtn()+(due?'<button class="btn alt" style="margin-top:10px;width:100%;padding:8px" onclick="go(\'review\')">🔁 '+cw(due,'كلمات','كلمة')+' تنتظر مراجعتك</button>':'')+'</div>'}
+return '<div class="det" style="text-align:start">'+streakLine()+'<div class="rowf"><div><div class="mu">مستواك</div><div style="font-size:19px;font-weight:800">المستوى '+(l+1)+' · '+LT[Math.min(l,LT.length-1)]+'</div></div><div class="ring" style="--p:'+gp+'"><b>'+(dg.ok?'✓':dg.x)+'</b></div></div><div class="bar"><i style="width:'+pc+'%"></i></div><div class="mu" style="margin-top:4px">'+(nx?cw(nx-S.xp,'نقاط','نقطة')+' للمستوى التالي':'وصلت لأعلى مستوى 👑')+' · هدف اليوم '+Math.min(dg.x,GOAL)+' من '+GOAL+(dg.ok?' ✅':'')+'</div></div>'}
 function proverbCard(){var p=PRV[dayNo(Date.now())%PRV.length];
 return '<div class="det" style="text-align:start"><div class="mu">🌹 حكمة اليوم</div><div style="display:flex;gap:10px;align-items:center;margin-top:4px"><div style="flex:1"><div class="fa" style="font-size:21px">'+p[0]+'</div><div class="tr" style="font-size:13px">'+p[1]+'</div><div class="mu">'+p[2]+'</div></div><button class="spk" aria-label="استمع" onclick="say(\''+esc(p[0])+'\')">🔊</button></div></div>'}
 function firstWin(){if(S.xp>0||S.fw)return '';
@@ -810,7 +817,7 @@ function lgNext(){if(LG.i===LG.qs.length-1){LG.fin=true;LG.xp=LG.sc*(LG.mode==='
 function dayNo(t){return Math.floor((t-new Date(t).getTimezoneOffset()*60000)/DAY)}
 function resetVolatile(){Q=null;M=null;PL=null;RP=null;MG=null;LG=null;GQ=null;LQ=null;CQ=null;RC=null;RSQ=[];RQ=null;RV=false;sub=null;D=null;G=null;CV=null}
 function rescue(){try{resetVolatile();tab='home';render()}catch(e){location.reload()}}
-function render(){try{render0()}catch(e){try{console.error(e);document.getElementById('main').innerHTML='<div class="det"><div class="big">⚠️</div><p>حدث خطأ غير متوقع، وتقدّمك محفوظ.</p><div class="btns"><button class="btn" onclick="rescue()">العودة للرئيسية</button></div></div>'}catch(x){}}}
+function render(){try{planCheck()}catch(e){}try{render0()}catch(e){try{console.error(e);document.getElementById('main').innerHTML='<div class="det"><div class="big">⚠️</div><p>حدث خطأ غير متوقع، وتقدّمك محفوظ.</p><div class="btns"><button class="btn" onclick="rescue()">العودة للرئيسية</button></div></div>'}catch(x){}}}
 window.onerror=function(){try{toast('حدث خطأ بسيط، حاول مرة أخرى')}catch(e){}return false};
 var AC=null;
 function sfx(k){try{if(S.sfx===0)return;if(!AC){var C=window.AudioContext||window.webkitAudioContext;if(!C)return;AC=new C()}if(AC.state==='suspended')AC.resume();
@@ -818,6 +825,70 @@ var seq={ok:[[660,.09],[880,.13]],no:[[240,.18]],win:[[523,.1],[659,.1],[784,.1]
 seq.forEach(function(n){var o=AC.createOscillator(),g=AC.createGain();o.type=k==='no'?'triangle':'sine';o.frequency.value=n[0];g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.16,t+.01);g.gain.exponentialRampToValueAtTime(.0001,t+n[1]);o.connect(g);g.connect(AC.destination);o.start(t);o.stop(t+n[1]+.02);t+=n[1]*.9});
 if(navigator.vibrate)navigator.vibrate(k==='no'?[40]:k==='win'?[20,40,20]:[12])}catch(e){}}
 function snd(ok){sfx(ok?'ok':'no')}
+// ---- How the sections support each other ----
+// LINK[lesson] = [grammar rule, [conversations]]: the rule that the lesson's sentences use and the
+// conversations built on its words or topic. Shown as links on lessons, rules and conversations,
+// and used to pick the "apply" step of the daily plan.
+var LINK=[[3,[0]],[2,[1,14]],[0,[8,15]],[4,[16]],[8,[6,5]],[4,[10]],[6,[18,14]],[3,[0,17,12]],[9,[5,3]],[5,[13,17]],[7,[1]],[8,[2,10,11]],[9,[3,7,13]],[5,[4,9]],[4,[18]],[9,[19,5]],[2,[2,11]]];
+function lesFor(t,i){var r=[];LINK.forEach(function(k,l){if(t==='g'?k[0]===i:k[1].indexOf(i)>=0)r.push(l)});return r}
+function dOpen(i){return(i===0||!!(S.dp&&S.dp[i-1]))&&allowed('D',i)}
+function gOpen(i){return(i===0||!!(S.gp&&S.gp[i-1]))&&allowed('G',i)}
+function openD(i){if(!dOpen(i)){lockD();return}go('talk');D=i;render();scrollTo(0,0)}
+function openG(i){if(!gOpen(i)){lockG();return}go('gram');G=i;render();scrollTo(0,0)}
+function openL(i){if(!unlocked(i)){locked();return}go('home');goLesson(i);scrollTo(0,0)}
+function chip(ic,t,on,act){return'<button class="chip'+(on?'':' off')+'" onclick="'+act+'">'+(on?ic:'🔒')+' '+t+'</button>'}
+function linksHtml(title,ls,gs,ds){var h='';ls.forEach(function(l){h+=chip('📘','درس «'+LES[l].t+'»',unlocked(l),'openL('+l+')')});gs.forEach(function(g){h+=chip('✍️','قاعدة «'+GR[g].t+'»',gOpen(g),'openG('+g+')')});ds.forEach(function(d){h+=chip('💬','محادثة «'+DLG[d].t+'»',dOpen(d),'openD('+d+')')});return h?'<div class="links"><div class="mu">'+title+'</div>'+h+'</div>':''}
+function uniq(a){return a.filter(function(x,i){return a.indexOf(x)===i})}
+
+// Word coverage of each conversation: of its words that the lessons teach, how many the learner has
+// started learning (any word in the review deck). It rises as lessons are learned.
+var VOC=null,DTOK=null;
+function ptoks(t){return t.replace(/‌/g,'').replace(/[؟?!.،,:;«»"()]/g,' ').split(/\s+/).filter(function(x){return x.length>1})}
+function pvars(x){var v=[x];if(/^(نمی|می)/.test(x)&&x.length>4)v.push(x.replace(/^(نمی|می)/,''));if(/(های|ها)$/.test(x)&&x.length>4)v.push(x.replace(/(های|ها)$/,''));return v}
+function covInit(){if(VOC)return;VOC={};ALL.forEach(function(w){ptoks(w.fa).forEach(function(t){(VOC[t]=VOC[t]||[]).push(w.id)})});DTOK=DLG.map(function(d){var o={};d.l.forEach(function(l){ptoks(l[0]).forEach(function(t){o[t]=1})});return Object.keys(o)})}
+function dCov(i){covInit();var k=0,n=0,miss={};DTOK[i].forEach(function(t){var ids=null;pvars(t).some(function(v){ids=VOC[v];return!!ids});if(!ids)return;n++;if(ids.some(function(id){return S.srs[id]}))k++;else ids.forEach(function(id){miss[+id.split('-')[0]]=1})});return{k:k,n:n,p:n?Math.round(k/n*100):0,miss:Object.keys(miss).map(Number).sort(function(a,b){return a-b})}}
+function covNew(){var out=[];S.cov=S.cov||{};DLG.forEach(function(d,i){if(S.cov[i])return;var c=dCov(i);if(c.n>=4&&c.p>=75){S.cov[i]=dayNo(Date.now());out.push(i)}});return out}
+function covBox(i){var c=dCov(i);if(!c.n)return'';var h='<div class="det" style="text-align:start"><b>📖 كلمات هذه المحادثة في دروسك: تعرف '+c.k+' من '+cw(c.n,'كلمات','كلمة')+'</b><div class="bar"><i style="width:'+c.p+'%"></i></div>';
+h+=c.miss.length?linksHtml('تعلّم الباقي في:',c.miss.slice(0,3),[],[]):'<div class="mu" style="margin-top:6px">تعرف كل كلمات الدروس فيها 👏</div>';return h+'</div>'}
+
+// Daily plan: three steps picked once a day from different sections, so each day reviews, moves the
+// current lesson on and applies it in a linked conversation or rule. Finishing all three gives +15.
+function planDone(x){var p=S.plan||{};switch(x.t){case'rv':return(p.rv||0)>=x.n;case'dc':return S.dc===ds(Date.now());case'st':return sp(x.l)>x.g;case'd':return!!(S.dp&&S.dp[x.i]);case'g':return!!(S.gp&&S.gp[x.i]);case'rd':return!!(S.rd&&S.rd[x.i]);case'rp':return!!(S.rpd&&S.rpd[x.i])}return false}
+function planApply(cur,it){var c=[],i,ls=cur===null?[]:[cur];if(cur>0)ls.push(cur-1);
+ls.forEach(function(l){LINK[l][1].forEach(function(d){c.push({t:'d',i:d,l:l})});c.push({t:'g',i:LINK[l][0],l:l})});
+for(i=0;i<DLG.length;i++)c.push({t:'d',i:i});for(i=0;i<GR.length;i++)c.push({t:'g',i:i});
+for(i=0;i<DLG.length;i++)if(S.dp&&S.dp[i]){c.push({t:'rd',i:i});c.push({t:'rp',i:i})}
+for(i=0;i<c.length;i++){var x=c[i];if(it.some(function(y){return y.t===x.t&&y.i===x.i}))continue;if(planDone(x))continue;if(x.t==='d'&&!dOpen(x.i))continue;if(x.t==='g'&&!gOpen(x.i))continue;return x}return null}
+function planMake(){var t=ds(Date.now());if(S.plan&&S.plan.d===t)return S.plan;var it=[],due=queue().due.length,ns=nextStep(),cur=ns?ns.l:LES.length-1;
+it.push(due?{t:'rv',n:Math.min(due,8)}:{t:'dc'});if(ns)it.push({t:'st',l:ns.l,g:ns.g});
+var ap=planApply(cur,it);if(ap)it.push(ap);if(!ns){ap=planApply(cur,it);if(ap)it.push(ap)}
+S.plan={d:t,it:it,rv:0,ok:0};snapTake();save();return S.plan}
+function planLabel(x){switch(x.t){
+case'rv':return['🔁 راجع '+cw(x.n,'كلمات','كلمة'),'حان موعد مراجعتها، قبل أن تنساها'];
+case'dc':return['⚡ تحدّي اليوم','6 أسئلة سريعة من كلماتك · +20 نقطة'];
+case'st':return['📘 '+LES[x.l].t+' · المرحلة '+(x.g+1),STG[x.g].t];
+case'd':var c=dCov(x.i);return['💬 محادثة «'+DLG[x.i].t+'»',(x.l!=null?'طبّق كلمات درس «'+LES[x.l].t+'»':'المحادثة التالية')+(c.n?' · تعرف '+c.p+'% من كلماتها':'')];
+case'g':return['✍️ قاعدة «'+GR[x.i].t+'»',x.l!=null?'تفيدك في درس «'+LES[x.l].t+'»':'القاعدة التالية'];
+case'rd':return['📖 اقرأ نص «'+DLG[x.i].t+'»','نص قصير بكلمات محادثة أنهيتها'];
+case'rp':return['🎭 مثّل حوار «'+DLG[x.i].t+'»','تكلّم بدورك في محادثة أنهيتها']}return['','']}
+function planGo(k){var x=S.plan.it[k];switch(x.t){case'rv':go('review');break;case'dc':startDaily();break;case'st':goStep(x.l,x.g);break;case'd':openD(x.i);break;case'g':openG(x.i);break;
+case'rd':go('talk');D=x.i;RV=true;RQ=null;render();break;case'rp':go('talk');D=x.i;render();rpChoose()}}
+function planCard(){if(!S.xp)return'';var p=planMake(),n=0,h='';p.it.forEach(function(x,k){var dn=planDone(x),lb=planLabel(x);if(dn)n++;
+h+='<button class="prow'+(dn?' dn':'')+'" onclick="planGo('+k+')"><span class="pi">'+(dn?'✓':k+1)+'</span><div style="flex:1"><div style="font-weight:600">'+lb[0]+'</div><div class="mu">'+lb[1]+'</div></div><span class="mu">‹</span></button>'});
+return'<div class="det" style="text-align:start"><div class="rowf"><b>🗓️ خطتي اليوم</b><span class="mu">'+n+' من '+p.it.length+'</span></div>'+h+(p.ok?'<div class="mu" style="margin-top:8px">🎉 أنجزت خطة اليوم! عد غداً لخطة جديدة، أو تابع بحرية من الأقسام.</div>':'')+'</div>'}
+function planCheck(){var p=S.plan;if(!p||p.ok||p.d!==ds(Date.now())||!p.it.length)return;if(!p.it.every(planDone))return;p.ok=1;gain(15);celebrate(['🗓️ أنجزت خطة اليوم! +15 نقطة'])}
+function planReviewed(){if(S.plan&&S.plan.d===ds(Date.now()))S.plan.rv=(S.plan.rv||0)+1}
+
+// Weekly summary: progress counts are snapshotted once a day and compared with the oldest of the last 7 days.
+function snapTake(){var dn=dayNo(Date.now());S.snap=S.snap||{};if(!S.snap[dn])S.snap[dn]={w:cnt(S.srs),g:cnt(S.gp),d:cnt(S.dp),c:cnt(S.cov)};Object.keys(S.snap).forEach(function(k){if(+k<dn-14)delete S.snap[k]})}
+function weekSum(){var dn=dayNo(Date.now()),b=null,i;for(i=6;i>=0&&!b;i--)b=S.snap&&S.snap[dn-i];if(!b)return'';
+var w=cnt(S.srs)-b.w,g=cnt(S.gp)-b.g,d=cnt(S.dp)-b.d,c=cnt(S.cov),dc=c-b.c,ls=[];
+if(w>0)ls.push('📚 +'+cw(w,'كلمات جديدة','كلمة جديدة'));if(g>0)ls.push('✍️ +'+cw(g,'قواعد','قاعدة'));if(d>0)ls.push('💬 +'+cw(d,'محادثات','محادثة'));
+var h='<div class="det" style="text-align:start"><b>🗓️ أسبوعك</b>';
+h+=ls.length?'<div style="margin-top:6px;line-height:2">'+ls.join('<br>')+'</div>':'<div class="mu" style="margin-top:6px">ابدأ أسبوعك بدرس قصير، وستظهر هنا إنجازاتك.</div>';
+if(c)h+='<div style="margin-top:6px">📖 تعرف أغلب كلمات '+cw(c,'محادثات','محادثة','محادثتين')+' من 20'+(dc>0?' <b style="color:var(--ok)">(+'+dc+' هذا الأسبوع)</b>':'')+'</div>';
+return h+'</div>'}
+
 // Installing the web version as an app (Chrome's "Install app"). Not used inside the Android app.
 var INST=null;
 function webApp(){return !bkNative()&&(location.protocol==='https:'||location.hostname==='localhost')}
@@ -889,9 +960,6 @@ return'<div class="mu" style="margin-bottom:8px">💤 انقطعت سلسلتك�
 function nextStep(){var sv=S.sv||{},k;for(k in sv)if(/^\d+-\d$/.test(k)){var a=k.split('-');return{l:+a[0],g:+a[1],r:1}}
 for(var l=0;l<LES.length;l++){if(!(S.pass&&S.pass[l])){if(unlocked(l)&&allowed('L',l))return{l:l,g:sp(l)};break}}return null}
 function goStep(l,g){tab='home';sub=l;startStage(l,g)}
-function stepBtn(){if(!S.xp)return'';var n=nextStep();if(!n)return'';return'<button class="btn" style="margin-top:10px;width:100%" onclick="goStep('+n.l+','+n.g+')">'+(n.r?'↻ تابع من حيث توقفت':'▶ تابع')+': '+LES[n.l].t+' · المرحلة '+(n.g+1)+'</button>'}
-function dailyCard(){if(!S.xp)return'';if(S.dc===ds(Date.now()))return'<div class="det" style="text-align:start;padding:10px 14px">⚡ تحدّي اليوم ✅ أنجزته! عد غداً لتحدٍّ جديد.</div>';
-return'<button class="row" style="border-color:var(--ac)" onclick="startDaily()"><div><div style="font-weight:600">⚡ تحدّي اليوم</div><div class="mu">6 أسئلة سريعة من كلماتك · +20 نقطة مكافأة</div></div><span class="mu">‹</span></button>'}
 function startDaily(){M=null;var pool=ALL.filter(function(w){return unlocked(w.l)&&allowed('L',w.l)}),ln=pool.filter(function(w){return S.srs[w.id]}),src=ln.length>=6?ln:pool,ws=sh(src).slice(0,6),md=['rec','aud','rev'];
 Q={l:-1,g:-1,daily:true,i:0,sc:0,n:ws.length,done:false,qs:ws.map(function(w,i){var d=sh(pool.filter(function(x){return x.ar!==w.ar&&x.fa!==w.fa})).slice(0,3);return{w:w,mode:md[i%3],o:sh([w].concat(d)),a:null}})};
 tab='home';sub=0;render();if(Q.qs[0].mode==='aud')say(Q.qs[0].w.fa)}
@@ -902,6 +970,7 @@ S.pass=mv(S.pass);S.sg=mv(S.sg);
 if(S.srs){var n={};Object.keys(S.srs).forEach(function(id){var a=id.split('-');n[up(+a[0])+'-'+a[1]]=S.srs[id]});S.srs=n}
 if(S.sv){var m={};Object.keys(S.sv).forEach(function(k){var a=/^(\d+)-(\d)$/.exec(k);if(a){if(+a[1]<8)m[k]=S.sv[k]}else m[k]=S.sv[k]});S.sv=m}
 if(S.unl){var u={};Object.keys(S.unl).forEach(function(k){var a=/^L(\d+)$/.exec(k);u[a?'L'+up(+a[1]):k]=S.unl[k]});S.unl=u}}
+if(!S.cov){S.cov={};covNew()}snapTake();
 render();
 </script>
 </body>
