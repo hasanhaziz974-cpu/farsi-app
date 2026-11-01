@@ -22,6 +22,7 @@ const PAGES = new Set(['/', '/index', '/index.html']);
 // <html> tag; anything else (the app, or the app served as a fallback for an unknown path) is refused.
 // This also covers hosts Access does not cover, like a deployment's own *.pages.dev address.
 const PUBLIC = ['/welcome', '/fonts/', '/pwa/'];
+const WELCOME = new Set(['/welcome', '/welcome/', '/welcome/index.html']);
 
 async function publicOnly(request, next) {
   const url = new URL(request.url);
@@ -40,6 +41,9 @@ async function publicOnly(request, next) {
 export async function onRequest({ request, env, next }) {
   const email = await accessEmail(request);
   if (!email) return publicOnly(request, next);
+  // The shared link is the welcome page; people already signed in go straight to the app.
+  const path = new URL(request.url).pathname;
+  if (WELCOME.has(path)) return Response.redirect(new URL('/', request.url).toString(), 302);
   if (!PAGES.has(new URL(request.url).pathname) || !env.TRIALS) return next();
 
   const allowed = (await env.TRIALS.get('allowlist', 'json')) || [];
