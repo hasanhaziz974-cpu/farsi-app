@@ -41,4 +41,9 @@ jobs:
               if [ "${out%% *}" = 200 ]; then echo "::error::$p opens without signing in"; bad=1; fi;; esac
             if grep -q 'id="main"' body.txt && [ "$p" != / ] && [ "$p" != /index.html ]; then echo "::error::$p serves the app"; bad=1; fi
           done
+          # A deployment's own address (here the branch alias) must not open the app either.
+          P=https://claude-project-files-review-lcyij6.parsa-farsi.pages.dev
+          out=$(curl -s -o body.txt -w '%{http_code} %{redirect_url}' "$P/")
+          echo "branch address / -> $out"
+          if grep -q 'id="main"' body.txt; then echo "::error::the branch address serves the app without signing in"; bad=1; fi
           exit $bad

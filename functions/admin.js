@@ -104,7 +104,7 @@ ${msg ? `<div class="msg">${esc(msg)}</div>` : ''}
 
 export async function onRequest({ request, env }) {
   const kv = env.TRIALS;
-  const email = accessEmail(request);
+  const email = await accessEmail(request);
   const admins = kv ? (await kv.get('admins', 'json')) || [] : [];
   if (!email || !admins.includes(email)) {
     return page(`<h1>هذه الصفحة للمدير فقط</h1>

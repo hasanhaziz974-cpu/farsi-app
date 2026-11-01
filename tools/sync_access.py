@@ -43,6 +43,8 @@ OLD_OPEN_POLICY_NAME = 'Open to everyone (temporary)'
 TRIAL_POLICY_NAME = 'Trial: anyone who signs in'
 PUBLIC_POLICY_NAME = 'Public pages: no sign-in'
 KV_TITLE = 'farsi-trials'
+# What Cloudflare Pages copies into the site. Every file the web version serves must be listed here.
+BUILD_COMMAND = 'mkdir -p www && cp -r index.html bridge.js fonts audio welcome 404.html www/'
 # How long a sign-in lasts before Cloudflare asks for the email again (its maximum is a month).
 # Access periods are enforced on every page load by functions/_middleware.js, not by this.
 SESSION = os.environ.get('ACCESS_SESSION') or '720h'
@@ -194,17 +196,24 @@ def trials(account, project, keep):
 
     proj = call('GET', f'/accounts/{account}/pages/projects/{project}')
     bc = proj.get('build_config') or {}
-    print(f"Pages build: command={bc.get('build_command')!r}, output={bc.get('destination_dir')!r}, root={bc.get('root_dir')!r}")
+    redeploy = False
+    if bc.get('build_command') != BUILD_COMMAND or bc.get('destination_dir') != 'www':
+        call('PATCH', f'/accounts/{account}/pages/projects/{project}',
+             {'build_config': {'build_command': BUILD_COMMAND, 'destination_dir': 'www', 'root_dir': ''}})
+        print('Updated the Pages build command: ' + BUILD_COMMAND)
+        redeploy = True
     configs = proj.get('deployment_configs') or {}
     bound = ((configs.get('production') or {}).get('kv_namespaces') or {}).get('TRIALS', {}).get('namespace_id')
     if bound != ns['id']:
         binding = {'kv_namespaces': {'TRIALS': {'namespace_id': ns['id']}}}
         call('PATCH', f'/accounts/{account}/pages/projects/{project}',
              {'deployment_configs': {'production': binding, 'preview': binding}})
+        redeploy = True
+    if redeploy:
         # 304 means Cloudflare is already building the latest commit; the next push redeploys anyway.
         started = call('POST', f'/accounts/{account}/pages/projects/{project}/deployments', allow=(304,))
-        print('Linked the trial storage to the site' +
-              (' and started a new deployment.' if started is not None else '; it takes effect with the next deployment.'))
+        print('Started a new deployment of the site.' if started is not None
+              else 'Cloudflare is already deploying; the change takes effect with that deployment.')
 
     started = len(call('GET', f'{kv}/keys?prefix=trial:&limit=1000'))
     print(f'Trial: {started} people have signed in for a trial so far.')
@@ -225,10 +234,12 @@ def protect(account, domain, policy, trial_on):
     apps = call('GET', f'/accounts/{account}/access/apps?per_page=100')
     app = next((a for a in apps if a.get('type') == 'self_hosted' and domain in app_hosts(a)), None)
     wanted = [policy['id']] + ([trial['id']] if trial_on else [])
+    # Each deployment also has its own address (<id>.<project>.pages.dev); those need signing in too.
+    wildcard = '*.' + domain
     if app is None:
         call('POST', f'/accounts/{account}/access/apps', {
             'type': 'self_hosted', 'name': domain, 'domain': domain,
-            'destinations': [{'type': 'public', 'uri': domain}],
+            'destinations': [{'type': 'public', 'uri': domain}, {'type': 'public', 'uri': wildcard}],
             'session_duration': SESSION,
             'app_launcher_visible': False,
             'policies': [{'id': i, 'precedence': n + 1} for n, i in enumerate(wanted)],
@@ -238,9 +249,15 @@ def protect(account, domain, policy, trial_on):
         managed = {policy['id']} | {p['id'] for p in (old_open, trial) if p}
         ids = [p['id'] for p in app.get('policies') or []]
         wanted += [i for i in ids if i not in managed]
-        if wanted != ids or app.get('session_duration') != SESSION:
+        missing = wildcard not in app_hosts(app)
+        if missing:
+            app['destinations'] = (app.get('destinations') or [{'type': 'public', 'uri': domain}]) + \
+                [{'type': 'public', 'uri': wildcard}]
+        if wanted != ids or app.get('session_duration') != SESSION or missing:
             app['session_duration'] = SESSION
             set_app_policies(account, app, wanted)
+            if missing:
+                print(f'Deployment addresses ({wildcard}) now need signing in too.')
 
     for p in (old_open, None if trial_on else trial):
         if p:
