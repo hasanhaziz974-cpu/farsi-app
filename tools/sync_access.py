@@ -18,11 +18,15 @@ gets a free trial counted from their first visit (enforced by functions/_middlew
 For that the script keeps a "Trial" policy on the application, a KV namespace bound to the
 Pages project as TRIALS, and the allowlist in KV, so people on ACCESS_LIST are never limited.
 
+PUBLIC_PATHS (e.g. "welcome fonts") lists paths on ACCESS_APP_DOMAIN that open without
+signing in, such as the welcome page. They get their own Access application with a bypass
+policy, which Cloudflare applies before the application protecting the whole hostname.
+
 LOGIN_HEADER and LOGIN_FOOTER, when set, are shown on the Cloudflare sign-in page where
 visitors type their email.
 
 Env: CF_API_TOKEN, CF_ACCOUNT_ID, ACCESS_LIST, ACCESS_POLICY_NAME (default "Farsi group"),
-ACCESS_APP_DOMAIN, TRIAL_PAGES_PROJECT, LOGIN_HEADER, LOGIN_FOOTER.
+ACCESS_APP_DOMAIN, PUBLIC_PATHS, TRIAL_PAGES_PROJECT, LOGIN_HEADER, LOGIN_FOOTER.
 Emails are never printed, because Actions logs of a public repository are public. For the
 same reason ACCESS_LIST must be a secret: Actions prints variables passed to a step.
 """
@@ -31,6 +35,7 @@ import datetime, json, os, re, sys, urllib.error, urllib.request
 API = os.environ.get('CF_API_BASE', 'https://api.cloudflare.com/client/v4')
 OLD_OPEN_POLICY_NAME = 'Open to everyone (temporary)'
 TRIAL_POLICY_NAME = 'Trial: anyone who signs in'
+PUBLIC_POLICY_NAME = 'Public pages: no sign-in'
 KV_TITLE = 'farsi-trials'
 # How long a sign-in lasts before Cloudflare asks for the email again (its maximum is a month).
 # Access periods are enforced on every page load by functions/_middleware.js, not by this.
@@ -128,6 +133,7 @@ def main():
     domain = (os.environ.get('ACCESS_APP_DOMAIN') or '').strip().lower()
     if domain:
         protect(account, domain, policy, bool(project))
+        public(account, domain, (os.environ.get('PUBLIC_PATHS') or '').split())
 
     header, footer = (os.environ.get('LOGIN_HEADER') or '').strip(), (os.environ.get('LOGIN_FOOTER') or '').strip()
     if header or footer:
@@ -229,6 +235,40 @@ def protect(account, domain, policy, trial_on):
             call('DELETE', f'/accounts/{account}/access/policies/{p["id"]}')
     print(f'{domain}: ' + ('anyone can sign in for a trial; the list has no limit.' if trial_on
                            else 'only the list can sign in.'))
+
+def public(account, domain, paths):
+    """Lets anyone open domain/<path> for each path, without the sign-in page."""
+    name = f'{domain} (public pages)'
+    apps = call('GET', f'/accounts/{account}/access/apps?per_page=100')
+    app = next((a for a in apps if a.get('name') == name), None)
+    pol = named_policy(account, PUBLIC_POLICY_NAME)
+    if not paths:
+        if app:
+            call('DELETE', f'/accounts/{account}/access/apps/{app["id"]}')
+            print('Removed the public pages; the whole site needs signing in again.')
+        if pol:
+            call('DELETE', f'/accounts/{account}/access/policies/{pol["id"]}')
+        return
+    if not pol:
+        pol = call('POST', f'/accounts/{account}/access/policies', {
+            'name': PUBLIC_POLICY_NAME, 'decision': 'bypass', 'include': [{'everyone': {}}]})
+    uris = [f'{domain}/{p.strip("/")}' for p in paths]
+    body = {
+        'type': 'self_hosted', 'name': name, 'domain': uris[0],
+        'destinations': [{'type': 'public', 'uri': u} for u in uris],
+        'app_launcher_visible': False,
+        'policies': [{'id': pol['id'], 'precedence': 1}],
+    }
+    current = sorted((d.get('uri') or '').lower() for d in (app or {}).get('destinations') or [])
+    if app is None:
+        call('POST', f'/accounts/{account}/access/apps', body)
+    elif current != sorted(u.lower() for u in uris) or [p['id'] for p in app.get('policies') or []] != [pol['id']]:
+        call('PUT', f'/accounts/{account}/access/apps/{app["id"]}', body)
+    else:
+        print('Public pages unchanged: ' + ', '.join('/' + p.strip('/') for p in paths))
+        return
+    print('Open without signing in: ' + ', '.join('https://' + u for u in uris))
+
 
 if __name__ == '__main__':
     main()
