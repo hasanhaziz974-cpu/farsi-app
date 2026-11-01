@@ -117,7 +117,7 @@ var dg=S.dg;if(!dg||dg.d!==t)dg=S.dg={d:t,x:0,ok:0};dg.x+=n;var dn=dayNo(Date.no
 var ms=[];if(hit)ms.push('🏆 حققت هدفك اليومي! +10 نقاط');var nl=lvl(S.xp);if(nl>ol)ms.push('🎉 ارتقيت إلى المستوى '+(nl+1)+': '+LT[Math.min(nl,LT.length-1)]);
 if(nd&&MS.indexOf(S.st)>=0)ms.push('🔥 '+S.st+' أيام متتالية، استمر!');
 chk().forEach(function(b){ms.push('🏅 إنجاز جديد: '+b.n)});
-save();top_();if(ms.length)celebrate(ms)}
+save();top_();try{remStudied()}catch(e){}if(ms.length)celebrate(ms)}
 function top_(){var live=S.last===ds(Date.now())||S.last===ds(Date.now()-DAY);document.getElementById("st").innerHTML="🔥 <b>"+(live?S.st:0)+"</b> يوم";document.getElementById("xp").innerHTML="⭐ <b>"+S.xp+"</b>"}
 var AU=null;
 function hs(t){var h=2166136261;for(var i=0;i<t.length;i++){h^=t.charCodeAt(i);h=Math.imul(h,16777619)>>>0}return h.toString(16)}
@@ -256,7 +256,7 @@ function pickRv(k){if(RC.a!==null)return;var ok=RC.o[k].id===RC.id;snd(ok);RC.a=
 function rvNext(){RC=null;render();if(RC&&RC.mode==='aud'&&RC.a===null)say(RC.w.fa)}
 function rate(id,ok){var c=S.srs[id],b=c?c.b:0;if(ok){b=Math.min(b+1,5);S.srs[id]={b:b,d:Date.now()+[1,2,4,8,16][b-1]*DAY}}else S.srs[id]={b:1,d:Date.now()+6e4};R.show=false;RC=null;if(!ok)RSQ.push({id:id,at:RN+3});RN++;gain(ok?3:1);render();var c=ok?CHEER[Math.floor(Math.random()*CHEER.length)]:TRYP[Math.floor(Math.random()*TRYP.length)];toast(c[0]+' — '+c[2])}
 function me(){var k=Object.keys(S.srs).length,m=Object.keys(S.srs).filter(function(i){return S.srs[i].b>=4}).length;
-return '<h2>تقدّمي</h2>'+installBox()+plBox()+weekBox()+badgeBox()+settingsBox()+backupBox()+premBox()+packBox()+audBox()+'<div class="det"><div class="big">'+S.xp+'</div><div class="mu">نقطة خبرة</div></div><div class="row" style="cursor:default"><span>كلمات بدأت تعلّمها</span><b>'+k+' / '+ALL.length+'</b></div><div class="row" style="cursor:default"><span>كلمات ثبتت في ذاكرتك</span><b>'+m+'</b></div><div class="row" style="cursor:default"><span>أطول سلسلة أيام</span><b>'+S.st+'</b></div><p class="mu">إن لم تسمع النطق، ثبّت صوتاً فارسياً من إعدادات تحويل النص إلى كلام في هاتفك.</p><div class="btns"><button class="btn alt" onclick="if(confirm(\'حذف كل التقدم؟\')){S={xp:0,st:0,last:\'\',srs:{},v:2,prem:S.prem};resetVolatile();save();render()}">إعادة تعيين التقدم</button></div>'}
+return '<h2>تقدّمي</h2>'+installBox()+reminderBox()+plBox()+weekBox()+badgeBox()+settingsBox()+backupBox()+premBox()+packBox()+audBox()+'<div class="det"><div class="big">'+S.xp+'</div><div class="mu">نقطة خبرة</div></div><div class="row" style="cursor:default"><span>كلمات بدأت تعلّمها</span><b>'+k+' / '+ALL.length+'</b></div><div class="row" style="cursor:default"><span>كلمات ثبتت في ذاكرتك</span><b>'+m+'</b></div><div class="row" style="cursor:default"><span>أطول سلسلة أيام</span><b>'+S.st+'</b></div><p class="mu">إن لم تسمع النطق، ثبّت صوتاً فارسياً من إعدادات تحويل النص إلى كلام في هاتفك.</p><div class="btns"><button class="btn alt" onclick="if(confirm(\'حذف كل التقدم؟\')){S={xp:0,st:0,last:\'\',srs:{},v:2,prem:S.prem};resetVolatile();save();render()}">إعادة تعيين التقدم</button></div>'}
 
 var DLG=[
 {t:"التعارف",l:[["سلام! حال شما چطور است؟","salām! hāl-e shomā chetor ast?","مرحباً! كيف حالك؟"],["خوبم، ممنون. شما چطورید؟","khubam, mamnun. shomā chetorid?","بخير، شكراً. وأنت؟"],["من هم خوبم. اسم من علی است.","man ham khubam. esm-e man Ali ast.","وأنا بخير أيضاً. اسمي علي."],["خوشبختم. اسم من سارا است.","khoshbakhtam. esm-e man Sārā ast.","تشرفت بمعرفتك. اسمي سارا."],["شما اهل کجا هستید؟","shomā ahl-e kojā hastid?","من أين أنت؟"],["من اهل ایران هستم. شما چطور؟","man ahl-e irān hastam. shomā chetor?","أنا من إيران. وأنت؟"],["من عربی هستم.","man arabi hastam.","أنا عربي."]]},
@@ -809,7 +809,9 @@ var INST=null;
 function webApp(){return !bkNative()&&(location.protocol==='https:'||location.hostname==='localhost')}
 function installed(){try{return matchMedia('(display-mode: standalone)').matches||navigator.standalone===true}catch(e){return false}}
 if(webApp()){
-if('serviceWorker' in navigator)window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){})});
+if('serviceWorker' in navigator)window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});
+// Keep the reminder switch in step with the server (e.g. after reinstalling or on a second device).
+if(remOk()&&navigator.onLine)remApi().then(function(i){var on=!!i.on,h=i.hour==null?(S.rem||{}).hour:i.hour;if(!S.rem||S.rem.on!==on||S.rem.hour!==h){S.rem={on:on,hour:h};save();if(tab==='me')render()}}).catch(function(){})});
 window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();INST=e;try{render()}catch(x){}});
 window.addEventListener('appinstalled',function(){INST=null;toast('✅ ثُبّت التطبيق، ستجده بين تطبيقات هاتفك');try{render()}catch(x){}});
 }
@@ -817,6 +819,32 @@ function installBox(){if(!webApp()||installed())return'';
 if(INST)return'<div class="det" style="text-align:start"><b>📲 ثبّت التطبيق على هاتفك</b><p class="mu" style="margin:6px 0 0">يظهر بأيقونة بين تطبيقاتك، ويفتح بملء الشاشة، والدروس التي سمعتها تعمل دون إنترنت.</p><div class="btns"><button class="btn" onclick="doInstall()">تثبيت</button></div></div>';
 return'<div class="det" style="text-align:start"><b>📲 ثبّت التطبيق على هاتفك</b><p class="mu" style="margin:6px 0 0">في Chrome اضغط ⋮ في الأعلى ثم «تثبيت التطبيق» أو «إضافة إلى الشاشة الرئيسية». وفي iPhone من Safari: زر المشاركة ثم «إضافة إلى الشاشة الرئيسية».</p></div>'}
 function doInstall(){if(!INST)return;var e=INST;INST=null;e.prompt();e.userChoice.then(function(c){if(c&&c.outcome!=='accepted')INST=e;render()},function(){render()})}
+// Daily reminder (installed web app): a push notification at the hour the learner picks, skipped on
+// days they already studied. Settings live on the server (functions/api/reminder.js); the hourly
+// sender is tools/send_reminders.py and the notification text is in sw.js.
+var REM={busy:false,err:''};
+function remOk(){return webApp()&&'serviceWorker' in navigator&&'PushManager' in window&&'Notification' in window}
+function remDay(){var d=new Date();return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2)}
+function remApi(body){return fetch('/api/reminder',body?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),credentials:'same-origin'}:{credentials:'same-origin'}).then(function(r){if(!r.ok)throw new Error('http '+r.status);return r.json()})}
+function remKey(b){b=b.replace(/-/g,'+').replace(/_/g,'/');b+='===='.slice(b.length%4||4);var r=atob(b),a=new Uint8Array(r.length);for(var i=0;i<r.length;i++)a[i]=r.charCodeAt(i);return a}
+function remHourLabel(h){var p=h<12?'صباحاً':'مساءً',x=h%12||12;return x+' '+p}
+function reminderBox(){if(!webApp())return'';var r=S.rem||{},h='<div class="det" style="text-align:start"><b>🔔 تذكير يومي</b>';
+if(!remOk()){h+='<p class="mu" style="margin:6px 0 0">'+(/iPhone|iPad/.test(navigator.userAgent)&&!installed()?'ثبّت التطبيق على الشاشة الرئيسية أولاً، ثم افتحه من أيقونته لتفعيل التذكير.':'متصفحك لا يدعم الإشعارات. استعمل Chrome، أو ثبّت التطبيق.')+'</p></div>';return h}
+var sel='<select id="remh" onchange="remSave(+this.value)" style="font:inherit;padding:8px;border-radius:10px;border:1px solid var(--bd);background:var(--sf);color:var(--tx)">';for(var i=6;i<=23;i++)sel+='<option value="'+i+'"'+(i===(r.hour==null?20:r.hour)?' selected':'')+'>'+remHourLabel(i)+'</option>';sel+='</select>';
+h+='<p class="mu" style="margin:6px 0 0">'+(r.on?'سيصلك إشعار كل يوم في الساعة '+remHourLabel(r.hour)+'، إلا إذا درست قبلها.':'إشعار واحد كل يوم في الوقت الذي تختاره، يذكّرك بالمراجعة. لا يصلك إن كنت درست ذلك اليوم.')+'</p>';
+if(REM.err)h+='<p style="margin:6px 0 0;color:var(--no)">'+REM.err+'</p>';
+h+='<div class="btns" style="align-items:center">'+sel+(r.on?'<button class="btn alt" onclick="remOff()"'+(REM.busy?' disabled':'')+'>إيقاف التذكير</button>':'<button class="btn" onclick="remSave()"'+(REM.busy?' disabled':'')+'>'+(REM.busy?'لحظة…':'تفعيل التذكير')+'</button>')+'</div></div>';return h}
+function remFail(m){REM.busy=false;REM.err=m;render()}
+function remSave(hour){var r=S.rem||{};if(hour==null){var el=document.getElementById('remh');hour=el?+el.value:20}
+if(!r.on&&arguments.length&&hour!=null){S.rem={on:false,hour:hour};save();return}
+REM.busy=true;REM.err='';render();
+Notification.requestPermission().then(function(p){if(p!=='granted')throw{m:'لم تسمح بالإشعارات. اسمح بها من إعدادات المتصفح ثم حاول مرة أخرى.'};return remApi()})
+.then(function(info){if(!info.publicKey)throw{m:'التذكير غير جاهز على الخادم بعد. حاول لاحقاً.'};return navigator.serviceWorker.ready.then(function(reg){return reg.pushManager.getSubscription().then(function(sub){return sub||reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:remKey(info.publicKey)})})})})
+.then(function(sub){return remApi({action:'save',sub:sub.toJSON(),hour:hour,tz:new Date().getTimezoneOffset()})})
+.then(function(){S.rem={on:true,hour:hour};save();REM.busy=false;render();toast('🔔 فُعّل التذكير اليومي الساعة '+remHourLabel(hour));if(S.last===ds(Date.now()))remStudied()})
+.catch(function(e){remFail(e&&e.m?e.m:'تعذّر تفعيل التذكير. تأكد من الاتصال وحاول مرة أخرى.')})}
+function remOff(){REM.busy=true;REM.err='';render();remApi({action:'off'}).then(function(){S.rem={on:false,hour:(S.rem||{}).hour};save();REM.busy=false;render();toast('أُوقف التذكير اليومي')}).catch(function(){remFail('تعذّر الإيقاف. تأكد من الاتصال وحاول مرة أخرى.')})}
+function remStudied(){if(!S.rem||!S.rem.on||!remOk())return;var d=remDay();if(S.remDay===d)return;remApi({action:'studied',day:d}).then(function(){S.remDay=d;save()}).catch(function(){})}
 // Progress backup: the whole state S as a text code the learner can copy, save as a file and restore on a new phone.
 var BK=null,BKP='PARSA1:';
 function bkCode(){var o={};for(var k in S)if(k!=='prem')o[k]=S[k];return BKP+btoa(unescape(encodeURIComponent(JSON.stringify(o))))}
@@ -833,7 +861,7 @@ function bkCopy(){var t=document.getElementById('bkt');try{if(navigator.clipboar
 function bkFile(){try{var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([bkCode()],{type:'text/plain'}));a.download='parsa-progress-'+new Date().toISOString().slice(0,10)+'.txt';document.body.appendChild(a);a.click();a.remove()}catch(e){toast('تعذّر التنزيل، انسخ الرمز بدلاً منه')}}
 function bkCheck(t){if(t===undefined)t=document.getElementById('bki').value;var o=bkRead(t);if(!o){toast('هذا الرمز غير صحيح، تأكد أنك نسخته كاملاً');return}BK={o:o,t:String(t).replace(/[<>&"]/g,'')};render()}
 function bkLoad(inp){var f=inp.files&&inp.files[0];if(!f)return;var r=new FileReader();r.onload=function(){bkCheck(String(r.result))};r.onerror=function(){toast('تعذّرت قراءة الملف')};r.readAsText(f)}
-function bkApply(){var o=BK&&BK.o;if(!o)return;o.prem=S.prem;S=o;S.srs=S.srs||{};S.xp=S.xp||0;S.st=S.st||0;S.last=S.last||'';if(S.v!==2){try{migrateV2()}catch(e){}S.v=2}resetVolatile();BK=null;save();render();toast('✅ استُعيد تقدّمك')}
+function bkApply(){var o=BK&&BK.o;if(!o)return;o.prem=S.prem;o.rem=S.rem;o.remDay=S.remDay;S=o;S.srs=S.srs||{};S.xp=S.xp||0;S.st=S.st||0;S.last=S.last||'';if(S.v!==2){try{migrateV2()}catch(e){}S.v=2}resetVolatile();BK=null;save();render();toast('✅ استُعيد تقدّمك')}
 function settingsBox(){return'<div class="det" style="text-align:start"><b>⚙️ الإعدادات</b><div class="btns"><button class="btn alt" onclick="S.sfx=S.sfx===0?1:0;save();render();sfx(\'ok\')">'+(S.sfx===0?'🔇 الأصوات والاهتزاز: متوقفة':'🔊 الأصوات والاهتزاز: تعمل')+'</button></div><div class="btns"><button class="btn alt" onclick="shareProg()">📣 شارك تقدّمك مع أصدقائك</button></div></div>'}
 function shareProg(){var l=lvl(S.xp),t='أتعلّم الفارسية مع تطبيق «الفارسية من الصفر» 🌹\nالمستوى '+(l+1)+' ('+LT[Math.min(l,LT.length-1)]+') · '+cnt(S.srs)+' كلمة · سلسلة '+(S.st||0)+' أيام 🔥\nجرّبه معي!';
 try{if(navigator.share){navigator.share({text:t}).catch(function(){});return}if(navigator.clipboard){navigator.clipboard.writeText(t).then(function(){toast('نُسخ النص، الصقه حيث تشاء')},function(){toast(t)});return}}catch(e){}toast('انسخ هذا النص: '+t)}
