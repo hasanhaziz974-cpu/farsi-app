@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-public>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>تسجيل الدخول | الفارسية من الصفر</title>
+<meta name="theme-color" content="#12807F">
+<link rel="icon" href="/pwa/icon-192.png">
+<link rel="manifest" href="/pwa/manifest.webmanifest">
+<style>
+@font-face{font-family:V;src:url(/fonts/Vazirmatn-Regular.woff2) format('woff2');font-weight:400;font-display:swap}
+@font-face{font-family:V;src:url(/fonts/Vazirmatn-ExtraBold.woff2) format('woff2');font-weight:800;font-display:swap}
+:root{--bg:#EEF4F3;--sf:#fff;--tx:#14263A;--mu:#5B7083;--pr:#12807F;--no:#C94B4B;--bd:#D5E2E0;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--bg:#0E1A24;--sf:#16293A;--tx:#E8F1F0;--mu:#93A8B6;--pr:#3FB8B5;--no:#E26D6D;--bd:#264054;color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:17px/1.8 V,Tahoma,Arial,sans-serif}
+main{max-width:440px;margin:0 auto;padding:40px 16px;text-align:center}
+img{width:88px;height:88px;border-radius:20px}
+h1{font-size:24px;font-weight:800;margin:14px 0 4px}
+.card{background:var(--sf);border:1px solid var(--bd);border-radius:16px;padding:18px;margin-top:18px;text-align:start}
+label{display:block;font-weight:800;margin-bottom:6px}
+input{width:100%;font:inherit;font-size:18px;padding:12px;border-radius:12px;border:1.5px solid var(--bd);background:var(--bg);color:var(--tx);direction:ltr;text-align:left}
+input.code{text-align:center;letter-spacing:10px;font-size:26px;font-weight:800}
+button{width:100%;font:inherit;font-weight:800;font-size:17px;padding:12px;border:0;border-radius:12px;background:var(--pr);color:#fff;margin-top:12px;cursor:pointer}
+button:disabled{opacity:.6;cursor:default}
+button.alt{background:transparent;color:var(--pr);border:1.5px solid var(--pr)}
+.mu{color:var(--mu);font-size:15px}
+.err{color:var(--no);font-weight:700;margin-top:10px;min-height:1px}
+.e{direction:ltr;unicode-bidi:isolate;font-weight:700}
+a{color:var(--pr)}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<main>
+  <img src="/pwa/icon-192.png" alt="">
+  <h1>الفارسية من الصفر</h1>
+  <p class="mu">ادخل ببريدك الإلكتروني، دون كلمة مرور.</p>
+
+  <form class="card" id="f1" novalidate>
+    <label for="email">بريدك الإلكتروني</label>
+    <input id="email" type="email" inputmode="email" autocomplete="email" placeholder="name@gmail.com" required>
+    <button id="b1" type="submit">أرسل رمز الدخول</button>
+    <div class="err" id="e1" role="alert"></div>
+    <p class="mu" style="margin:10px 0 0">سيصلك رمز من 6 أرقام في رسالة من «الفارسية من الصفر». أول دخول يبدأ فترتك التجريبية المجانية (7 أيام).</p>
+  </form>
+
+  <form class="card" id="f2" novalidate hidden>
+    <label for="code">أدخل الرمز</label>
+    <p class="mu" style="margin:0 0 8px">أرسلنا رمزاً إلى <span class="e" id="to"></span>. إن لم تجده فانظر في مجلد الرسائل غير المرغوب فيها (Spam).</p>
+    <input id="code" class="code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="••••••" required>
+    <button id="b2" type="submit">دخول</button>
+    <div class="err" id="e2" role="alert"></div>
+    <button id="again" type="button" class="alt" disabled>إعادة إرسال الرمز</button>
+    <p class="mu" style="margin:10px 0 0"><a href="#" id="change">تغيير البريد</a></p>
+  </form>
+
+  <p class="mu" style="margin-top:22px"><a href="/welcome/">عن التطبيق</a> · <a href="https://hasanhaziz974-cpu.github.io/farsi-app/privacy-policy.html">سياسة الخصوصية</a></p>
+</main>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var email = '', timer = null;
+  var next = new URLSearchParams(location.search).get('next') || '/';
+  if (!/^\/(?!\/)/.test(next)) next = '/';
+  try { var saved = localStorage.getItem('login-email'); if (saved) $('email').value = saved; } catch (e) {}
+
+  function post(url, data) {
+    return fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data), credentials: 'same-origin' })
+      .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { j.status = r.status; return j; }); })
+      .catch(function () { return { msg: 'تعذّر الاتصال. تأكد من الإنترنت وحاول مرة أخرى.' }; });
+  }
+  function countdown(s) {
+    clearInterval(timer);
+    var b = $('again');
+    b.disabled = true;
+    timer = setInterval(function () {
+      s--;
+      b.textContent = s > 0 ? 'إعادة إرسال الرمز (' + s + ')' : 'إعادة إرسال الرمز';
+      if (s <= 0) { clearInterval(timer); b.disabled = false; }
+    }, 1000);
+  }
+  function send(btn, err) {
+    btn.disabled = true; err.textContent = '';
+    return post('/api/auth/start', { email: email }).then(function (j) {
+      btn.disabled = false;
+      if (j.ok) {
+        try { localStorage.setItem('login-email', email); } catch (e) {}
+        $('to').textContent = email; $('f1').hidden = true; $('f2').hidden = false;
+        $('code').value = ''; $('code').focus(); countdown(60);
+      } else {
+        err.textContent = j.msg || 'حدث خطأ، حاول مرة أخرى.';
+        if (j.wait) countdown(j.wait);
+      }
+    });
+  }
+  $('f1').addEventListener('submit', function (e) {
+    e.preventDefault();
+    email = $('email').value.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { $('e1').textContent = 'اكتب بريداً إلكترونياً صحيحاً.'; return; }
+    send($('b1'), $('e1'));
+  });
+  $('again').addEventListener('click', function () { send($('again'), $('e2')); });
+  $('change').addEventListener('click', function (e) { e.preventDefault(); $('f2').hidden = true; $('f1').hidden = false; $('e1').textContent = ''; $('email').focus(); });
+  $('code').addEventListener('input', function () {
+    this.value = this.value.replace(/[^0-9٠-٩۰-۹]/g, '').replace(/[٠-٩]/g, function (d) { return d.charCodeAt(0) - 0x660; }).replace(/[۰-۹]/g, function (d) { return d.charCodeAt(0) - 0x6f0; }).slice(0, 6);
+    if (this.value.length === 6) $('f2').requestSubmit();
+  });
+  $('f2').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var code = $('code').value;
+    if (code.length !== 6) { $('e2').textContent = 'اكتب الرمز المكوّن من 6 أرقام.'; return; }
+    $('b2').disabled = true; $('e2').textContent = '';
+    post('/api/auth/verify', { email: email, code: code }).then(function (j) {
+      if (j.ok) {
+        $('b2').textContent = '✓ تم الدخول';
+        // ?test=1: only confirms the code works, for trying the sign-in before it replaces Cloudflare's.
+        if (new URLSearchParams(location.search).get('test')) { $('e2').style.color = 'var(--pr)'; $('e2').textContent = '✅ نجح تسجيل الدخول بالنظام الجديد.'; return; }
+        location.replace(next); return;
+      }
+      $('b2').disabled = false;
+      $('e2').textContent = (j.msg || 'حدث خطأ، حاول مرة أخرى.') + (j.left ? ' (بقي ' + j.left + ' محاولات)' : '');
+      $('code').select();
+    });
+  });
+})();
+</script>
+</body>
+</html>

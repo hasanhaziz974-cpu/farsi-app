@@ -36,7 +36,7 @@ FACEBOOK_APP_SECRET, TRIAL_PAGES_PROJECT, LOGIN_HEADER, LOGIN_FOOTER, LOGIN_FOOT
 Emails are never printed, because Actions logs of a public repository are public. For the
 same reason ACCESS_LIST must be a secret: Actions prints variables passed to a step.
 """
-import datetime, json, os, re, sys, urllib.error, urllib.request
+import datetime, hashlib, json, os, re, sys, urllib.error, urllib.request
 
 API = os.environ.get('CF_API_BASE', 'https://api.cloudflare.com/client/v4')
 OLD_OPEN_POLICY_NAME = 'Open to everyone (temporary)'
@@ -44,7 +44,7 @@ TRIAL_POLICY_NAME = 'Trial: anyone who signs in'
 PUBLIC_POLICY_NAME = 'Public pages: no sign-in'
 KV_TITLE = 'farsi-trials'
 # What Cloudflare Pages copies into the site. Every file the web version serves must be listed here.
-BUILD_COMMAND = 'mkdir -p www && cp -r index.html bridge.js sw.js fonts audio welcome pwa 404.html www/'
+BUILD_COMMAND = 'mkdir -p www && cp -r index.html bridge.js sw.js fonts audio welcome login pwa 404.html www/'
 # How long a sign-in lasts before Cloudflare asks for the email again (its maximum is a month).
 # Access periods are enforced on every page load by functions/_middleware.js, not by this.
 SESSION = os.environ.get('ACCESS_SESSION') or '720h'
@@ -141,6 +141,10 @@ def main():
     if project:
         trials(account, project, keep)
     domain = (os.environ.get('ACCESS_APP_DOMAIN') or '').strip().lower()
+    if (os.environ.get('AUTH_MODE') or '').strip() == 'own':
+        if domain:
+            unprotect(account, domain)
+        return
     if domain:
         protect(account, domain, policy, bool(project))
         public(account, domain, (os.environ.get('PUBLIC_PATHS') or '').split())
@@ -208,6 +212,18 @@ def named_policy(account, name):
     return found[0] if found else None
 
 
+def cf_kv_get(kv, key):
+    """A KV value as text, or None. (call() parses JSON results; KV values are raw.)"""
+    req = urllib.request.Request(API + f'{kv}/values/{key}', headers={'Authorization': 'Bearer ' + os.environ['CF_API_TOKEN'].strip()})
+    try:
+        with urllib.request.urlopen(req, timeout=30) as r:
+            return r.read().decode()
+    except urllib.error.HTTPError as e:
+        if e.code == 404:
+            return None
+        raise
+
+
 def trials(account, project, keep):
     spaces = call('GET', f'/accounts/{account}/storage/kv/namespaces?per_page=100')
     ns = next((n for n in spaces if n.get('title') == KV_TITLE), None) or \
@@ -231,8 +247,25 @@ def trials(account, project, keep):
         call('PATCH', f'/accounts/{account}/pages/projects/{project}',
              {'deployment_configs': {'production': binding, 'preview': binding}})
         redeploy = True
+    mail_url, mail_key = (os.environ.get('MAIL_URL') or '').strip(), (os.environ.get('MAIL_KEY') or '').strip()
+    if mail_url and mail_key:
+        if re.search(r'\s', mail_url + mail_key) or not mail_url.startswith('https://script.google.com/'):
+            print('::warning::MAIL_URL must be the Apps Script web app URL (https://script.google.com/...) and neither '
+                  'MAIL_URL nor MAIL_KEY may contain spaces or extra lines. The app sign-in mail was not set up.')
+        else:
+            digest = hashlib.sha256((mail_url + '\n' + mail_key).encode()).hexdigest()
+            if cf_kv_get(kv, 'mailcfg') not in (digest, json.dumps(digest)):
+                env = {'MAIL_URL': {'type': 'secret_text', 'value': mail_url}, 'MAIL_KEY': {'type': 'secret_text', 'value': mail_key}}
+                call('PATCH', f'/accounts/{account}/pages/projects/{project}',
+                     {'deployment_configs': {'production': {'env_vars': env}, 'preview': {'env_vars': env}}})
+                call('PUT', f'{kv}/values/mailcfg', digest)
+                print('Set the sign-in mail settings on the site.')
+                redeploy = True
+            else:
+                print('Sign-in mail settings unchanged.')
+    else:
+        print('The app sign-in mail is not set up yet (add the MAIL_URL and MAIL_KEY secrets).')
     if redeploy:
-        # 304 means Cloudflare is already building the latest commit; the next push redeploys anyway.
         started = call('POST', f'/accounts/{account}/pages/projects/{project}/deployments', allow=(304,))
         print('Started a new deployment of the site.' if started is not None
               else 'Cloudflare is already deploying; the change takes effect with that deployment.')
@@ -331,6 +364,18 @@ def social(account, domain):
                     set_app_policies(account, app, [p['id'] for p in app.get('policies') or []])
                     print(f'Added {label} to the sign-in options of {domain}.')
     return on
+
+
+def unprotect(account, domain):
+    """AUTH_MODE=own: the app signs people in itself (functions/api/auth), so the Access applications in
+    front of the site are removed. Deployment addresses keep the one Cloudflare Pages made for them."""
+    gone = 0
+    for app in call('GET', f'/accounts/{account}/access/apps?per_page=100'):
+        hosts = app_hosts(app)
+        if app.get('type') == 'self_hosted' and (domain in hosts or any(h.startswith(domain + '/') for h in hosts)):
+            call('DELETE', f'/accounts/{account}/access/apps/{app["id"]}')
+            gone += 1
+    print(f'App sign-in: {domain} uses the app\'s own sign-in' + (f'; removed {gone} Access application(s).' if gone else '.'))
 
 
 def public(account, domain, paths):
