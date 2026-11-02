@@ -18,6 +18,7 @@ function loadApp() {
     document: el(), navigator: {}, console, Date, Math, JSON,
     localStorage: { getItem: k => store[k] ?? null, setItem: (k, v) => { store[k] = v } },
     setTimeout: () => 0, clearTimeout: () => {}, matchMedia: () => ({ matches: false }), scrollTo: () => {},
+    location: { protocol: 'file:', hostname: '', origin: '' }, addEventListener: () => {},
   };
   ctx.window = ctx;
   vm.createContext(ctx);
