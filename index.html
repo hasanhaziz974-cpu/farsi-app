@@ -134,7 +134,7 @@ if(nd&&MS.indexOf(S.st)>=0)ms.push('🔥 '+cw(S.st,'أيام','يوماً','يو
 chk().forEach(function(b){ms.push('🏅 إنجاز جديد: '+b.n)});
 covNew().forEach(function(i){ms.push('📖 صرت تعرف أغلب كلمات محادثة «'+DLG[i].t+'»، جرّبها!')});
 save();top_();try{remStudied()}catch(e){}if(ms.length)celebrate(ms)}
-function top_(){var live=S.last===ds(Date.now())||S.last===ds(Date.now()-DAY);document.getElementById("st").innerHTML="🔥 <b>"+(live?S.st:0)+"</b> يوم";document.getElementById("xp").innerHTML="⭐ <b>"+S.xp+"</b>"}
+function top_(){var live=S.last===ds(Date.now())||S.last===ds(Date.now()-DAY);var sn=live?S.st:0;document.getElementById("st").innerHTML="🔥 <b>"+sn+"</b> "+(sn>=3&&sn<=10?"أيام":"يوم");document.getElementById("xp").innerHTML="⭐ <b>"+S.xp+"</b>"}
 var AU=null;
 function hs(t){var h=2166136261;for(var i=0;i<t.length;i++){h^=t.charCodeAt(i);h=Math.imul(h,16777619)>>>0}return h.toString(16)}
 function tts(t,cb){try{var u=new SpeechSynthesisUtterance(t);u.lang="fa-IR";u.rate=.85;if(cb)u.onend=cb;speechSynthesis.cancel();speechSynthesis.speak(u)}catch(e){}}
@@ -345,7 +345,7 @@ if(GQ.fin){var n=GQ.n;return h+'<div class="det" style="margin-top:20px"><div cl
 var q=GQ.qs[GQ.i],e=q.e;
 if(GQ.resumed)h+='<div class="mu" style="margin:4px 0">↻ تابعت من حيث توقفت. <button class="back" style="font-size:14px" onclick="startGQ(true)">ابدأ التمرين من جديد</button></div>';
 h+='<p class="mu">'+(q.r?'🔁 إعادة سؤال أخطأت فيه':'تمرين '+(GQ.i+1)+' من '+GQ.n)+'</p><div class="det">';
-if(!q.rev)h+='<p class="mu">ما معنى هذه الجملة؟</p><div class="fa" style="font-size:32px">'+e[0]+'</div><div class="tr" style="font-size:16px">'+e[1]+'</div><button class="spk" style="margin-top:6px" aria-label="استمع" onclick="say(\''+esc(e[0])+'\')">🔊</button>';
+if(!q.rev)h+='<p class="mu">ما معنى هذه العبارة؟</p><div class="fa" style="font-size:32px">'+e[0]+'</div><div class="tr" style="font-size:16px">'+e[1]+'</div><button class="spk" style="margin-top:6px" aria-label="استمع" onclick="say(\''+esc(e[0])+'\')">🔊</button>';
 else h+='<p class="mu">كيف تقولها بالفارسية؟</p><div class="ar" style="font-size:24px">'+e[2]+'</div>';
 h+='</div>';
 q.o.forEach(function(o,k){var c='opt';if(q.a!==null){if(o===e)c+=' good';else if(k===q.a)c+=' bad'}
@@ -770,6 +770,7 @@ var MG=null,LG=null;
 function gamesCard(){return'<button class="row" onclick="go(\'games\')"><div><div style="font-weight:600">🎮 ألعاب وتحديات</div><div class="mu">بطاقات الذاكرة · الحروف · تركيب الكلمات</div></div><span class="mu">‹</span></button>'}
 function gamesView(){if(MG)return memView();if(LG)return lgView();
 return'<button class="back" onclick="go(\'home\')">› رجوع للدروس</button><h2>🎮 ألعاب</h2><p class="mu">استراحة ممتعة تثبّت ما تعلّمته وتمنحك نقاطاً.</p>'
++(S.dc===ds(Date.now())?'<div class="det" style="text-align:start;padding:10px 14px">⚡ تحدّي اليوم ✅ أنجزته! عد غداً لتحدٍّ جديد.</div>':'<button class="row" style="border-color:var(--ac)" onclick="startDaily()"><div><div style="font-weight:600">⚡ تحدّي اليوم</div><div class="mu">6 أسئلة سريعة من كلماتك · +20 نقطة مكافأة</div></div><span class="mu">‹</span></button>')
 +'<button class="row" onclick="startMem()"><div><div style="font-weight:600">🃏 بطاقات الذاكرة</div><div class="mu">طابق الكلمة الفارسية بمعناها بأقل حركات</div></div><span class="mu">‹</span></button>'
 +'<button class="row" onclick="startLG(\'name\')"><div><div style="font-weight:600">🔤 ما هذا الحرف؟</div><div class="mu">تعرّف على الحروف الفارسية ونطقها</div></div><span class="mu">‹</span></button>'
 +'<button class="row" onclick="startLG(\'spell\')"><div><div style="font-weight:600">🧩 ركّب الكلمة</div><div class="mu">رتّب الحروف لتكوّن الكلمة الفارسية</div></div><span class="mu">‹</span></button>'}
@@ -818,8 +819,9 @@ function lgNext(){if(LG.i===LG.qs.length-1){LG.fin=true;LG.xp=LG.sc*(LG.mode==='
 /* ===== polish: robustness, sound, daily challenge, week chart, share ===== */
 function dayNo(t){return Math.floor((t-new Date(t).getTimezoneOffset()*60000)/DAY)}
 function resetVolatile(){Q=null;M=null;PL=null;RP=null;MG=null;LG=null;GQ=null;LQ=null;CQ=null;RC=null;RSQ=[];RQ=null;RV=false;sub=null;D=null;G=null;CV=null}
+function markFa(){try{document.querySelectorAll('.fa:not([lang])').forEach(function(e){e.lang='fa';e.dir='rtl'})}catch(e){}}
 function rescue(){try{resetVolatile();tab='home';render()}catch(e){location.reload()}}
-function render(){try{planCheck()}catch(e){}try{render0()}catch(e){try{console.error(e);document.getElementById('main').innerHTML='<div class="det"><div class="big">⚠️</div><p>حدث خطأ غير متوقع، وتقدّمك محفوظ.</p><div class="btns"><button class="btn" onclick="rescue()">العودة للرئيسية</button></div></div>'}catch(x){}}}
+function render(){try{planCheck()}catch(e){}try{render0();markFa()}catch(e){try{console.error(e);document.getElementById('main').innerHTML='<div class="det"><div class="big">⚠️</div><p>حدث خطأ غير متوقع، وتقدّمك محفوظ.</p><div class="btns"><button class="btn" onclick="rescue()">العودة للرئيسية</button></div></div>'}catch(x){}}}
 window.onerror=function(){try{toast('حدث خطأ بسيط، حاول مرة أخرى')}catch(e){}return false};
 var AC=null;
 function sfx(k){try{if(S.sfx===0)return;if(!AC){var C=window.AudioContext||window.webkitAudioContext;if(!C)return;AC=new C()}if(AC.state==='suspended')AC.resume();
@@ -862,11 +864,11 @@ for(i=0;i<DLG.length;i++)c.push({t:'d',i:i});for(i=0;i<GR.length;i++)c.push({t:'
 for(i=0;i<DLG.length;i++)if(S.dp&&S.dp[i]){c.push({t:'rd',i:i});c.push({t:'rp',i:i})}
 for(i=0;i<c.length;i++){var x=c[i];if(it.some(function(y){return y.t===x.t&&y.i===x.i}))continue;if(planDone(x))continue;if(x.t==='d'&&!dOpen(x.i))continue;if(x.t==='g'&&!gOpen(x.i))continue;return x}return null}
 function planMake(){var t=ds(Date.now());if(S.plan&&S.plan.d===t)return S.plan;var it=[],due=queue().due.length,ns=nextStep(),cur=ns?ns.l:LES.length-1;
-it.push(due?{t:'rv',n:Math.min(due,8)}:{t:'dc'});if(ns)it.push({t:'st',l:ns.l,g:ns.g});
+it.push(due?{t:'rv',n:Math.min(due,8),s:queue().due.some(function(x){return x.sent})}:{t:'dc'});if(ns)it.push({t:'st',l:ns.l,g:ns.g});
 var ap=planApply(cur,it);if(ap)it.push(ap);if(!ns){ap=planApply(cur,it);if(ap)it.push(ap)}
 S.plan={d:t,it:it,rv:0,ok:0};snapTake();save();return S.plan}
 function planLabel(x){switch(x.t){
-case'rv':return['🔁 راجع '+cw(x.n,'كلمات','كلمة'),'حان موعد مراجعتها، قبل أن تنساها'];
+case'rv':return['🔁 راجع '+(x.s?cw(x.n,'بطاقات','بطاقة'):cw(x.n,'كلمات','كلمة')),(x.s?'كلمات وجمل ':'')+'حان موعد مراجعتها، قبل أن تنساها'];
 case'dc':return['⚡ تحدّي اليوم','6 أسئلة سريعة من كلماتك · +20 نقطة'];
 case'st':return['📘 '+LES[x.l].t+' · المرحلة '+(x.g+1),STG[x.g].t];
 case'd':var c=dCov(x.i);return['💬 محادثة «'+DLG[x.i].t+'»',(x.l!=null?'طبّق كلمات درس «'+LES[x.l].t+'»':'المحادثة التالية')+(c.n?' · تعرف '+c.p+'% من كلماتها':'')];
