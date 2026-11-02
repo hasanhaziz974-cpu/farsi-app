@@ -80,7 +80,7 @@ self.addEventListener('push', (e) => {
   const [title, body] = REMINDERS[Math.floor(Math.random() * REMINDERS.length)];
   e.waitUntil(self.registration.showNotification(title, {
     body, lang: 'ar', dir: 'rtl', tag: 'daily-reminder',
-    icon: '/pwa/icon-192.png', badge: '/pwa/icon-192.png',
+    icon: '/pwa/icon-192.png', badge: '/pwa/badge-96.png', // badge: white shape on transparent; Android draws only its outline
   }));
 });
 
