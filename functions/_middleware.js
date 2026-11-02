@@ -5,16 +5,34 @@
 // last day of access (YYYY-MM-DD, UTC, Arabic or Persian digits accepted) or any other
 // text for no end date. Signed-in requests are checked only on page loads; audio, font and script
 // requests pass straight through. Requests without a verified sign-in get only the public pages.
-import { TRIAL_DAYS, DAY, CONTACT, accessEmail, lastDay, today } from '../lib/trial.js';
+import { TRIAL_DAYS, CONTACT, accessEmail, accessStatus } from '../lib/trial.js';
 
-const ENDED = `<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1"><title>انتهت الفترة التجريبية</title>
-<style>body{font:17px/1.9 Tahoma,Arial,sans-serif;max-width:520px;margin:0 auto;padding:40px 20px;text-align:center;color:#14263A;background:#EEF4F3}
-h1{color:#12807F;font-size:24px}a{color:#12807F}</style></head><body>
-<h1>انتهت فترتك التجريبية</h1>
-<p>شكراً لتجربتك تطبيق «الفارسية من الصفر». انتهت مدة التجربة المجانية (${TRIAL_DAYS} أيام).</p>
-<p>للاستمرار تواصل معنا: <a href="mailto:${CONTACT}" dir="ltr">${CONTACT}</a></p>
-</body></html>`;
+// Shown instead of the app when access has ended: the trial, or a subscription period.
+function endedPage(kind, email) {
+  const trial = kind === 'trial';
+  const subject = encodeURIComponent('اشتراك في «الفارسية من الصفر»');
+  const body = encodeURIComponent('مرحباً، أريد الاشتراك في التطبيق.\nبريدي المسجّل: ' + email);
+  return `<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>${trial ? 'انتهت الفترة التجريبية' : 'انتهى اشتراكك'}</title>
+<meta name="theme-color" content="#12807F"><link rel="icon" href="/pwa/icon-192.png">
+<style>
+:root{--bg:#EEF4F3;--sf:#fff;--tx:#14263A;--mu:#5B7083;--pr:#12807F;--bd:#D5E2E0;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--bg:#0E1A24;--sf:#16293A;--tx:#E8F1F0;--mu:#93A8B6;--pr:#3FB8B5;--bd:#264054;color-scheme:dark}}
+body{margin:0;background:var(--bg);color:var(--tx);font:17px/1.9 Tahoma,Arial,sans-serif;text-align:center}
+main{max-width:520px;margin:0 auto;padding:40px 16px}img{width:96px;height:96px;border-radius:22px}
+h1{color:var(--pr);font-size:24px;margin:16px 0 6px}.card{background:var(--sf);border:1px solid var(--bd);border-radius:16px;padding:16px;margin:16px 0;text-align:start}
+.btn{display:block;background:var(--pr);color:#fff;text-decoration:none;font-weight:700;border-radius:12px;padding:12px;margin:10px 0}
+.mu{color:var(--mu);font-size:15px}a{color:var(--pr)}.e{direction:ltr;unicode-bidi:isolate;font-weight:700}
+</style></head><body><main>
+<img src="/pwa/icon-192.png" alt="">
+<h1>${trial ? 'انتهت فترتك التجريبية' : 'انتهت مدة اشتراكك'}</h1>
+<p>${trial ? `شكراً لتجربتك «الفارسية من الصفر» طوال ${TRIAL_DAYS} أيام.` : 'شكراً لتعلّمك معنا في «الفارسية من الصفر».'} للاستمرار في التعلّم تواصل معنا ليُفعَّل اشتراكك.</p>
+<a class="btn" href="mailto:${CONTACT}?subject=${subject}&body=${body}">✉️ راسلنا للاشتراك</a>
+<div class="card">💾 <b>تقدّمك محفوظ</b> في جهازك كما هو: كلماتك ونقاطك وسلسلتك. ستجده عندما يُفعَّل اشتراكك.</div>
+<p class="mu">أنت مسجّل بالبريد <span class="e">${email.replace(/[<>&"]/g, '')}</span><br>
+<a href="/cdn-cgi/access/logout">الدخول ببريد آخر</a></p>
+</main></body></html>`;
+}
 
 const PAGES = new Set(['/', '/index', '/index.html']);
 
@@ -46,28 +64,12 @@ export async function onRequest({ request, env, next }) {
   if (WELCOME.has(path)) return Response.redirect(new URL('/', request.url).toString(), 302);
   if (!PAGES.has(new URL(request.url).pathname) || !env.TRIALS) return next();
 
-  const allowed = (await env.TRIALS.get('allowlist', 'json')) || [];
-  if (allowed.includes(email)) return next();
-
-  const allow = await env.TRIALS.get('allow:' + email);
-  if (allow !== null) {
-    const until = lastDay(allow);
-    if (!until || today() <= until) return next();
-    return ended();
-  }
-
-  const key = 'trial:' + email;
-  let start = Number(await env.TRIALS.get(key));
-  if (!start) {
-    start = Date.now();
-    await env.TRIALS.put(key, String(start));
-  }
-  if (Date.now() - start < TRIAL_DAYS * DAY) return next();
-  return ended();
+  const st = await accessStatus(env.TRIALS, email, true);
+  return st.ok ? next() : ended(st.kind, email);
 }
 
-function ended() {
-  return new Response(ENDED, {
+function ended(kind, email) {
+  return new Response(endedPage(kind, email), {
     status: 403,
     headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' },
   });
