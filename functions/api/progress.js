@@ -10,7 +10,7 @@ const json = (body, status = 200) => Response.json(body, { status, headers: { 'C
 
 export async function onRequest({ request, env }) {
   const kv = env.TRIALS;
-  const email = await accessEmail(request);
+  const email = await accessEmail(request, env);
   if (!email || !kv) return json({ error: 'signin' }, 401);
   const key = 'prog:' + email;
   const stored = (await kv.get(key, 'json')) || { t: 0, data: null };

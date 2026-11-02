@@ -105,7 +105,7 @@ async function view(kv, msg) {
   const trialRows = (active.map(trialCard).join('') || '<p class="mu">لا أحد في فترة تجريبية الآن.</p>')
     + (ended.length ? `<details><summary>انتهت تجربتهم (${ended.length}) · يمكنك مراسلتهم أو إضافتهم</summary>${ended.map(trialCard).join('')}</details>` : '');
 
-  return page(`<h1>إدارة المشتركين</h1><p class="mu">التغييرات تعمل خلال دقيقة تقريباً. · <a href="/cdn-cgi/access/logout">خروج</a></p>
+  return page(`<h1>إدارة المشتركين</h1><p class="mu">التغييرات تعمل خلال دقيقة تقريباً. · <a href="/logout">خروج</a></p>
 ${msg ? `<div class="msg">${esc(msg)}</div>` : ''}
 <h2>إضافة شخص</h2><form method="post" class="card"><input type="email" name="email" placeholder="name@gmail.com" required>
 <div class="row">${periodSelect()}<button name="action" value="add">إضافة</button></div>
@@ -118,13 +118,13 @@ ${allowed.length + trials.length > 8 ? '<input type="search" id="q" placeholder=
 
 export async function onRequest({ request, env }) {
   const kv = env.TRIALS;
-  const email = await accessEmail(request);
+  const email = await accessEmail(request, env);
   const admins = kv ? (await kv.get('admins', 'json')) || [] : [];
   if (!email || !admins.includes(email)) {
     return page(`<h1>هذه الصفحة للمدير فقط</h1>
 <p>أنت مسجّل الدخول بالبريد: <span class="e">${esc(email || 'غير معروف')}</span></p>
 <p class="mu">إن كان هذا ليس بريد المدير، اخرج ثم ادخل ببريد المدير.</p>
-<p><a href="/cdn-cgi/access/logout"><button type="button">تسجيل الخروج</button></a></p>`, 403);
+<p><a href="/logout"><button type="button">تسجيل الخروج</button></a></p>`, 403);
   }
 
   const url = new URL(request.url);

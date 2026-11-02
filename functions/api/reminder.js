@@ -14,7 +14,7 @@ const DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 export async function onRequest({ request, env }) {
   const kv = env.TRIALS;
-  const email = await accessEmail(request);
+  const email = await accessEmail(request, env);
   if (!email || !kv) return json({ error: 'signin' }, 401);
   const key = 'push:' + email;
 
