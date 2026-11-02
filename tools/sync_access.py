@@ -48,6 +48,8 @@ BUILD_COMMAND = 'mkdir -p www && cp -r index.html bridge.js sw.js fonts audio we
 # How long a sign-in lasts before Cloudflare asks for the email again (its maximum is a month).
 # Access periods are enforced on every page load by functions/_middleware.js, not by this.
 SESSION = os.environ.get('ACCESS_SESSION') or '720h'
+# Free a seat after a month without signing in (the shortest period Cloudflare allows).
+SEAT_EXPIRY = '730h'
 
 
 def fail(msg):
@@ -151,20 +153,40 @@ def main():
     if header or footer:
         try:
             login_page(account, header, footer)
+            seats(account)
         except SystemExit:
             print('::warning::Could not update the sign-in page message; access was still synced.')
 
 
 def login_page(account, header, footer):
+    """Sets the sign-in page message, and frees the seats of people inactive for SEAT_EXPIRY.
+
+    The free Zero Trust plan has 50 seats; everyone who signs in takes one, and by default
+    a seat is never given back. With seat expiry, someone who has not signed in for a month
+    frees their seat (they take one again if they come back)."""
     org = call('GET', f'/accounts/{account}/access/organizations')
     design = dict(org.get('login_design') or {})
-    if design.get('header_text') == header and design.get('footer_text') == footer:
+    same_text = design.get('header_text') == header and design.get('footer_text') == footer
+    if same_text and org.get('user_seat_expiration_inactive_time') == SEAT_EXPIRY:
         return
     design = {k: v for k, v in design.items() if v}
     design.update(header_text=header, footer_text=footer)
-    body = {'name': org['name'], 'auth_domain': org['auth_domain'], 'login_design': design}
+    body = {'name': org['name'], 'auth_domain': org['auth_domain'], 'login_design': design,
+            'user_seat_expiration_inactive_time': SEAT_EXPIRY}
     call('PUT', f'/accounts/{account}/access/organizations', body)
-    print('Updated the message on the sign-in page.')
+    print('Updated the sign-in page message' if not same_text else 'Turned on seat expiry',
+          f'(seats of people inactive for {SEAT_EXPIRY} are freed).')
+
+
+def seats(account):
+    """Prints how many of the free plan's 50 seats are taken, with a warning near the limit."""
+    users = call('GET', f'/accounts/{account}/access/users?per_page=1000', allow=(403, 404))
+    if users is None:
+        return
+    used = sum(1 for u in users if u.get('access_seat'))
+    print(f'Seats: {used} of 50 taken.')
+    if used >= 40:
+        print(f'::warning::{used} of the 50 free seats are taken. New people cannot sign in once all 50 are used.')
 
 def app_hosts(app):
     hosts = {(app.get('domain') or '').lower()}
