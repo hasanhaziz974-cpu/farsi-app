@@ -25,7 +25,7 @@ input,select,button{font:inherit;border-radius:10px;border:1px solid var(--bd);p
 input[type=email]{width:100%;direction:ltr;text-align:left}.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px}
 button{background:var(--pr);color:#fff;border:0;cursor:pointer}button.no{background:var(--no)}button.alt{background:transparent;color:var(--pr);border:1px solid var(--pr)}
 .p{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}.e{direction:ltr;font-weight:600;word-break:break-all}
-.ok{color:var(--ok)}.end{color:var(--no)}form{margin:0}
+.ok{color:var(--ok)}.end{color:var(--no)}.soon{color:#C77C0E;font-weight:600}form{margin:0}
 </style></head><body><main>${body}</main></body></html>`, {
     status,
     headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' },
@@ -70,6 +70,14 @@ async function act(kv, form) {
   return `${ltr(email)} يستطيع الدخول حتى ${ltr(until)}.`;
 }
 
+// Active period: highlighted when it ends within a week, so it can be renewed in time.
+function soon(until, now) {
+  const left = Math.round((Date.parse(until) - Date.parse(now)) / DAY) + 1;
+  return left <= 7
+    ? `<span class="soon">حتى ${ltr(until)} · ${left === 1 ? 'آخر يوم' : left === 2 ? 'يومان' : left + ' أيام'}</span>`
+    : `<span class="ok">حتى ${ltr(until)}</span>`;
+}
+
 async function view(kv, msg) {
   const now = today();
   const allowed = (await entries(kv, 'allow:')).sort((a, b) => a.email.localeCompare(b.email));
@@ -82,7 +90,7 @@ async function view(kv, msg) {
   const people = allowed.map(({ email, value }) => {
     const until = lastDay(value);
     const state = !until ? '<span class="ok">دائم</span>'
-      : until >= now ? `<span class="ok">حتى ${ltr(until)}</span>` : `<span class="end">انتهى في ${ltr(until)}</span>`;
+      : until >= now ? soon(until, now) : `<span class="end">انتهى في ${ltr(until)}</span>`;
     return `<div class="card"><div class="p"><span class="e">${esc(email)}</span>${state}</div>
 <form method="post" class="row"><input type="hidden" name="email" value="${esc(email)}">${periodSelect()}
 <button name="action" value="add">تمديد</button><button name="action" value="remove" class="no">إيقاف</button></form></div>`;
