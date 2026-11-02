@@ -41,6 +41,8 @@ jobs:
               if [ "${out%% *}" = 200 ]; then echo "::error::$p opens without signing in"; bad=1; fi;; esac
             if grep -q 'id="main"' body.txt && [ "$p" != / ] && [ "$p" != /index.html ]; then echo "::error::$p serves the app"; bad=1; fi
           done
+          # Security headers set by functions/_middleware.js.
+          if ! curl -sI "$S/welcome/" | grep -qi '^x-frame-options: *DENY'; then echo "::error::/welcome/ is missing X-Frame-Options"; bad=1; fi
           # A deployment's own address (here the branch alias) must not open the app either.
           P=https://claude-project-files-review-lcyij6.parsa-farsi.pages.dev
           out=$(curl -s -o body.txt -w '%{http_code} %{redirect_url}' "$P/")

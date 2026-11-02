@@ -25,7 +25,7 @@ input,select,button{font:inherit;border-radius:10px;border:1px solid var(--bd);p
 input[type=email]{width:100%;direction:ltr;text-align:left}.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px}
 button{background:var(--pr);color:#fff;border:0;cursor:pointer}button.no{background:var(--no)}button.alt{background:transparent;color:var(--pr);border:1px solid var(--pr)}
 .p{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}.e{direction:ltr;font-weight:600;word-break:break-all}
-.ok{color:var(--ok)}.end{color:var(--no)}.soon{color:#C77C0E;font-weight:600}form{margin:0}
+.ok{color:var(--ok)}.end{color:var(--no)}.soon{color:#C77C0E;font-weight:600}form{margin:0}\ninput[type=search]{width:100%;direction:ltr;text-align:left;margin-top:12px}details{margin-top:8px}summary{cursor:pointer;color:var(--mu);padding:8px 0}
 </style></head><body><main>${body}</main></body></html>`, {
     status,
     headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' },
@@ -84,7 +84,7 @@ async function view(kv, msg) {
   const allowedSet = new Set(allowed.map((a) => a.email));
   const trials = (await entries(kv, 'trial:'))
     .filter((t) => !allowedSet.has(t.email))
-    .map((t) => ({ email: t.email, left: TRIAL_DAYS - Math.floor((Date.now() - Number(t.value)) / DAY) }))
+    .map((t) => ({ email: t.email, left: Math.max(0, Math.ceil((Number(t.value) + TRIAL_DAYS * DAY - Date.now()) / DAY)) }))
     .sort((a, b) => b.left - a.left);
 
   const people = allowed.map(({ email, value }) => {
@@ -96,18 +96,24 @@ async function view(kv, msg) {
 <button name="action" value="add">تمديد</button><button name="action" value="remove" class="no">إيقاف</button></form></div>`;
   }).join('') || '<p class="mu">لا أحد بعد.</p>';
 
-  const trialRows = trials.map(({ email, left }) => `<div class="card"><div class="p"><span class="e">${esc(email)}</span>${
-    left > 0 ? `<span class="ok">باقٍ ${left} ${left === 1 ? 'يوم' : 'أيام'}</span>` : '<span class="end">انتهت التجربة</span>'}</div>
+  const days = (n) => (n === 1 ? 'يوم واحد' : n === 2 ? 'يومان' : n <= 10 ? n + ' أيام' : n + ' يوماً');
+  const trialCard = ({ email, left }) => `<div class="card"><div class="p"><span class="e">${esc(email)}</span>${
+    left > 0 ? `<span class="${left <= 2 ? 'soon' : 'ok'}">باقٍ ${days(left)}</span>` : '<span class="end">انتهت التجربة</span>'}</div>
 <form method="post" class="row"><input type="hidden" name="email" value="${esc(email)}">${periodSelect()}
-<button name="action" value="add" class="alt">أضفه</button></form></div>`).join('') || '<p class="mu">لم يجرّب أحد بعد.</p>';
+<button name="action" value="add" class="alt">أضفه</button></form></div>`;
+  const active = trials.filter((t) => t.left > 0), ended = trials.filter((t) => t.left <= 0);
+  const trialRows = (active.map(trialCard).join('') || '<p class="mu">لا أحد في فترة تجريبية الآن.</p>')
+    + (ended.length ? `<details><summary>انتهت تجربتهم (${ended.length}) · يمكنك مراسلتهم أو إضافتهم</summary>${ended.map(trialCard).join('')}</details>` : '');
 
   return page(`<h1>إدارة المشتركين</h1><p class="mu">التغييرات تعمل خلال دقيقة تقريباً. · <a href="/cdn-cgi/access/logout">خروج</a></p>
 ${msg ? `<div class="msg">${esc(msg)}</div>` : ''}
 <h2>إضافة شخص</h2><form method="post" class="card"><input type="email" name="email" placeholder="name@gmail.com" required>
 <div class="row">${periodSelect()}<button name="action" value="add">إضافة</button></div>
 <p class="mu">إن كان الشخص مضافاً، تُحسب المدة من آخر يوم له.</p></form>
+${allowed.length + trials.length > 8 ? '<input type="search" id="q" placeholder="ابحث ببريد…" oninput="flt(this.value)">' : ''}
 <h2>المشتركون (${allowed.length})</h2>${people}
-<h2>في الفترة التجريبية (${trials.length})</h2>${trialRows}`);
+<h2>في الفترة التجريبية (${active.length})</h2>${trialRows}
+<script>function flt(q){q=q.trim().toLowerCase();document.querySelectorAll('.card').forEach(function(c){var e=c.querySelector('.e');if(e)c.style.display=!q||e.textContent.toLowerCase().indexOf(q)>=0?'':'none'});document.querySelectorAll('details').forEach(function(d){if(q)d.open=true})}</script>`);
 }
 
 export async function onRequest({ request, env }) {

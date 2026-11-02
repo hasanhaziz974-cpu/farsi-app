@@ -56,7 +56,34 @@ async function publicOnly(request, next) {
   return new Response(html, { status: res.status, headers });
 }
 
-export async function onRequest({ request, env, next }) {
+// Headers added to every response: no framing (protects the admin buttons from clickjacking),
+// no MIME sniffing, a strict referrer and no camera, microphone or location. Fonts never change and
+// are cached for a year; audio, signed-in content, for a week in the browser only.
+const SECURITY = {
+  'X-Frame-Options': 'DENY',
+  'X-Content-Type-Options': 'nosniff',
+  'Referrer-Policy': 'strict-origin-when-cross-origin',
+  'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+};
+const CACHE = [
+  [/^\/fonts\/.+\.woff2$/, 'public, max-age=31536000, immutable'],
+  [/^\/audio\/.+\.mp3$/, 'private, max-age=604800'],
+  [/^\/(pwa|welcome)\/.+\.(png|webp)$/, 'public, max-age=604800'],
+];
+
+export async function onRequest(context) {
+  const res = await handle(context);
+  const out = new Response(res.body, res);
+  for (const [k, v] of Object.entries(SECURITY)) out.headers.set(k, v);
+  if (out.status === 200) {
+    const path = new URL(context.request.url).pathname;
+    const rule = CACHE.find(([re]) => re.test(path));
+    if (rule) out.headers.set('Cache-Control', rule[1]);
+  }
+  return out;
+}
+
+async function handle({ request, env, next }) {
   const email = await accessEmail(request);
   if (!email) return publicOnly(request, next);
   // The shared link is the welcome page; people already signed in go straight to the app.
