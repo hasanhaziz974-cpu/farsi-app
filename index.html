@@ -937,7 +937,7 @@ function syncSoon(){if(SYNC.timer)return;SYNC.timer=setTimeout(function(){SYNC.t
 function syncNow(first){if(!SYNC.on||SYNC.busy||!navigator.onLine)return;SYNC.busy=true;var v=SYNC.ver,before=S.xp;
 fetch('/api/progress',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data:syncData()}),credentials:'same-origin'}).then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(res){SYNC.busy=false;SYNC.last=Date.now();if(SYNC.ver!==v){syncSoon();return}SYNC.dirty=false;if(res&&res.data)syncAdopt(res.data,first&&(res.data.xp||0)>before)}).catch(function(){SYNC.busy=false;if(SYNC.dirty)syncSoon()})}
 function syncAdopt(d,restored){if(JSON.stringify(d)===JSON.stringify(syncData()))return;var keep={};DEVF.forEach(function(k){if(S[k]!==undefined)keep[k]=S[k]});S=d;for(var k in keep)S[k]=keep[k];S.srs=S.srs||{};S.xp=S.xp||0;S.st=S.st||0;S.last=S.last||'';
-SYNC.quiet=true;save();SYNC.quiet=false;try{top_();render()}catch(e){}if(restored)toast('☁️ استعدنا تقدّمك المحفوظ مع بريدك')}
+SYNC.quiet=true;save();SYNC.quiet=false;try{top_();render()}catch(e){}if(restored)setTimeout(function(){celebrate(['☁️ استعدنا تقدّمك المحفوظ مع بريدك','⭐ '+cw(S.xp,'نقاط','نقطة')+' · 📚 '+cw(cnt(S.srs),'كلمات','كلمة')])},600)}
 function syncStart(){if(SYNC.on||!webApp())return;SYNC.on=true;syncNow(true);
 document.addEventListener('visibilitychange',function(){if(document.visibilityState!=='hidden'||!SYNC.dirty||!navigator.sendBeacon)return;try{if(navigator.sendBeacon('/api/progress',new Blob([JSON.stringify({data:syncData()})],{type:'application/json'}))){SYNC.dirty=false;SYNC.last=Date.now()}}catch(e){}})}
 
