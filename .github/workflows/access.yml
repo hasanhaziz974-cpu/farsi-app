@@ -26,8 +26,8 @@ jobs:
           PUBLIC_PATHS: welcome fonts pwa
           # Shown on the sign-in page where visitors type their email.
           LOGIN_HEADER: 'الفارسية من الصفر: لديك أسبوع فترة تجريبية مجانية'
-          LOGIN_FOOTER: 'أدخل بريدك ليصلك رمز الدخول. تبدأ فترتك التجريبية (٧ أيام) من أول دخول.'
-          LOGIN_FOOTER_SOCIAL: 'ادخل بحساب {options} بضغطة واحدة، أو أدخل بريدك ليصلك رمز الدخول. تبدأ فترتك التجريبية (٧ أيام) من أول دخول.'
+          LOGIN_FOOTER: 'أدخل بريدك ليصلك رمز الدخول في رسالة بعنوان «Cloudflare Access login code» (انظر في Spam إن لم تجدها). تبدأ فترتك التجريبية (٧ أيام) من أول دخول.'
+          LOGIN_FOOTER_SOCIAL: 'ادخل بحساب {options} بضغطة واحدة، أو أدخل بريدك ليصلك رمز الدخول في رسالة بعنوان «Cloudflare Access login code». تبدأ فترتك التجريبية (٧ أيام) من أول دخول.'
         run: python3 tools/sync_access.py
       - name: Check that only the public pages open without signing in
         run: |
