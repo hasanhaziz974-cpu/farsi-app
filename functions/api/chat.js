@@ -44,6 +44,53 @@ const ROLES = [
   'Parsa, a friendly Iranian tutor who chats about anything the learner likes',
 ];
 
+// "Your trip to Iran": a story in chapters, each a scene with tasks the learner must do in Persian.
+// The app (index.html, TRIP) has the same chapters with Arabic titles and tasks, in the same order.
+export const CHAPTERS = [
+  { role: 'an information desk employee at Imam Khomeini airport in Tehran; the learner, an Arab traveller, has just landed',
+    tasks: ['greet you and say their name', 'say where they are from', 'ask where the taxis are', 'thank you and say goodbye'] },
+  { role: 'a taxi driver at the airport; the learner is going to the Azadi hotel',
+    tasks: ['greet you and say where they want to go', 'ask how much the fare is', 'ask you to stop or say they have arrived', 'pay and thank you'] },
+  { role: 'a receptionist at the Azadi hotel in Tehran; the learner is checking in',
+    tasks: ['greet you and say they have a reservation', 'give their name', 'ask which floor or room number it is', 'ask what time breakfast is'] },
+  { role: 'a waiter in a traditional restaurant in Tehran; the learner comes for their first dinner in Iran',
+    tasks: ['ask for a table', 'order a food', 'order a drink', 'ask for the bill'] },
+  { role: 'a shopkeeper in the Tehran Grand Bazaar who sells scarves and souvenirs',
+    tasks: ['greet you and say what they want to buy', 'ask the price', 'ask for a discount or say it is expensive', 'buy it and say goodbye'] },
+  { role: "Parsa's mother, welcoming the learner to the family home for lunch",
+    tasks: ['greet you politely', 'introduce themselves and their family', 'say the food is delicious', 'thank you for the invitation'] },
+];
+
+const LEVELS = [
+  'The learner is a complete beginner: use very short sentences (3 to 6 words) and only the most common words.',
+  'The learner knows basic everyday words: short simple sentences (up to 8 words).',
+  'The learner is at an elementary level: simple natural sentences, a few new words are fine.',
+];
+
+const RULES =
+  'Write standard Persian as in a textbook, not colloquial spelling (ممنونم or متشکرم, می‌کنم, می‌خواهم; never میکونم or میخوام). ' +
+  'Never put words from Turkish, English, Arabic or any other language into the Persian line. Use Persian letters ی and ک. ';
+const FORMAT =
+  'FA: your reply in Persian script\n' +
+  'TR: its Latin transliteration (like: salām, khoshhālam, che mikhāhid?)\n' +
+  'AR: its translation into Arabic\n' +
+  "FIX: only if the learner's last message had a real Persian mistake: the corrected Persian sentence, then a very short explanation in Arabic. " +
+  'If it was correct, or there is nothing to correct, write only - (never write that no correction is needed).';
+
+function chapterSystem(c, done, known, level) {
+  const ch = CHAPTERS[c];
+  const left = ch.tasks.map((t, i) => (done.includes(i + 1) ? null : `${i + 1}) ${t}`)).filter(Boolean);
+  return `You are ${ch.role}. You are talking with an Arabic-speaking learner of Persian. Stay in your role and in the scene. ` +
+    `${LEVELS[level]} Reply in simple, natural, correct modern Persian (Iran), 1 or 2 short sentences. ` + RULES +
+    `The learner's mission in this scene is to do these things in Persian: ${ch.tasks.map((t, i) => `${i + 1}) ${t}`).join('; ')}. ` +
+    (left.length ? `Still to do: ${left.join('; ')}. Lead the conversation naturally so the learner can do them, but never do them for the learner. `
+      : 'The learner has done every task: wrap up the scene warmly. ') +
+    (known.length ? `Prefer words the learner already knows: ${known.join('، ')}. ` : '') +
+    'Answer in exactly these six lines and nothing else:\n' + FORMAT + '\n' +
+    "DONE: the numbers of the tasks the learner accomplished in their last message, separated by commas, or - if none\n" +
+    'HINTS: two short replies the learner could say next in Persian, each followed by = and its Arabic meaning, separated by |';
+}
+
 const system = (s) =>
   `You are ${ROLES[s]}. You are talking with an Arabic-speaking beginner who is learning Persian. ` +
   'Stay in your role. Reply in simple, natural, correct modern Persian (Iran), 1 or 2 short sentences, ' +
@@ -62,11 +109,11 @@ const NO_FIX = /لا حاجة|لا يوجد (خطأ|أخطاء)|لا أخطاء|
 const norm = (t) => String(t).replace(/[\u200c\s.,،؟?!:«»"'\-–—]/g, '').replace(/ي/g, 'ی').replace(/ك/g, 'ک');
 
 function parse(text, said) {
-  const out = { fa: '', tr: '', ar: '', fix: '' };
+  const out = { fa: '', tr: '', ar: '', fix: '', done: '', hints: '' };
   let cur = null;
   const clean = String(text || '').replace(/<think>[\s\S]*?<\/think>/g, '').replace(/\*\*/g, '');
   for (const line of clean.split('\n')) {
-    const m = line.match(/^\s*(FA|TR|AR|FIX)\s*[:：]\s*(.*)$/i);
+    const m = line.match(/^\s*(FA|TR|AR|FIX|DONE|HINTS)\s*[:：]\s*(.*)$/i);
     if (m) { cur = m[1].toLowerCase(); out[cur] = m[2].trim(); }
     else if (cur && line.trim()) out[cur] += ' ' + line.trim();
   }
@@ -74,7 +121,12 @@ function parse(text, said) {
   out.fix = out.fix.replace(/[\s,،\-–—]+$/, '').trim();
   if (!out.fix || NO_FIX.test(out.fix) || (said && norm(out.fix) === norm(said))) out.fix = '';
   for (const k of Object.keys(out)) out[k] = out[k].slice(0, 400);
-  return out;
+  const done = [...new Set((out.done.match(/\d+/g) || []).map(Number).filter((n) => n >= 1 && n <= 6))];
+  const hints = out.hints.split('|').map((h) => {
+    const [fa, ar] = h.split('=').map((x) => (x || '').trim());
+    return fa && /[\u0600-\u06FF]/.test(fa) ? { fa: fa.slice(0, 120), ar: (ar || '').slice(0, 120) } : null;
+  }).filter(Boolean).slice(0, 3);
+  return { ...out, done, hints };
 }
 
 const asText = (m) => (m.r === 'a' ? `FA: ${m.t}` : m.t);
@@ -105,13 +157,21 @@ export async function onRequest({ request, env }) {
 
   let body;
   try { body = await request.json(); } catch (e) { return json({ error: 'body' }, 400); }
-  const s = Number(body.s);
-  if (!Number.isInteger(s) || s < 0 || s >= ROLES.length) return json({ error: 'scenario' }, 400);
+  const chapter = body.c != null;
+  const c = Number(body.c), s = Number(body.s);
+  if (chapter ? !Number.isInteger(c) || c < 0 || c >= CHAPTERS.length : !Number.isInteger(s) || s < 0 || s >= ROLES.length) {
+    return json({ error: 'scenario' }, 400);
+  }
+  if (chapter && c > 0 && !st.ok) return json({ error: 'free', msg: 'هذا الفصل للمشتركين. الفصل الأول مجاني.' }, 403);
+  const done = (Array.isArray(body.done) ? body.done : []).map(Number).filter((n) => n >= 1 && n <= 6);
+  const known = (Array.isArray(body.known) ? body.known : []).filter((w) => typeof w === 'string' && /[\u0600-\u06FF]/.test(w))
+    .map((w) => w.trim().slice(0, 30)).slice(0, 60);
+  const level = Math.max(0, Math.min(2, Number(body.level) || 0));
   const msgs = (Array.isArray(body.msgs) ? body.msgs : []).slice(-MAX_TURNS)
     .filter((m) => m && (m.r === 'u' || m.r === 'a') && typeof m.t === 'string' && m.t.trim())
     .map((m) => ({ r: m.r, t: m.t.trim().slice(0, MAX_CHARS) }));
-  const messages = [{ role: 'system', content: system(s) }];
-  if (!msgs.length || msgs[0].r !== 'u') messages.push({ role: 'user', content: '(Start the conversation in your role with a short greeting and a question.)' });
+  const messages = [{ role: 'system', content: chapter ? chapterSystem(c, done, known, level) : system(s) }];
+  if (!msgs.length || msgs[0].r !== 'u') messages.push({ role: 'user', content: '(Start the scene in your role with a short greeting and a question.)' });
   for (const m of msgs) messages.push({ role: m.r === 'u' ? 'user' : 'assistant', content: asText(m) });
 
   const first = admin && MODELS.includes(body.model) ? body.model : (env.CHAT_MODEL || MODELS[0]);
@@ -119,7 +179,7 @@ export async function onRequest({ request, env }) {
   let reply = null, model = null;
   for (const m of order.slice(0, 3)) {
     try {
-      const res = await env.AI.run(m, { messages, max_tokens: 350, temperature: 0.6 });
+      const res = await env.AI.run(m, { messages, max_tokens: chapter ? 450 : 350, temperature: 0.6 });
       const text = typeof res === 'string' ? res : res && res.response;
       const said = msgs.length && msgs[msgs.length - 1].r === 'u' ? msgs[msgs.length - 1].t : '';
       if (text && text.trim()) { reply = parse(text, said); model = m; break; }
