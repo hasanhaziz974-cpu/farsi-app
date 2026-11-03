@@ -2,7 +2,8 @@
 // - The app page: network first, so the sign-in and trial checks in functions/_middleware.js still run
 //   whenever there is a connection. The last good copy is used only when the phone is offline.
 // - Fonts, scripts, icons and audio: cached on first use, so lessons heard once also play offline.
-// - Daily reminder: tools/send_reminders.py sends an empty push; the text is chosen here.
+// - Daily reminder: tools/send_reminders.py sends an empty push; the text is chosen here (on the
+//   trial's last day it says the trial is ending).
 const APP = 'parsa-app-v1';
 const MEDIA = 'parsa-media-v1';
 const PAGE = '/';
@@ -76,12 +77,26 @@ const REMINDERS = [
   ['⭐ هدفك اليومي', 'أكمل هدف اليوم واجمع نقاطك.'],
 ];
 
+// On the last day of the trial the reminder says so instead (the learner's status comes from /api/me).
+async function reminderText() {
+  try {
+    const res = await Promise.race([
+      fetch('/api/me', { credentials: 'same-origin' }),
+      new Promise((_, no) => setTimeout(no, 4000)),
+    ]);
+    const me = res.ok ? await res.json() : null;
+    if (me && me.kind === 'trial' && me.ok && me.left <= 1) {
+      return ['⏳ تنتهي تجربتك المجانية اليوم', 'اشترك لتتابع كل الدروس ومحادثة پارسا. تقدّمك محفوظ.'];
+    }
+  } catch (err) { /* offline or signed out: the usual reminder */ }
+  return REMINDERS[Math.floor(Math.random() * REMINDERS.length)];
+}
+
 self.addEventListener('push', (e) => {
-  const [title, body] = REMINDERS[Math.floor(Math.random() * REMINDERS.length)];
-  e.waitUntil(self.registration.showNotification(title, {
+  e.waitUntil(reminderText().then(([title, body]) => self.registration.showNotification(title, {
     body, lang: 'ar', dir: 'rtl', tag: 'daily-reminder',
     icon: '/pwa/icon-192.png', badge: '/pwa/badge-96.png', // badge: white shape on transparent; Android draws only its outline
-  }));
+  })));
 });
 
 self.addEventListener('notificationclick', (e) => {

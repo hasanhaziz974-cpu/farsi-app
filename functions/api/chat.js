@@ -16,7 +16,7 @@ export const MODELS = [
   '@cf/mistralai/mistral-small-3.1-24b-instruct',
   '@cf/qwen/qwen3-30b-a3b-fp8',
 ];
-const LIMIT = { list: 100, member: 40, trial: 15 };
+const LIMIT = { list: 100, member: 40, trial: 15, free: 3 }; // free: after the trial or subscription ended
 const MAX_TURNS = 12, MAX_CHARS = 300;
 
 // The character the model plays in each conversation (same order as the app's DLG), and a free chat.
@@ -92,16 +92,16 @@ export async function onRequest({ request, env }) {
   const email = await accessEmail(request, env);
   if (!email || !kv) return json({ error: 'signin' }, 401);
   const st = await accessStatus(kv, email, false);
-  if (!st.ok) return json({ error: 'ended', msg: 'انتهت مدة دخولك. جدّد اشتراكك لتتابع المحادثة.' }, 403);
+
   const admin = ((await kv.get('admins', 'json')) || []).includes(email);
-  const limit = LIMIT[st.kind] || LIMIT.trial;
+  const limit = st.ok ? LIMIT[st.kind] || LIMIT.trial : LIMIT.free;
   const used = await counter(request, kv, email);
 
-  if (request.method === 'GET') return json({ left: Math.max(0, limit - used), limit, admin, models: admin ? MODELS : [] });
+  if (request.method === 'GET') return json({ left: Math.max(0, limit - used), limit, free: !st.ok, admin, models: admin ? MODELS : [] });
   if (request.method !== 'POST') return json({ error: 'method' }, 405);
   if (request.headers.get('Origin') !== new URL(request.url).origin) return json({ error: 'origin' }, 403);
   if (!env.AI) return json({ error: 'not_ready', msg: 'المحادثة غير جاهزة بعد. حاول لاحقاً.' }, 503);
-  if (used >= limit) return json({ error: 'limit', left: 0, msg: `وصلت إلى حدّ اليوم (${limit} رسالة). عُد غداً لمحادثة جديدة!` }, 429);
+  if (used >= limit) return json({ error: 'limit', left: 0, free: !st.ok, msg: st.ok ? `وصلت إلى حدّ اليوم (${limit} رسالة). عُد غداً لمحادثة جديدة!` : `انتهت رسائلك المجانية لليوم (${limit}). اشترك لتتحدث مع پارسا أكثر.` }, 429);
 
   let body;
   try { body = await request.json(); } catch (e) { return json({ error: 'body' }, 400); }
