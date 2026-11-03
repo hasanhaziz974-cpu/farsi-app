@@ -77,9 +77,9 @@ const FORMAT =
   'FA: your reply in Persian script\n' +
   'TR: its Latin transliteration (like: salām, khoshhālam, che mikhāhid?)\n' +
   'AR: its translation into Arabic\n' +
-  "FIX: check every word of the learner's last message, including misspelled words (like چمور for چطور). " +
-  "Only if it had a real Persian mistake: the corrected Persian sentence, then a very short explanation in Arabic. " +
-  'If it was correct, or there is nothing to correct, write only - (never write that no correction is needed).';
+  "FIX: the learner's last message rewritten in correct Persian, or only - if it had no mistake. Check every word's spelling " +
+  "(example: the learner wrote «خوبم ممنون شما چمور», so FIX: خوبم، ممنون. شما چطورید؟). Never put your own reply here.\n" +
+  'WHY: only if FIX is not -: a very short explanation in Arabic of the mistake (example: «چطور» تُكتب بالطاء)، otherwise -';
 
 function chapterSystem(c, done, known, level) {
   const ch = CHAPTERS[c];
@@ -90,7 +90,7 @@ function chapterSystem(c, done, known, level) {
     (left.length ? `Still to do: ${left.join('; ')}. Lead the conversation naturally so the learner can do them, but never do them for the learner. `
       : 'The learner has done every task: wrap up the scene warmly. ') +
     (known.length ? `Prefer words the learner already knows: ${known.join('، ')}. ` : '') +
-    'Answer in exactly these six lines and nothing else:\n' + FORMAT + '\n' +
+    'Answer in exactly these seven lines and nothing else:\n' + FORMAT + '\n' +
     "DONE: the numbers of the tasks the learner accomplished in their last message, separated by commas, or - if none\n" +
     'HINTS: two short replies the learner could say next in Persian, each followed by = and its Arabic meaning, separated by |';
 }
@@ -102,13 +102,13 @@ const system = (s) =>
   'Write standard Persian as in a textbook, not colloquial spelling (ممنونم or متشکرم, می‌کنم, می‌خواهم; never میکونم or میخوام). ' +
   'Never put words from Turkish, English, Arabic or any other language into the Persian line. Use Persian letters ی and ک. ' +
   'Write explanations only in Arabic. Never correct the learner for typing Arabic letters (أ for ا, ي for ی, ك for ک, ة for ه): that is not a mistake. ' +
-  'Answer in exactly these four lines and nothing else:\n' +
+  'Answer in exactly these five lines and nothing else:\n' +
   'FA: your reply in Persian script\n' +
   'TR: its Latin transliteration (like: salām, khoshhālam, che mikhāhid?)\n' +
   'AR: its translation into Arabic\n' +
-  "FIX: check every word of the learner's last message, including misspelled words (like چمور for چطور). " +
-  "Only if it had a real Persian mistake: the corrected Persian sentence, then a very short explanation in Arabic. " +
-  'If it was correct, or there is nothing to correct, write only - (never write that no correction is needed).';
+  "FIX: the learner's last message rewritten in correct Persian, or only - if it had no mistake. Check every word's spelling " +
+  "(example: the learner wrote «خوبم ممنون شما چمور», so FIX: خوبم، ممنون. شما چطورید؟). Never put your own reply here.\n" +
+  'WHY: only if FIX is not -: a very short explanation in Arabic of the mistake (example: «چطور» تُكتب بالطاء)، otherwise -';
 
 // A FIX line that only says the message was fine, or repeats it unchanged, is not a correction.
 // Only the start of the line is checked: an explanation like «الكلمة الصحيحة هي چطور» is a real correction.
@@ -120,21 +120,40 @@ const norm = (t) => String(t).replace(/[\u200c\u064B-\u0652\s.,،؟?!:«»"'\-�
 // sometimes leak into a model's answer; they are removed with any label they carry ("설명:").
 const FOREIGN = /[\u0370-\u03FF\u0400-\u052F\u0590-\u05FF\u0900-\u0DFF\u0E00-\u0FFF\u1100-\u11FF\u3040-\u30FF\u3130-\u318F\u3400-\u9FFF\uAC00-\uD7AF]+\s*[:：]?\s*/g;
 
+// Edit distance, to check that a correction is the learner's sentence with a few changes and not something else.
+function distance(a, b) {
+  let prev = Array.from({ length: b.length + 1 }, (_, j) => j);
+  for (let i = 1; i <= a.length; i++) {
+    const row = [i];
+    for (let j = 1; j <= b.length; j++) row[j] = Math.min(prev[j] + 1, row[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    prev = row;
+  }
+  return prev[b.length];
+}
+
+// A correction is shown only when it is Persian, differs from what the learner wrote, and is close to it.
+export function correction(fix, why, said) {
+  const fa = String(fix || '').replace(/[\s,،\-–—]+$/, '').trim();
+  if (!said || !fa || NO_FIX.test(fa) || /[A-Za-z]/.test(fa) || !/[\u0600-\u06FF]/.test(fa)) return '';
+  const a = norm(said), b = norm(fa);
+  if (a === b || distance(a, b) > Math.max(3, Math.ceil(0.5 * Math.max(a.length, b.length)))) return '';
+  const w = String(why || '').trim();
+  return w && w !== '-' && !/[A-Za-z]/.test(w) && !NO_FIX.test(w) ? `${fa} — ${w}` : fa;
+}
+
 function parse(text, said) {
-  const out = { fa: '', tr: '', ar: '', fix: '', done: '', hints: '' };
+  const out = { fa: '', tr: '', ar: '', fix: '', why: '', done: '', hints: '' };
   let cur = null;
   const clean = String(text || '').replace(/<think>[\s\S]*?<\/think>/g, '').replace(/\*\*/g, '');
   for (const line of clean.split('\n')) {
-    const m = line.match(/^\s*(FA|TR|AR|FIX|DONE|HINTS)\s*[:：]\s*(.*)$/i);
+    const m = line.match(/^\s*(FA|TR|AR|FIX|WHY|DONE|HINTS)\s*[:：]\s*(.*)$/i);
     if (m) { cur = m[1].toLowerCase(); out[cur] = m[2].trim(); }
     else if (cur && line.trim()) out[cur] += ' ' + line.trim();
   }
   if (!out.fa) out.fa = clean.trim().split('\n')[0] || '';
   for (const k of Object.keys(out)) out[k] = out[k].replace(FOREIGN, ' ').replace(/\s{2,}/g, ' ').trim();
-  out.fix = out.fix.replace(/[\s,،\-–—]+$/, '').trim();
-  // The corrected sentence is what comes before the explanation; if it is what the learner wrote, there is no correction.
-  const corrected = out.fix.split(/[،,:：.؟?!\n]|\s[-–—]\s/)[0];
-  if (!out.fix || NO_FIX.test(out.fix) || (said && (norm(out.fix) === norm(said) || norm(corrected) === norm(said)))) out.fix = '';
+  out.fix = correction(out.fix, out.why, said);
+  delete out.why;
   for (const k of Object.keys(out)) out[k] = out[k].slice(0, 400);
   const done = [...new Set((out.done.match(/\d+/g) || []).map(Number).filter((n) => n >= 1 && n <= 6))];
   const hints = out.hints.split('|').map((h) => {
