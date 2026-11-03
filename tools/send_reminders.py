@@ -13,7 +13,7 @@ the first run. Subscriptions the push service reports as gone (404 or 410) are d
 
 Env: CF_API_TOKEN, CF_ACCOUNT_ID. Emails are never printed: Actions logs of this repository are public.
 """
-import base64, datetime, json, os, sys, time, urllib.error, urllib.parse, urllib.request
+import base64, datetime, json, os, re, sys, time, urllib.error, urllib.parse, urllib.request
 
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import ec
@@ -119,12 +119,41 @@ def push(key, public, sub):
         return 0
 
 
+TRIAL_DAYS = 7  # as in lib/trial.js
+DIGITS = str.maketrans('٠١٢٣٤٥٦٧٨٩۰۱۲۳۴۵۶۷۸۹', '01234567890123456789')
+
+
+def has_access(kv, email, allowlist, now):
+    """Whether the learner may still use the app (mirrors accessStatus in lib/trial.js), so people
+    whose trial or subscription ended are not reminded every day of a lesson they cannot open."""
+    if email in allowlist:
+        return True
+    allow = kv_raw(kv, 'allow:' + email)
+    if allow is not None:
+        v = allow.strip().translate(DIGITS)
+        if not re.fullmatch(r'\d{4}-\d{2}-\d{2}', v):
+            return True  # no end date
+        return now.date().isoformat() <= v
+    start = kv_raw(kv, 'trial:' + email)
+    return bool(start) and now.timestamp() * 1000 - float(start) < TRIAL_DAYS * 864e5
+
+
+def kv_raw(kv, key):
+    try:
+        return cf('GET', f'{kv}/values/{urllib.parse.quote(key, safe="")}', raw=True).decode()
+    except urllib.error.HTTPError as e:
+        if e.code == 404:
+            return None
+        raise
+
+
 def main():
     account = os.environ['CF_ACCOUNT_ID'].strip()
     kv = kv_path(account)
     key, public = vapid_key(kv)
     now = datetime.datetime.now(datetime.timezone.utc)
-    counts = {'reminders': 0, 'sent': 0, 'studied': 0, 'removed': 0, 'failed': 0}
+    counts = {'reminders': 0, 'sent': 0, 'studied': 0, 'ended': 0, 'removed': 0, 'failed': 0}
+    allowlist = kv_get(kv, 'allowlist') or []
     for name in kv_keys(kv, 'push:'):
         rec = kv_get(kv, name)
         if not rec or not rec.get('sub'):
@@ -136,6 +165,9 @@ def main():
             continue
         if rec.get('last') == day:
             counts['studied'] += 1
+            continue
+        if not has_access(kv, name[len('push:'):], allowlist, now):
+            counts['ended'] += 1
             continue
         status = push(key, public, rec['sub'])
         if status in (200, 201, 202, 204):
@@ -149,7 +181,7 @@ def main():
             counts['failed'] += 1
             print(f'::warning::A push service answered {status}.')
     print('Reminders: {reminders} on, {sent} sent now, {studied} skipped (already studied today), '
-          '{removed} removed (no longer subscribed), {failed} failed.'.format(**counts))
+          '{ended} skipped (access ended), {removed} removed (no longer subscribed), {failed} failed.'.format(**counts))
 
 
 if __name__ == '__main__':
