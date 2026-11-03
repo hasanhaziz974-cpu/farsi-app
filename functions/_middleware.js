@@ -5,10 +5,21 @@
 // last day of access (YYYY-MM-DD, UTC, Arabic or Persian digits accepted) or any other
 // text for no end date. Signed-in requests are checked only on page loads; audio, font and script
 // requests pass straight through. Requests without a verified sign-in get only the public pages.
-import { TRIAL_DAYS, CONTACT, accessEmail, accessStatus } from '../lib/trial.js';
+import { TRIAL_DAYS, CONTACT, accessEmail, accessStatus, payConfig } from '../lib/trial.js';
 
 // Shown instead of the app when access has ended: the trial, or a subscription period.
-function endedPage(kind, email) {
+const h = (t) => String(t).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+
+// Prices, payment numbers and a WhatsApp button with the learner's email filled in (admin page settings).
+function payBlock(pay, email) {
+  const msg = encodeURIComponent('مرحباً، أريد الاشتراك في «الفارسية من الصفر».\nبريدي: ' + email + '\nالباقة: \nأرسلت المبلغ عبر: \n(أرفق صورة الإيصال)');
+  return `<div class="card"><b>💳 الباقات</b>${pay.plans.map((p) => `<div class="pl"><span>${h(p.label)}</span><b>${h(p.price)}</b></div>`).join('')}</div>
+<div class="card"><b>طرق الدفع</b>${pay.methods.map((m) => `<div class="pl"><span>${h(m.label)}</span><b class="e">${h(m.value)}</b></div>`).join('')}
+<p class="mu" style="margin:8px 0 0">حوّل مبلغ الباقة، ثم أرسل لنا صورة الإيصال على واتساب مع بريدك.${pay.note ? ' ' + h(pay.note) : ''}</p></div>
+<a class="btn" href="https://wa.me/${h(pay.whatsapp)}?text=${msg}">💬 أرسلت المبلغ: راسلنا على واتساب</a>`;
+}
+
+function endedPage(kind, email, pay) {
   const trial = kind === 'trial';
   const subject = encodeURIComponent('اشتراك في «الفارسية من الصفر»');
   const body = encodeURIComponent('مرحباً، أريد الاشتراك في التطبيق.\nبريدي المسجّل: ' + email);
@@ -23,11 +34,12 @@ main{max-width:520px;margin:0 auto;padding:40px 16px}img{width:96px;height:96px;
 h1{color:var(--pr);font-size:24px;margin:16px 0 6px}.card{background:var(--sf);border:1px solid var(--bd);border-radius:16px;padding:16px;margin:16px 0;text-align:start}
 .btn{display:block;background:var(--pr);color:#fff;text-decoration:none;font-weight:700;border-radius:12px;padding:12px;margin:10px 0}
 .mu{color:var(--mu);font-size:15px}a{color:var(--pr)}.e{direction:ltr;unicode-bidi:isolate;font-weight:700}
+.pl{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px solid var(--bd)}.pl:first-of-type{border-top:0}
 </style></head><body><main>
 <img src="/pwa/icon-192.png" alt="">
 <h1>${trial ? 'انتهت فترتك التجريبية' : 'انتهت مدة اشتراكك'}</h1>
 <p>${trial ? `شكراً لتجربتك «الفارسية من الصفر» طوال ${TRIAL_DAYS} أيام.` : 'شكراً لتعلّمك معنا في «الفارسية من الصفر».'} للاستمرار في التعلّم تواصل معنا ليُفعَّل اشتراكك.</p>
-<a class="btn" href="mailto:${CONTACT}?subject=${subject}&body=${body}">✉️ راسلنا للاشتراك</a>
+${pay ? payBlock(pay, email) : `<a class="btn" href="mailto:${CONTACT}?subject=${subject}&body=${body}">✉️ راسلنا للاشتراك</a>`}
 <div class="card">💾 <b>تقدّمك محفوظ</b> في جهازك كما هو: كلماتك ونقاطك وسلسلتك. ستجده عندما يُفعَّل اشتراكك.</div>
 <p class="mu">أنت مسجّل بالبريد <span class="e">${email.replace(/[<>&"]/g, '')}</span><br>
 <a href="/logout">الدخول ببريد آخر</a></p>
@@ -96,11 +108,11 @@ async function handle({ request, env, next }) {
   if (!PAGES.has(new URL(request.url).pathname) || !env.TRIALS) return next();
 
   const st = await accessStatus(env.TRIALS, email, true);
-  return st.ok ? next() : ended(st.kind, email);
+  return st.ok ? next() : ended(st.kind, email, await payConfig(env.TRIALS));
 }
 
-function ended(kind, email) {
-  return new Response(endedPage(kind, email), {
+function ended(kind, email, pay) {
+  return new Response(endedPage(kind, email, pay), {
     status: 403,
     headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' },
   });

@@ -1,5 +1,5 @@
 // The signed-in learner's access, for the app's subscription card and the "trial ends soon" banner.
-import { accessEmail, accessStatus, TRIAL_DAYS, CONTACT } from '../../lib/trial.js';
+import { accessEmail, accessStatus, TRIAL_DAYS, CONTACT, payConfig } from '../../lib/trial.js';
 import { readSession, needsRenewal, makeSession, sessionCookie } from '../../lib/auth.js';
 
 export async function onRequest({ request, env }) {
@@ -10,5 +10,5 @@ export async function onRequest({ request, env }) {
   // Renew the app's own session when it is close to expiring, so active learners stay signed in.
   const own = await readSession(request, env.TRIALS);
   if (own && needsRenewal(own)) headers.append('Set-Cookie', sessionCookie(await makeSession(env.TRIALS, email)));
-  return Response.json({ email, trialDays: TRIAL_DAYS, contact: CONTACT, ...st }, { headers });
+  return Response.json({ email, trialDays: TRIAL_DAYS, contact: CONTACT, ...st, pay: await payConfig(env.TRIALS) }, { headers });
 }
