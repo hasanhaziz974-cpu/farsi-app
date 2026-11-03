@@ -247,6 +247,16 @@ def trials(account, project, keep):
         call('PATCH', f'/accounts/{account}/pages/projects/{project}',
              {'deployment_configs': {'production': binding, 'preview': binding}})
         redeploy = True
+    # Workers AI for the conversation practice (functions/api/chat.js): a binding, no key.
+    if 'AI' not in ((configs.get('production') or {}).get('ai_bindings') or {}):
+        ai = {'ai_bindings': {'AI': {}}}
+        done = call('PATCH', f'/accounts/{account}/pages/projects/{project}',
+                    {'deployment_configs': {'production': ai, 'preview': ai}}, allow=(400, 403))
+        if done is None:
+            print('::warning::Could not connect Workers AI to the site; the AI conversation stays off.')
+        else:
+            print('Connected Workers AI to the site (AI conversation practice).')
+            redeploy = True
     mail_url, mail_key = (os.environ.get('MAIL_URL') or '').strip(), (os.environ.get('MAIL_KEY') or '').strip()
     if mail_url and mail_key:
         if re.search(r'\s', mail_url + mail_key) or not mail_url.startswith('https://script.google.com/'):
