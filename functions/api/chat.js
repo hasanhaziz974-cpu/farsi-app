@@ -69,7 +69,8 @@ const LEVELS = [
 
 const RULES =
   'Write standard Persian as in a textbook, not colloquial spelling (ممنونم or متشکرم, می‌کنم, می‌خواهم; never میکونم or میخوام). ' +
-  'Never put words from Turkish, English, Arabic or any other language into the Persian line. Use Persian letters ی and ک. ';
+  'Never put words from Turkish, English, Arabic or any other language into the Persian line. Use Persian letters ی and ک. ' +
+  'Write explanations only in Arabic. Never correct the learner for typing Arabic letters (أ for ا, ي for ی, ك for ک, ة for ه): that is not a mistake. ';
 const FORMAT =
   'FA: your reply in Persian script\n' +
   'TR: its Latin transliteration (like: salām, khoshhālam, che mikhāhid?)\n' +
@@ -97,6 +98,7 @@ const system = (s) =>
   'beginner level, everyday words, and usually end with a short question that keeps the conversation going. ' +
   'Write standard Persian as in a textbook, not colloquial spelling (ممنونم or متشکرم, می‌کنم, می‌خواهم; never میکونم or میخوام). ' +
   'Never put words from Turkish, English, Arabic or any other language into the Persian line. Use Persian letters ی and ک. ' +
+  'Write explanations only in Arabic. Never correct the learner for typing Arabic letters (أ for ا, ي for ی, ك for ک, ة for ه): that is not a mistake. ' +
   'Answer in exactly these four lines and nothing else:\n' +
   'FA: your reply in Persian script\n' +
   'TR: its Latin transliteration (like: salām, khoshhālam, che mikhāhid?)\n' +
@@ -106,7 +108,12 @@ const system = (s) =>
 
 // A FIX line that only says the message was fine, or repeats it unchanged, is not a correction.
 const NO_FIX = /لا حاجة|لا يوجد (خطأ|أخطاء)|لا أخطاء|بدون أخطاء|صحيحة|صحيح تماماً|جملتك صحيحة|no (mistake|correction)|is correct|nothing to correct/i;
-const norm = (t) => String(t).replace(/[\u200c\s.,،؟?!:«»"'\-–—]/g, '').replace(/ي/g, 'ی').replace(/ك/g, 'ک');
+// Arabic and Persian spellings of the same letter (أ/ا, ي/ی, ك/ک, ة/ه) are not mistakes.
+const norm = (t) => String(t).replace(/[\u200c\u064B-\u0652\s.,،؟?!:«»"'\-–—]/g, '')
+  .replace(/[أإٱ]/g, 'ا').replace(/[يى]/g, 'ی').replace(/ك/g, 'ک').replace(/ة/g, 'ه');
+// Letters of scripts the app never uses (Korean, Chinese, Japanese, Cyrillic, Greek, Hebrew, Indic, Thai)
+// sometimes leak into a model's answer; they are removed with any label they carry ("설명:").
+const FOREIGN = /[\u0370-\u03FF\u0400-\u052F\u0590-\u05FF\u0900-\u0DFF\u0E00-\u0FFF\u1100-\u11FF\u3040-\u30FF\u3130-\u318F\u3400-\u9FFF\uAC00-\uD7AF]+\s*[:：]?\s*/g;
 
 function parse(text, said) {
   const out = { fa: '', tr: '', ar: '', fix: '', done: '', hints: '' };
@@ -118,8 +125,11 @@ function parse(text, said) {
     else if (cur && line.trim()) out[cur] += ' ' + line.trim();
   }
   if (!out.fa) out.fa = clean.trim().split('\n')[0] || '';
+  for (const k of Object.keys(out)) out[k] = out[k].replace(FOREIGN, ' ').replace(/\s{2,}/g, ' ').trim();
   out.fix = out.fix.replace(/[\s,،\-–—]+$/, '').trim();
-  if (!out.fix || NO_FIX.test(out.fix) || (said && norm(out.fix) === norm(said))) out.fix = '';
+  // The corrected sentence is what comes before the explanation; if it is what the learner wrote, there is no correction.
+  const corrected = out.fix.split(/[،,:：.؟?!\n]|\s[-–—]\s/)[0];
+  if (!out.fix || NO_FIX.test(out.fix) || (said && (norm(out.fix) === norm(said) || norm(corrected) === norm(said)))) out.fix = '';
   for (const k of Object.keys(out)) out[k] = out[k].slice(0, 400);
   const done = [...new Set((out.done.match(/\d+/g) || []).map(Number).filter((n) => n >= 1 && n <= 6))];
   const hints = out.hints.split('|').map((h) => {
