@@ -1,0 +1,25 @@
+name: Try AI models
+# Temporary: compares Workers AI models on a Persian role-play turn.
+on:
+  push:
+    branches: [claude/project-files-review-lcyij6]
+    paths: [.github/workflows/try-ai.yml, tools/try_ai_models.py]
+permissions:
+  contents: read
+jobs:
+  try:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - env:
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+          MODELS: >-
+            @cf/meta/llama-3.3-70b-instruct-fp8-fast
+            @cf/google/gemma-3-12b-it
+            @cf/meta/llama-4-scout-17b-16e-instruct
+            @cf/mistralai/mistral-small-3.1-24b-instruct
+            @cf/qwen/qwen3-30b-a3b-fp8
+            @cf/openai/gpt-oss-120b
+            @cf/openai/gpt-oss-20b
+        run: python3 tools/try_ai_models.py
