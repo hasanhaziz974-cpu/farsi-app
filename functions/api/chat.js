@@ -187,13 +187,18 @@ export async function onRequest({ request, env }) {
   const first = admin && MODELS.includes(body.model) ? body.model : (env.CHAT_MODEL || MODELS[0]);
   const order = [first, ...MODELS.filter((m) => m !== first)];
   let reply = null, model = null;
+  const failed = []; // admin only: why a model was skipped
   for (const m of order.slice(0, 3)) {
     try {
       const res = await env.AI.run(m, { messages, max_tokens: chapter ? 450 : 350, temperature: 0.6 });
-      const text = typeof res === 'string' ? res : res && res.response;
+      // Most models answer {response}; some answer in the OpenAI shape {choices: [{message: {content}}]}.
+      let text = typeof res === 'string' ? res : res && (res.response ?? (res.choices && res.choices[0] && res.choices[0].message && res.choices[0].message.content));
+      if (text && typeof text !== 'string') text = JSON.stringify(text);
       const said = msgs.length && msgs[msgs.length - 1].r === 'u' ? msgs[msgs.length - 1].t : '';
       if (text && text.trim()) { reply = parse(text, said); model = m; break; }
+      failed.push(`${m.split('/').pop()}: empty`);
     } catch (e) {
+      failed.push(`${m.split('/').pop()}: ${String(e && e.message).slice(0, 120)}`);
       if (/neuron|limit|quota|429|capacity/i.test(String(e && e.message))) {
         return json({ error: 'busy', msg: 'انتهى رصيد المحادثة لهذا اليوم. عُد غداً!' }, 503);
       }
@@ -202,5 +207,5 @@ export async function onRequest({ request, env }) {
   if (!reply) return json({ error: 'ai', msg: 'تعذّر الردّ الآن. حاول بعد قليل.' }, 502);
   const n = used + 1;
   const cookie = `pc=${await signValue(kv, { e: email, d: today(), n })}; Path=/api/chat; Max-Age=172800; HttpOnly; Secure; SameSite=Lax`;
-  return json({ ...reply, left: Math.max(0, limit - n), model: admin ? model : undefined }, 200, { 'Set-Cookie': cookie });
+  return json({ ...reply, left: Math.max(0, limit - n), model: admin ? [model, ...failed].join(' | ') : undefined }, 200, { 'Set-Cookie': cookie });
 }
