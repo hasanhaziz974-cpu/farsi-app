@@ -46,14 +46,20 @@ const system = (s) =>
   `You are ${ROLES[s]}. You are talking with an Arabic-speaking beginner who is learning Persian. ` +
   'Stay in your role. Reply in simple, natural, correct modern Persian (Iran), 1 or 2 short sentences, ' +
   'beginner level, everyday words, and usually end with a short question that keeps the conversation going. ' +
-  'Never write Arabic or English in the Persian line. Use Persian letters ی and ک. ' +
+  'Write standard Persian as in a textbook, not colloquial spelling (ممنونم or متشکرم, می‌کنم, می‌خواهم; never میکونم or میخوام). ' +
+  'Never put words from Turkish, English, Arabic or any other language into the Persian line. Use Persian letters ی and ک. ' +
   'Answer in exactly these four lines and nothing else:\n' +
   'FA: your reply in Persian script\n' +
   'TR: its Latin transliteration (like: salām, khoshhālam, che mikhāhid?)\n' +
   'AR: its translation into Arabic\n' +
-  "FIX: if the learner's last message had a Persian mistake, the corrected Persian sentence, then a very short explanation in Arabic; if it was correct or there is nothing to correct, just -";
+  "FIX: only if the learner's last message had a real Persian mistake: the corrected Persian sentence, then a very short explanation in Arabic. " +
+  'If it was correct, or there is nothing to correct, write only - (never write that no correction is needed).';
 
-function parse(text) {
+// A FIX line that only says the message was fine, or repeats it unchanged, is not a correction.
+const NO_FIX = /لا حاجة|لا يوجد (خطأ|أخطاء)|لا أخطاء|بدون أخطاء|صحيحة|صحيح تماماً|جملتك صحيحة|no (mistake|correction)|is correct|nothing to correct/i;
+const norm = (t) => String(t).replace(/[\u200c\s.,،؟?!:«»"'\-–—]/g, '').replace(/ي/g, 'ی').replace(/ك/g, 'ک');
+
+function parse(text, said) {
   const out = { fa: '', tr: '', ar: '', fix: '' };
   let cur = null;
   const clean = String(text || '').replace(/<think>[\s\S]*?<\/think>/g, '').replace(/\*\*/g, '');
@@ -63,7 +69,8 @@ function parse(text) {
     else if (cur && line.trim()) out[cur] += ' ' + line.trim();
   }
   if (!out.fa) out.fa = clean.trim().split('\n')[0] || '';
-  if (/^[\s\-–—.]*$/.test(out.fix) || /^(none|no mistakes?|correct|لا يوجد|لا أخطاء)/i.test(out.fix)) out.fix = '';
+  out.fix = out.fix.replace(/[\s,،\-–—]+$/, '').trim();
+  if (!out.fix || NO_FIX.test(out.fix) || (said && norm(out.fix) === norm(said))) out.fix = '';
   for (const k of Object.keys(out)) out[k] = out[k].slice(0, 400);
   return out;
 }
@@ -112,7 +119,8 @@ export async function onRequest({ request, env }) {
     try {
       const res = await env.AI.run(m, { messages, max_tokens: 350, temperature: 0.6 });
       const text = typeof res === 'string' ? res : res && res.response;
-      if (text && text.trim()) { reply = parse(text); model = m; break; }
+      const said = msgs.length && msgs[msgs.length - 1].r === 'u' ? msgs[msgs.length - 1].t : '';
+      if (text && text.trim()) { reply = parse(text, said); model = m; break; }
     } catch (e) {
       if (/neuron|limit|quota|429|capacity/i.test(String(e && e.message))) {
         return json({ error: 'busy', msg: 'انتهى رصيد المحادثة لهذا اليوم. عُد غداً!' }, 503);
