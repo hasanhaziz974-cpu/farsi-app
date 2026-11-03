@@ -39,14 +39,14 @@ const PAGES = new Set(['/', '/index', '/index.html']);
 // Without a verified sign-in only the public pages may be served. They carry data-public on their
 // <html> tag; anything else (the app, or the app served as a fallback for an unknown path) is refused.
 // This also covers hosts Access does not cover, like a deployment's own *.pages.dev address.
-const PUBLIC = ['/welcome', '/fonts/', '/pwa/', '/login', '/api/auth/'];
+const PUBLIC = ['/welcome', '/fonts/', '/pwa/', '/login', '/api/auth/', '/logout'];
 const WELCOME = new Set(['/welcome', '/welcome/', '/welcome/index.html', '/login', '/login/', '/login/index.html']);
 
 async function publicOnly(request, next) {
   const url = new URL(request.url);
   if (!PUBLIC.some((p) => url.pathname.startsWith(p))) {
-    // The app goes to the welcome page; other pages (e.g. /admin) to sign-in, then back.
-    const to = PAGES.has(url.pathname) ? '/welcome/' : '/login/?next=' + encodeURIComponent(url.pathname);
+    // Sign in first, then back to the page asked for (the welcome page's buttons lead to the app).
+    const to = PAGES.has(url.pathname) ? '/login/' : '/login/?next=' + encodeURIComponent(url.pathname);
     return Response.redirect(url.origin + to, 302);
   }
   const res = await next();
