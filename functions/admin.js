@@ -2,7 +2,7 @@
 // Only emails in the KV "admins" list (the first line of ACCESS_LIST, written by
 // tools/sync_access.py) can open it. People are stored as "allow:<email>" entries,
 // the same ones the trial check in _middleware.js reads.
-import { TRIAL_DAYS, DAY, accessEmail, lastDay, today } from '../lib/trial.js';
+import { TRIAL_DAYS, DAY, accessEmail, lastDay, today, PLAN_IDS, PAY_METHODS } from '../lib/trial.js';
 
 const PERIODS = { week: ['أسبوع', 7], month: ['شهر', 30], quarter: ['3 أشهر', 90], half: ['6 أشهر', 180], year: ['سنة', 365], forever: ['دائم', 0] };
 const FOREVER = 'دائم';
@@ -48,7 +48,33 @@ function periodSelect() {
     `<option value="${k}"${k === 'month' ? ' selected' : ''}>${label}</option>`).join('')}</select>`;
 }
 
+// The subscription offer: prices per plan, payment numbers and the WhatsApp number for receipts.
+async function savePay(kv, form) {
+  const clip = (v, n) => String(v || '').trim().slice(0, n);
+  const prices = {}, methods = {};
+  for (const [id] of PLAN_IDS) { const v = clip(form.get('price_' + id), 40); if (v) prices[id] = v; }
+  for (const [id] of PAY_METHODS) { const v = clip(form.get('pay_' + id), 80); if (v) methods[id] = v; }
+  const whatsapp = clip(form.get('whatsapp'), 20).replace(/[^0-9]/g, '').replace(/^00/, '').replace(/^0(7\d{9})$/, '964$1');
+  if (form.get('whatsapp') && !/^\d{10,15}$/.test(whatsapp)) return 'رقم الواتساب غير صحيح. اكتبه مثل 07701234567 أو 9647701234567.';
+  await kv.put('paycfg', JSON.stringify({ prices, methods, whatsapp, note: clip(form.get('note'), 300) }));
+  return Object.keys(prices).length && Object.keys(methods).length && whatsapp
+    ? 'حُفظت إعدادات الاشتراك، وصارت صفحة «اشترك» تظهر للمشتركين.'
+    : 'حُفظت. لتظهر صفحة «اشترك» للمشتركين يلزم سعر واحد على الأقل، وطريقة دفع، ورقم واتساب.';
+}
+
+function payForm(c) {
+  const p = c.prices || {}, m = c.methods || {};
+  return `<h2>💳 إعدادات الاشتراك</h2><form method="post" class="card"><input type="hidden" name="action" value="paycfg">
+<p class="mu" style="margin-top:0">تظهر في صفحة «اشترك» داخل التطبيق وفي صفحة انتهاء التجربة. اترك الخانة فارغة لإخفائها.</p>
+<b>الأسعار</b>${PLAN_IDS.map(([id, label]) => `<div class="row"><span style="min-width:70px">${label}</span><input name="price_${id}" value="${esc(p[id] || '')}" placeholder="مثل: 5,000 دينار" style="flex:1"></div>`).join('')}
+<b style="display:block;margin-top:12px">طرق الدفع (الرقم أو الحساب)</b>${PAY_METHODS.map(([id, label]) => `<div class="row"><span style="min-width:70px">${label}</span><input name="pay_${id}" value="${esc(m[id] || '')}" placeholder="${id === 'other' ? 'الاسم والرقم' : 'الرقم'}" style="flex:1;direction:ltr"></div>`).join('')}
+<b style="display:block;margin-top:12px">واتساب لاستقبال الإيصالات</b><div class="row"><input name="whatsapp" value="${esc(c.whatsapp || '')}" placeholder="07701234567" style="flex:1;direction:ltr"></div>
+<b style="display:block;margin-top:12px">ملاحظة (اختيارية)</b><div class="row"><input name="note" value="${esc(c.note || '')}" placeholder="مثل: يُفعَّل الاشتراك خلال ساعات" style="flex:1"></div>
+<div class="row"><button>حفظ</button></div></form>`;
+}
+
 async function act(kv, form) {
+  if (form.get('action') === 'paycfg') return savePay(kv, form);
   const email = String(form.get('email') || '').trim().toLowerCase();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return 'اكتب بريداً صحيحاً.';
   const key = 'allow:' + email;
@@ -129,6 +155,7 @@ async function view(kv, msg) {
   const trialRows = (active.map(trialCard).join('') || '<p class="mu">لا أحد في فترة تجريبية الآن.</p>')
     + (ended.length ? `<details><summary>انتهت تجربتهم (${ended.length}) · يمكنك مراسلتهم أو إضافتهم</summary>${ended.map(trialCard).join('')}</details>` : '');
 
+  const pay = (await kv.get('paycfg', 'json')) || {};
   return page(`<h1>إدارة المشتركين</h1><p class="mu">التغييرات تعمل خلال دقيقة تقريباً. · <a href="/logout">خروج</a></p>
 ${msg ? `<div class="msg">${esc(msg)}</div>` : ''}
 <div class="stats"><div><b>${activeMembers}</b><span>مشترك</span></div><div><b>${trials.filter((t) => t.left > 0).length}</b><span>في التجربة</span></div><div><b>${week}</b><span>تعلّموا هذا الأسبوع</span></div><div><b>${reminders}</b><span>فعّلوا التذكير</span></div></div>
@@ -139,6 +166,7 @@ ${mailsToday ? `<p class="mu">رسائل رمز الدخول اليوم: ${mails
 ${allowed.length + trials.length > 8 ? '<input type="search" id="q" placeholder="ابحث ببريد…" oninput="flt(this.value)">' : ''}
 <h2>المشتركون (${allowed.length})</h2>${people}
 <h2>في الفترة التجريبية (${active.length})</h2>${trialRows}
+${payForm(pay)}
 <script>function flt(q){q=q.trim().toLowerCase();document.querySelectorAll('.card').forEach(function(c){var e=c.querySelector('.e');if(e)c.style.display=!q||e.textContent.toLowerCase().indexOf(q)>=0?'':'none'});document.querySelectorAll('details').forEach(function(d){if(q)d.open=true})}</script>`);
 }
 
