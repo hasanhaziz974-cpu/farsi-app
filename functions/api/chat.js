@@ -9,12 +9,14 @@ import { signValue, readSigned } from '../../lib/auth.js';
 
 // The first model is the default (chosen by comparing them on real chats); the rest are fallbacks
 // and the admin's comparison list.
+// The first is the default. gemma-3-12b-it now answers 5018 "This account is not allowed to access"
+// on this account, so it is last (an admin can still try it from the picker).
 export const MODELS = [
-  '@cf/google/gemma-3-12b-it',
   '@cf/meta/llama-3.3-70b-instruct-fp8-fast',
   '@cf/meta/llama-4-scout-17b-16e-instruct',
   '@cf/mistralai/mistral-small-3.1-24b-instruct',
   '@cf/qwen/qwen3-30b-a3b-fp8',
+  '@cf/google/gemma-3-12b-it',
 ];
 const LIMIT = { list: 100, member: 40, trial: 15, free: 3 }; // free: after the trial or subscription ended
 const MAX_TURNS = 12, MAX_CHARS = 300;
@@ -75,7 +77,8 @@ const FORMAT =
   'FA: your reply in Persian script\n' +
   'TR: its Latin transliteration (like: salām, khoshhālam, che mikhāhid?)\n' +
   'AR: its translation into Arabic\n' +
-  "FIX: only if the learner's last message had a real Persian mistake: the corrected Persian sentence, then a very short explanation in Arabic. " +
+  "FIX: check every word of the learner's last message, including misspelled words (like چمور for چطور). " +
+  "Only if it had a real Persian mistake: the corrected Persian sentence, then a very short explanation in Arabic. " +
   'If it was correct, or there is nothing to correct, write only - (never write that no correction is needed).';
 
 function chapterSystem(c, done, known, level) {
@@ -103,11 +106,13 @@ const system = (s) =>
   'FA: your reply in Persian script\n' +
   'TR: its Latin transliteration (like: salām, khoshhālam, che mikhāhid?)\n' +
   'AR: its translation into Arabic\n' +
-  "FIX: only if the learner's last message had a real Persian mistake: the corrected Persian sentence, then a very short explanation in Arabic. " +
+  "FIX: check every word of the learner's last message, including misspelled words (like چمور for چطور). " +
+  "Only if it had a real Persian mistake: the corrected Persian sentence, then a very short explanation in Arabic. " +
   'If it was correct, or there is nothing to correct, write only - (never write that no correction is needed).';
 
 // A FIX line that only says the message was fine, or repeats it unchanged, is not a correction.
-const NO_FIX = /لا حاجة|لا يوجد (خطأ|أخطاء)|لا أخطاء|بدون أخطاء|صحيحة|صحيح تماماً|جملتك صحيحة|no (mistake|correction)|is correct|nothing to correct/i;
+// Only the start of the line is checked: an explanation like «الكلمة الصحيحة هي چطور» is a real correction.
+const NO_FIX = /^\s*(لا حاجة|لا يوجد|لا أخطاء|بدون أخطاء|(جملتك |الجملة )?صحيحة|صحيح|ممتاز|no (mistake|correction)|nothing to correct|(it|the sentence|your sentence) is correct)/i;
 // Arabic and Persian spellings of the same letter (أ/ا, ي/ی, ك/ک, ة/ه) are not mistakes.
 const norm = (t) => String(t).replace(/[\u200c\u064B-\u0652\s.,،؟?!:«»"'\-–—]/g, '')
   .replace(/[أإٱ]/g, 'ا').replace(/[يى]/g, 'ی').replace(/ك/g, 'ک').replace(/ة/g, 'ه');
