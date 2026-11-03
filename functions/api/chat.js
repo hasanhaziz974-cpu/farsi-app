@@ -7,9 +7,11 @@
 import { accessEmail, accessStatus, today } from '../../lib/trial.js';
 import { signValue, readSigned } from '../../lib/auth.js';
 
+// The first model is the default (chosen by comparing them on real chats); the rest are fallbacks
+// and the admin's comparison list.
 export const MODELS = [
-  '@cf/meta/llama-3.3-70b-instruct-fp8-fast',
   '@cf/google/gemma-3-12b-it',
+  '@cf/meta/llama-3.3-70b-instruct-fp8-fast',
   '@cf/meta/llama-4-scout-17b-16e-instruct',
   '@cf/mistralai/mistral-small-3.1-24b-instruct',
   '@cf/qwen/qwen3-30b-a3b-fp8',
