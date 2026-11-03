@@ -25,7 +25,7 @@ input,select,button{font:inherit;border-radius:10px;border:1px solid var(--bd);p
 input[type=email]{width:100%;direction:ltr;text-align:left}.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px}
 button{background:var(--pr);color:#fff;border:0;cursor:pointer}button.no{background:var(--no)}button.alt{background:transparent;color:var(--pr);border:1px solid var(--pr)}
 .p{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}.e{direction:ltr;font-weight:600;word-break:break-all}
-.ok{color:var(--ok)}.end{color:var(--no)}.soon{color:#C77C0E;font-weight:600}form{margin:0}\ninput[type=search]{width:100%;direction:ltr;text-align:left;margin-top:12px}details{margin-top:8px}summary{cursor:pointer;color:var(--mu);padding:8px 0}
+.ok{color:var(--ok)}.end{color:var(--no)}.soon{color:#C77C0E;font-weight:600}form{margin:0}\n.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0}.stats div{background:var(--sf);border:1px solid var(--bd);border-radius:12px;padding:8px;text-align:center}.stats b{display:block;font-size:22px;color:var(--pr)}.stats span{font-size:12px;color:var(--mu)}@media(max-width:380px){.stats{grid-template-columns:repeat(2,1fr)}}\ninput[type=search]{width:100%;direction:ltr;text-align:left;margin-top:12px}details{margin-top:8px}summary{cursor:pointer;color:var(--mu);padding:8px 0}
 </style></head><body><main>${body}</main></body></html>`, {
     status,
     headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' },
@@ -78,6 +78,23 @@ function soon(until, now) {
     : `<span class="ok">حتى ${ltr(until)}</span>`;
 }
 
+// What a learner has done, from the cloud copy of their progress (functions/api/progress.js):
+// lessons finished, points and the last day they studied. Empty for people who never synced.
+async function learning(kv, email) {
+  const p = await kv.get('prog:' + email, 'json');
+  const d = p && p.data;
+  if (!d) return null;
+  const last = Date.parse(d.last || '') || 0;
+  return { lessons: Object.keys(d.pass || {}).length, xp: Number(d.xp) || 0, words: Object.keys(d.srs || {}).length, last };
+}
+
+function learnLine(l) {
+  if (!l) return '<div class="mu">لم يبدأ التعلّم بعد</div>';
+  const ago = l.last ? Math.floor((Date.now() - l.last) / DAY) : null;
+  const when = ago === null ? '' : ago <= 0 ? 'اليوم' : ago === 1 ? 'أمس' : ago === 2 ? 'قبل يومين' : ago <= 10 ? `قبل ${ago} أيام` : `قبل ${ago} يوماً`;
+  return `<div class="mu">📘 ${l.lessons} ${l.lessons >= 3 && l.lessons <= 10 ? 'دروس' : 'درس'} · 📚 ${l.words} كلمة · ⭐ ${l.xp}${when ? ` · <span class="${ago <= 2 ? 'ok' : ''}">آخر نشاط ${when}</span>` : ''}</div>`;
+}
+
 async function view(kv, msg) {
   const now = today();
   const allowed = (await entries(kv, 'allow:')).sort((a, b) => a.email.localeCompare(b.email));
@@ -86,27 +103,36 @@ async function view(kv, msg) {
     .filter((t) => !allowedSet.has(t.email))
     .map((t) => ({ email: t.email, left: Math.max(0, Math.ceil((Number(t.value) + TRIAL_DAYS * DAY - Date.now()) / DAY)) }))
     .sort((a, b) => b.left - a.left);
+  const learn = {};
+  await Promise.all([...allowed, ...trials].map(async (x) => { learn[x.email] = await learning(kv, x.email); }));
+  const week = Object.values(learn).filter((l) => l && Date.now() - l.last < 7 * DAY).length;
+  const reminders = (await kv.list({ prefix: 'push:' })).keys.length;
+  const mailsToday = Number(await kv.get('mails:' + new Date().toISOString().slice(0, 10))) || 0;
+  const activeMembers = allowed.filter(({ value }) => { const u = lastDay(value); return !u || u >= now; }).length;
 
   const people = allowed.map(({ email, value }) => {
     const until = lastDay(value);
     const state = !until ? '<span class="ok">دائم</span>'
       : until >= now ? soon(until, now) : `<span class="end">انتهى في ${ltr(until)}</span>`;
-    return `<div class="card"><div class="p"><span class="e">${esc(email)}</span>${state}</div>
+    return `<div class="card"><div class="p"><span class="e">${esc(email)}</span>${state}</div>${learnLine(learn[email])}
 <form method="post" class="row"><input type="hidden" name="email" value="${esc(email)}">${periodSelect()}
 <button name="action" value="add">تمديد</button><button name="action" value="remove" class="no">إيقاف</button></form></div>`;
   }).join('') || '<p class="mu">لا أحد بعد.</p>';
 
   const days = (n) => (n === 1 ? 'يوم واحد' : n === 2 ? 'يومان' : n <= 10 ? n + ' أيام' : n + ' يوماً');
   const trialCard = ({ email, left }) => `<div class="card"><div class="p"><span class="e">${esc(email)}</span>${
-    left > 0 ? `<span class="${left <= 2 ? 'soon' : 'ok'}">باقٍ ${days(left)}</span>` : '<span class="end">انتهت التجربة</span>'}</div>
+    left > 0 ? `<span class="${left <= 2 ? 'soon' : 'ok'}">باقٍ ${days(left)}</span>` : '<span class="end">انتهت التجربة</span>'}</div>${learnLine(learn[email])}
 <form method="post" class="row"><input type="hidden" name="email" value="${esc(email)}">${periodSelect()}
 <button name="action" value="add" class="alt">أضفه</button></form></div>`;
-  const active = trials.filter((t) => t.left > 0), ended = trials.filter((t) => t.left <= 0);
+  const score = (t) => { const l = learn[t.email]; return l ? l.last : 0; };
+  const active = trials.filter((t) => t.left > 0), ended = trials.filter((t) => t.left <= 0).sort((a, b) => score(b) - score(a));
   const trialRows = (active.map(trialCard).join('') || '<p class="mu">لا أحد في فترة تجريبية الآن.</p>')
     + (ended.length ? `<details><summary>انتهت تجربتهم (${ended.length}) · يمكنك مراسلتهم أو إضافتهم</summary>${ended.map(trialCard).join('')}</details>` : '');
 
   return page(`<h1>إدارة المشتركين</h1><p class="mu">التغييرات تعمل خلال دقيقة تقريباً. · <a href="/logout">خروج</a></p>
 ${msg ? `<div class="msg">${esc(msg)}</div>` : ''}
+<div class="stats"><div><b>${activeMembers}</b><span>مشترك</span></div><div><b>${trials.filter((t) => t.left > 0).length}</b><span>في التجربة</span></div><div><b>${week}</b><span>تعلّموا هذا الأسبوع</span></div><div><b>${reminders}</b><span>فعّلوا التذكير</span></div></div>
+${mailsToday ? `<p class="mu">رسائل رمز الدخول اليوم: ${mailsToday} من 90</p>` : ''}
 <h2>إضافة شخص</h2><form method="post" class="card"><input type="email" name="email" placeholder="name@gmail.com" required>
 <div class="row">${periodSelect()}<button name="action" value="add">إضافة</button></div>
 <p class="mu">إن كان الشخص مضافاً، تُحسب المدة من آخر يوم له.</p></form>
