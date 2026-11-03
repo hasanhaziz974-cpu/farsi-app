@@ -92,7 +92,7 @@ function chapterSystem(c, done, known, level) {
     (known.length ? `Prefer words the learner already knows: ${known.join('، ')}. ` : '') +
     'Answer in exactly these seven lines and nothing else:\n' + FORMAT + '\n' +
     "DONE: the numbers of the tasks the learner accomplished in their last message, separated by commas, or - if none\n" +
-    'HINTS: two short replies the learner could say next in Persian, each followed by = and its Arabic meaning, separated by |';
+    'HINTS: two short replies the learner could say next in Persian, each followed by = and its meaning translated into Arabic (Arabic words only, no Persian), separated by |';
 }
 
 const system = (s) =>
@@ -132,11 +132,13 @@ function distance(a, b) {
 }
 
 // A correction is shown only when it is Persian, differs from what the learner wrote, and is close to it.
-export function correction(fix, why, said) {
+export function correction(fix, why, said, reply = '') {
   const fa = String(fix || '').replace(/[\s,،\-–—]+$/, '').trim();
   if (!said || !fa || NO_FIX.test(fa) || /[A-Za-z]/.test(fa) || !/[\u0600-\u06FF]/.test(fa)) return '';
   const a = norm(said), b = norm(fa);
-  if (a === b || distance(a, b) > Math.max(3, Math.ceil(0.5 * Math.max(a.length, b.length)))) return '';
+  if (a === b || distance(a, b) > Math.max(2, Math.round(0.3 * Math.max(a.length, b.length)))) return '';
+  // The model sometimes puts a sentence of its own reply into the correction.
+  if (String(reply).split(/[.،,؟?!]/).map(norm).some((x) => x.length > 4 && b.includes(x) && !a.includes(x))) return '';
   const w = String(why || '').trim();
   return w && w !== '-' && !/[A-Za-z]/.test(w) && !NO_FIX.test(w) ? `${fa} — ${w}` : fa;
 }
@@ -152,13 +154,15 @@ function parse(text, said) {
   }
   if (!out.fa) out.fa = clean.trim().split('\n')[0] || '';
   for (const k of Object.keys(out)) out[k] = out[k].replace(FOREIGN, ' ').replace(/\s{2,}/g, ' ').trim();
-  out.fix = correction(out.fix, out.why, said);
+  out.fix = correction(out.fix, out.why, said, out.fa);
   delete out.why;
   for (const k of Object.keys(out)) out[k] = out[k].slice(0, 400);
   const done = [...new Set((out.done.match(/\d+/g) || []).map(Number).filter((n) => n >= 1 && n <= 6))];
   const hints = out.hints.split('|').map((h) => {
     const [fa, ar] = h.split('=').map((x) => (x || '').trim());
-    return fa && /[\u0600-\u06FF]/.test(fa) ? { fa: fa.slice(0, 120), ar: (ar || '').slice(0, 120) } : null;
+    // A meaning with Persian-only letters (پ چ ژ گ ک ی) is Persian, not an Arabic translation: it is left out.
+    const meaning = ar && !/[پچژگکیA-Za-z]/.test(ar) ? ar : '';
+    return fa && /[\u0600-\u06FF]/.test(fa) && !/[A-Za-z]/.test(fa) ? { fa: fa.slice(0, 120), ar: meaning.slice(0, 120) } : null;
   }).filter(Boolean).slice(0, 3);
   return { ...out, done, hints };
 }
