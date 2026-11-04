@@ -3,10 +3,11 @@
  *
  * Setup (once, from the Google account that should send the codes):
  *   1. https://script.google.com → New project. Replace the code with this file and save.
- *   2. Project Settings (gear) → Script properties → Add: name KEY, value: a long secret you
- *      make up (the same value goes into the GitHub secret MAIL_KEY).
- *   3. Deploy → New deployment → type "Web app": Execute as "Me", Who has access "Anyone".
+ *   2. Deploy → New deployment → type "Web app": Execute as "Me", Who has access "Anyone".
  *      Authorise it, then copy the Web app URL into the GitHub secret MAIL_URL.
+ * The key: the site sends a long random key (made by tools/sync_access.py, or the GitHub secret
+ * MAIL_KEY). While the script has no KEY property, it keeps the first such key it receives, so from
+ * then on only the site can send. To set it yourself instead: Project Settings → Script properties → KEY.
  *
  * functions/api/auth/start.js posts {key, to, code, minutes}; only that fixed message is sent,
  * so the script cannot be used to send anything else. A consumer Gmail account can send
@@ -16,7 +17,8 @@ function doPost(e) {
   var out = function (o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); };
   try {
     var d = JSON.parse(e.postData.contents);
-    var key = PropertiesService.getScriptProperties().getProperty('KEY');
+    var props = PropertiesService.getScriptProperties(), key = props.getProperty('KEY');
+    if (!key && typeof d.key === 'string' && d.key.length >= 32) { props.setProperty('KEY', d.key); key = d.key; }
     if (!key || d.key !== key) return out({ ok: false, error: 'key' });
     var to = String(d.to || ''), code = String(d.code || '');
     if (!/^[^\s@<>]+@[^\s@<>]+\.[a-z]{2,}$/i.test(to) || !/^\d{6}$/.test(code)) return out({ ok: false, error: 'input' });
