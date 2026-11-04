@@ -258,9 +258,15 @@ def trials(account, project, keep):
             print('Connected Workers AI to the site (AI conversation practice).')
             redeploy = True
     mail_url, mail_key = (os.environ.get('MAIL_URL') or '').strip(), (os.environ.get('MAIL_KEY') or '').strip()
-    if re.fullmatch(r'AKfyc[\w-]{20,}', mail_url):
-        # The Apps Script "Deployment ID" was saved instead of its web app URL; both name the same deployment.
-        mail_url = f'https://script.google.com/macros/s/{mail_url}/exec'
+    # The secret may hold more than the address (text copied with it, or the "Deployment ID" instead of
+    # the web app URL): the web app address is taken from whatever it holds.
+    found = re.search(r'https://script\.google\.com/(?:a/[\w.-]+/)?macros/s/[\w-]{20,}/exec', mail_url)
+    dep = re.search(r'\bAKfyc[\w-]{20,}', mail_url)
+    if found and found.group(0) != mail_url:
+        mail_url = found.group(0)
+        print('MAIL_URL holds more than the web app address; using the address found in it.')
+    elif not found and dep:
+        mail_url = f'https://script.google.com/macros/s/{dep.group(0)}/exec'
         print('MAIL_URL holds the deployment ID; using its web app address.')
     if mail_url and not mail_key:
         # No MAIL_KEY secret: a key is made here and kept in KV ("mailkey"). The Apps Script keeps the
@@ -275,7 +281,9 @@ def trials(account, project, keep):
     if mail_url and mail_key:
         if re.search(r'\s', mail_url + mail_key) or not mail_url.startswith('https://script.google.com/'):
             # What is wrong, without printing the secret itself.
-            why = ('it contains spaces or line breaks' if re.search(r'\s', mail_url) else
+            why = ('it is the address of the script editor, not of the web app (use Deploy > Manage deployments > Web app URL)'
+                   if re.search(r'script\.google\.com/(home|d/|macros/d/)', mail_url) else
+                   'it contains spaces or line breaks' if re.search(r'\s', mail_url) else
                    'it starts with "' + re.sub(r'[A-Za-z0-9]', 'x', mail_url[:12]) + '…" (' + str(len(mail_url)) + ' characters)')
             print('::warning::MAIL_URL must be the Apps Script web app URL (https://script.google.com/macros/s/…/exec) '
                   'or its deployment ID; ' + why + '. The app sign-in mail was not set up.')
