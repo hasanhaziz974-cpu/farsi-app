@@ -36,7 +36,7 @@ FACEBOOK_APP_SECRET, TRIAL_PAGES_PROJECT, LOGIN_HEADER, LOGIN_FOOTER, LOGIN_FOOT
 Emails are never printed, because Actions logs of a public repository are public. For the
 same reason ACCESS_LIST must be a secret: Actions prints variables passed to a step.
 """
-import datetime, hashlib, json, os, re, sys, urllib.error, urllib.request
+import datetime, hashlib, json, os, re, secrets, sys, urllib.error, urllib.request
 
 API = os.environ.get('CF_API_BASE', 'https://api.cloudflare.com/client/v4')
 OLD_OPEN_POLICY_NAME = 'Open to everyone (temporary)'
@@ -258,6 +258,16 @@ def trials(account, project, keep):
             print('Connected Workers AI to the site (AI conversation practice).')
             redeploy = True
     mail_url, mail_key = (os.environ.get('MAIL_URL') or '').strip(), (os.environ.get('MAIL_KEY') or '').strip()
+    if mail_url and not mail_key:
+        # No MAIL_KEY secret: a key is made here and kept in KV ("mailkey"). The Apps Script keeps the
+        # first key it receives when it has none set, so only this site can use it afterwards.
+        stored = cf_kv_get(kv, 'mailkey')
+        if stored:
+            mail_key = json.loads(stored) if stored.startswith('"') else stored
+        else:
+            mail_key = secrets.token_urlsafe(32)
+            call('PUT', f'{kv}/values/mailkey', mail_key)
+            print('Made a key for the sign-in mail sender.')
     if mail_url and mail_key:
         if re.search(r'\s', mail_url + mail_key) or not mail_url.startswith('https://script.google.com/'):
             print('::warning::MAIL_URL must be the Apps Script web app URL (https://script.google.com/...) and neither '
@@ -274,7 +284,7 @@ def trials(account, project, keep):
             else:
                 print('Sign-in mail settings unchanged.')
     else:
-        print('The app sign-in mail is not set up yet (add the MAIL_URL and MAIL_KEY secrets).')
+        print('The app sign-in mail is not set up yet (add the MAIL_URL secret).')
     if redeploy:
         started = call('POST', f'/accounts/{account}/pages/projects/{project}/deployments', allow=(304,))
         print('Started a new deployment of the site.' if started is not None
