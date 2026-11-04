@@ -19,6 +19,7 @@ export const MODELS = [
   '@cf/google/gemma-3-12b-it',
 ];
 const LIMIT = { list: 100, member: 40, trial: 15, free: 3 }; // free: after the trial or subscription ended
+const FREE_CHAPTER = 10; // messages a day in the free first chapter of the trip
 const MAX_TURNS = 12, MAX_CHARS = 300;
 
 // The character the model plays in each conversation (same order as the app's DLG), and a free chat.
@@ -211,17 +212,20 @@ export async function onRequest({ request, env }) {
   const st = await accessStatus(kv, email, false);
 
   const admin = ((await kv.get('admins', 'json')) || []).includes(email);
-  const limit = st.ok ? LIMIT[st.kind] || LIMIT.trial : LIMIT.free;
+  let limit = st.ok ? LIMIT[st.kind] || LIMIT.trial : LIMIT.free;
   const used = await counter(request, kv, email);
 
   if (request.method === 'GET') return json({ left: Math.max(0, limit - used), limit, free: !st.ok, admin, models: admin ? MODELS : [] });
   if (request.method !== 'POST') return json({ error: 'method' }, 405);
   if (request.headers.get('Origin') !== new URL(request.url).origin) return json({ error: 'origin' }, 403);
   if (!env.AI) return json({ error: 'not_ready', msg: 'المحادثة غير جاهزة بعد. حاول لاحقاً.' }, 503);
-  if (used >= limit) return json({ error: 'limit', left: 0, free: !st.ok, msg: st.ok ? `وصلت إلى حدّ اليوم (${limit} رسالة). عُد غداً لمحادثة جديدة!` : `انتهت رسائلك المجانية لليوم (${limit}). اشترك لتتحدث مع پارسا أكثر.` }, 429);
 
   let body;
   try { body = await request.json(); } catch (e) { return json({ error: 'body' }, 400); }
+  // The free first chapter needs about six messages (the opening and four tasks), more than the free daily
+  // chat allowance, so without a subscription it gets its own larger allowance.
+  if (!st.ok && body.c === 0) limit = Math.max(limit, FREE_CHAPTER);
+  if (used >= limit) return json({ error: 'limit', left: 0, free: !st.ok, msg: st.ok ? `وصلت إلى حدّ اليوم (${limit} رسالة). عُد غداً لمحادثة جديدة!` : `انتهت رسائلك المجانية لليوم (${limit}). اشترك لتتحدث مع پارسا أكثر.` }, 429);
   const chapter = body.c != null;
   const c = Number(body.c), s = Number(body.s);
   if (chapter ? !Number.isInteger(c) || c < 0 || c >= CHAPTERS.length : !Number.isInteger(s) || s < 0 || s >= ROLES.length) {
