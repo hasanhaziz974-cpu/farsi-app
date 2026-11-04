@@ -993,6 +993,9 @@ var TRIP=[
 {e:'🏠',t:'غداء مع عائلة پارسا',d:'دعاك پارسا إلى بيت عائلته على الغداء، ووالدته تستقبلك.',who:'والدة پارسا',req:3,tasks:['سلّم عليها بأدب','عرّف بنفسك وبعائلتك','قل إن الطعام لذيذ','اشكرها على الدعوة'],say:[[["سلام، خوشبختم.", "مرحباً، تشرّفت"], ["سلام خانم، حال شما چطور است؟", "مرحباً يا سيدة، كيف حالك؟"]], [["من علی هستم، از عراق.", "أنا علي، من العراق"], ["من دو برادر و یک خواهر دارم.", "عندي أخوان وأخت"]], [["غذا خیلی خوشمزه است!", "الطعام لذيذ جداً!"], ["دستتان درد نکند، خیلی خوشمزه بود.", "سلمت يداك، كان لذيذاً جداً"]], [["از دعوت شما خیلی ممنونم.", "شكراً جزيلاً على دعوتك"], ["خیلی لطف کردید، متشکرم.", "لطف كبير منكم، شكراً"]]]}];
 // Phrases for the next task: written by hand, so the 💡 help is always correct Persian (the model's own suggestions were not).
 function tripHints(){var ch=TRIP[AIC.c];if(!ch)return[];var d=trip(AIC.c).done||[];for(var k=0;k<ch.tasks.length;k++)if(d.indexOf(k+1)<0)return ch.say[k].map(function(p){return{fa:p[0],ar:p[1],task:ch.tasks[k]}});return[]}
+// A task is also done when the learner wrote one of its phrases (some models forget the DONE line).
+function tripNorm(t){return String(t).replace(/[\u200c\u064B-\u0652\s.,،؛؟?!:«»"'\-]/g,'').replace(/[أإآ]/g,'ا').replace(/[يى]/g,'ی').replace(/ك/g,'ک').replace(/ة/g,'ه')}
+function tripSaid(t){var ch=TRIP[AIC.c],u=tripNorm(t),out=[];if(!ch)return out;ch.say.forEach(function(ps,k){if(ps.some(function(p){var n=tripNorm(p[0]);return n.length>3&&u.indexOf(n)>=0}))out.push(k+1)});return out}
 function aiHints(){return AIC.c!=null?tripHints():AIC.hints}
 function trip(i){S.trip=S.trip||{};return S.trip[i]||{done:[]}}
 function tripDone(i){return!!trip(i).stars}
@@ -1029,7 +1032,7 @@ fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},cre
 .then(function(r){return r.json().catch(function(){return{}}).then(function(j){j.status=r.status;return j})})
 .then(function(j){AIC.busy=false;if(j.left!=null)AIC.left=j.left;if(!j.fa){AIC.err=j.msg||'تعذّر الردّ الآن. حاول بعد قليل.';render();return}
 var last=AIC.msgs[AIC.msgs.length-1];if(last&&last.r==='u'&&j.fix)last.fix=j.fix;AIC.msgs.push({r:'a',t:j.fa,tr:j.tr,ar:j.ar,model:j.model});AIC.hints=j.hints||[];AIC.showHints=false;
-if(AIC.c!=null&&last&&last.r==='u'&&j.done&&j.done.length)tripAdd(j.done);render();aiBottom();try{gain(2)}catch(e){}})
+if(AIC.c!=null&&last&&last.r==='u'){var dn=(j.done||[]).concat(tripSaid(last.t));if(dn.length)tripAdd(dn)}render();aiBottom();try{gain(2)}catch(e){}})
 .catch(function(){AIC.busy=false;AIC.err='تعذّر الاتصال. تأكد من الإنترنت وحاول مرة أخرى.';render()})}
 function aiSend(){var el=document.getElementById('aiin');var t=el?el.value.trim():'';if(!t||AIC.busy)return;if(t.length>300)t=t.slice(0,300);AIC.msgs.push({r:'u',t:t});aiAsk()}
 function aiBottom(){setTimeout(function(){try{window.scrollTo(0,document.body.scrollHeight)}catch(e){}},50)}
