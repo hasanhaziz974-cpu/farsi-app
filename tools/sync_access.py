@@ -258,6 +258,10 @@ def trials(account, project, keep):
             print('Connected Workers AI to the site (AI conversation practice).')
             redeploy = True
     mail_url, mail_key = (os.environ.get('MAIL_URL') or '').strip(), (os.environ.get('MAIL_KEY') or '').strip()
+    if re.fullmatch(r'AKfyc[\w-]{20,}', mail_url):
+        # The Apps Script "Deployment ID" was saved instead of its web app URL; both name the same deployment.
+        mail_url = f'https://script.google.com/macros/s/{mail_url}/exec'
+        print('MAIL_URL holds the deployment ID; using its web app address.')
     if mail_url and not mail_key:
         # No MAIL_KEY secret: a key is made here and kept in KV ("mailkey"). The Apps Script keeps the
         # first key it receives when it has none set, so only this site can use it afterwards.
@@ -270,8 +274,11 @@ def trials(account, project, keep):
             print('Made a key for the sign-in mail sender.')
     if mail_url and mail_key:
         if re.search(r'\s', mail_url + mail_key) or not mail_url.startswith('https://script.google.com/'):
-            print('::warning::MAIL_URL must be the Apps Script web app URL (https://script.google.com/...) and neither '
-                  'MAIL_URL nor MAIL_KEY may contain spaces or extra lines. The app sign-in mail was not set up.')
+            # What is wrong, without printing the secret itself.
+            why = ('it contains spaces or line breaks' if re.search(r'\s', mail_url) else
+                   'it starts with "' + re.sub(r'[A-Za-z0-9]', 'x', mail_url[:12]) + '…" (' + str(len(mail_url)) + ' characters)')
+            print('::warning::MAIL_URL must be the Apps Script web app URL (https://script.google.com/macros/s/…/exec) '
+                  'or its deployment ID; ' + why + '. The app sign-in mail was not set up.')
         else:
             digest = hashlib.sha256((mail_url + '\n' + mail_key).encode()).hexdigest()
             if cf_kv_get(kv, 'mailcfg') not in (digest, json.dumps(digest)):
