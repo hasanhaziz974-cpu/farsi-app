@@ -260,7 +260,7 @@ def trials(account, project, keep):
     mail_url, mail_key = (os.environ.get('MAIL_URL') or '').strip(), (os.environ.get('MAIL_KEY') or '').strip()
     # The secret may hold more than the address (text copied with it, or the "Deployment ID" instead of
     # the web app URL): the web app address is taken from whatever it holds.
-    found = re.search(r'https://script\.google\.com/(?:a/[\w.-]+/)?macros/s/[\w-]{20,}/exec', mail_url)
+    found = re.search(r'https://script\.google\.com/(?:a/(?:macros/)?[\w.-]+/)?(?:macros/)?s/[\w-]{20,}/exec', mail_url)
     dep = re.search(r'\bAKfyc[\w-]{20,}', mail_url)
     if found and found.group(0) != mail_url:
         mail_url = found.group(0)
@@ -283,7 +283,12 @@ def trials(account, project, keep):
             # What is wrong, without printing the secret itself.
             why = ('it is the address of the script editor, not of the web app (use Deploy > Manage deployments > Web app URL)'
                    if re.search(r'script\.google\.com/(home|d/|macros/d/)', mail_url) else
-                   'it contains spaces or line breaks' if re.search(r'\s', mail_url) else
+                   'it contains spaces or line breaks and no web app address or deployment ID (' +
+                   f'{len(mail_url.splitlines())} lines, {len(mail_url)} characters, '
+                   f'script.google.com: {"yes" if "script.google.com" in mail_url else "no"}, '
+                   f'/exec: {"yes" if "/exec" in mail_url else "no"}, AKfyc: {"yes" if "AKfyc" in mail_url else "no"}, '
+                   'Arabic letters: ' + ('yes' if re.search('[\u0600-\u06FF]', mail_url) else 'no') + ')'
+                   if re.search(r'\s', mail_url) else
                    'it starts with "' + re.sub(r'[A-Za-z0-9]', 'x', mail_url[:12]) + '…" (' + str(len(mail_url)) + ' characters)')
             print('::warning::MAIL_URL must be the Apps Script web app URL (https://script.google.com/macros/s/…/exec) '
                   'or its deployment ID; ' + why + '. The app sign-in mail was not set up.')
