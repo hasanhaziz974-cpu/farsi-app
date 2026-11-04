@@ -131,14 +131,27 @@ function distance(a, b) {
   return prev[b.length];
 }
 
+// Smallest edit distance between x and any part of t.
+function within(x, t) {
+  let prev = new Array(t.length + 1).fill(0);
+  for (let i = 1; i <= x.length; i++) {
+    const row = [i];
+    for (let j = 1; j <= t.length; j++) row[j] = Math.min(prev[j] + 1, row[j - 1] + 1, prev[j - 1] + (x[i - 1] === t[j - 1] ? 0 : 1));
+    prev = row;
+  }
+  return Math.min(...prev);
+}
+
 // A correction is shown only when it is Persian, differs from what the learner wrote, and is close to it.
 export function correction(fix, why, said, reply = '') {
   const fa = String(fix || '').replace(/[\s,،\-–—]+$/, '').trim();
   if (!said || !fa || NO_FIX.test(fa) || /[A-Za-z]/.test(fa) || !/[\u0600-\u06FF]/.test(fa)) return '';
   const a = norm(said), b = norm(fa);
   if (a === b || distance(a, b) > Math.max(2, Math.round(0.4 * Math.max(a.length, b.length)))) return '';
-  // The model sometimes puts a sentence of its own reply into the correction.
-  if (String(reply).split(/[.،,؟?!]/).map(norm).some((x) => x.length > 4 && b.includes(x) && !a.includes(x))) return '';
+  // The model sometimes puts a sentence of its own reply into the correction. A reply sentence that is
+  // close to part of what the learner wrote is fine (the model may echo the corrected sentence).
+  if (String(reply).split(/[.،,؟?!]/).map(norm).some((x) => x.length > 4 && b.includes(x) && !a.includes(x)
+    && within(x, a) > Math.round(0.4 * x.length))) return '';
   const w = String(why || '').trim();
   return w && w !== '-' && !/[A-Za-z]/.test(w) && !NO_FIX.test(w) ? `${fa} — ${w}` : fa;
 }
