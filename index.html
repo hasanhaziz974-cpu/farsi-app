@@ -675,7 +675,10 @@ var BD=[
 {id:'rp',i:'🎭',n:'ممثل بارع',d:'أنهِ حواراً تفاعلياً',f:function(){return(S.rpn||0)>=1}},
 {id:'game',i:'🎮',n:'لاعب',d:'أنهِ لعبة واحدة',f:function(){return(S.gm||0)>=1}},
 {id:'chal',i:'⚡',n:'متحدٍّ',d:'أنهِ تحدّي اليوم',f:function(){return(S.dcn||0)>=1}},
-{id:'xp500',i:'⭐',n:'500 نقطة',d:'اجمع 500 نقطة',f:function(){return S.xp>=500}}];
+{id:'xp500',i:'⭐',n:'500 نقطة',d:'اجمع 500 نقطة',f:function(){return S.xp>=500}},
+{id:'trip1',i:'✈️',n:'وصلت إلى إيران',d:'أنهِ أول فصل من رحلتك',f:function(){return!!(S.trip&&S.trip[0]&&S.trip[0].stars)}},
+{id:'trip6',i:'🧳',n:'نصف الرحلة',d:'أنهِ 6 فصول من رحلتك',f:function(){return Object.keys(S.trip||{}).filter(function(i){return S.trip[i].stars}).length>=6}},
+{id:'tripall',i:'🕌',n:'رحلة كاملة',d:'أنهِ كل فصول رحلتك إلى إيران',f:function(){return Object.keys(S.trip||{}).filter(function(i){return S.trip[i].stars}).length>=TRIP.length}}];
 function chk(){S.bd=S.bd||{};var nb=[];BD.forEach(function(b){if(!S.bd[b.id]&&b.f()){S.bd[b.id]=Date.now();nb.push(b)}});return nb}
 function celebrate(ms){sfx('win');try{var d=document.createElement('div');d.className='cel';d.innerHTML=ms.map(function(m){return'<div>'+m+'</div>'}).join('');document.body.appendChild(d);
 if(!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches)){var c=document.createElement('div');c.className='cnf';var cl=['#E3A12F','#12807F','#E26D6D','#4CC27F','#6C8EF5'];
