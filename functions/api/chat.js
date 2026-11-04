@@ -136,7 +136,7 @@ export function correction(fix, why, said, reply = '') {
   const fa = String(fix || '').replace(/[\s,،\-–—]+$/, '').trim();
   if (!said || !fa || NO_FIX.test(fa) || /[A-Za-z]/.test(fa) || !/[\u0600-\u06FF]/.test(fa)) return '';
   const a = norm(said), b = norm(fa);
-  if (a === b || distance(a, b) > Math.max(2, Math.round(0.3 * Math.max(a.length, b.length)))) return '';
+  if (a === b || distance(a, b) > Math.max(2, Math.round(0.4 * Math.max(a.length, b.length)))) return '';
   // The model sometimes puts a sentence of its own reply into the correction.
   if (String(reply).split(/[.،,؟?!]/).map(norm).some((x) => x.length > 4 && b.includes(x) && !a.includes(x))) return '';
   const w = String(why || '').trim();
@@ -154,7 +154,9 @@ function parse(text, said) {
   }
   if (!out.fa) out.fa = clean.trim().split('\n')[0] || '';
   for (const k of Object.keys(out)) out[k] = out[k].replace(FOREIGN, ' ').replace(/\s{2,}/g, ' ').trim();
+  const raw = out.fix && out.fix !== '-' ? out.fix : '';
   out.fix = correction(out.fix, out.why, said, out.fa);
+  out.dropped = !out.fix && raw ? raw : ''; // shown to the admin only, to judge the models
   delete out.why;
   for (const k of Object.keys(out)) out[k] = out[k].slice(0, 400);
   const done = [...new Set((out.done.match(/\d+/g) || []).map(Number).filter((n) => n >= 1 && n <= 6))];
@@ -235,5 +237,6 @@ export async function onRequest({ request, env }) {
   if (!reply) return json({ error: 'ai', msg: 'تعذّر الردّ الآن. حاول بعد قليل.' }, 502);
   const n = used + 1;
   const cookie = `pc=${await signValue(kv, { e: email, d: today(), n })}; Path=/api/chat; Max-Age=172800; HttpOnly; Secure; SameSite=Lax`;
-  return json({ ...reply, left: Math.max(0, limit - n), model: admin ? [model, ...failed].join(' | ') : undefined }, 200, { 'Set-Cookie': cookie });
+  const { dropped, ...shown } = reply;
+  return json({ ...shown, left: Math.max(0, limit - n), model: admin ? [model, ...failed, ...(dropped ? [`FIX hidden: ${dropped}`] : [])].join(' | ') : undefined }, 200, { 'Set-Cookie': cookie });
 }
