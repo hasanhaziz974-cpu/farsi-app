@@ -61,6 +61,18 @@ export const CHAPTERS = [
     tasks: ['greet you and say what they want to buy', 'ask the price', 'ask for a discount or say it is expensive', 'buy it and say goodbye'] },
   { role: "Parsa's mother, welcoming the learner to the family home for lunch",
     tasks: ['greet you politely', 'introduce themselves and their family', 'say the food is delicious', 'thank you for the invitation'] },
+  { role: "a ticket clerk at a Tehran metro station",
+    tasks: ["ask for a ticket", "ask which line or train goes to Azadi Square", "ask how many stations or where to get off", "thank you and say goodbye"] },
+  { role: "a kind pharmacist in Tehran",
+    tasks: ["say you do not feel well", "say what hurts", "ask for medicine and how to take it", "ask the price and thank them"] },
+  { role: "a shop assistant in a clothes shop in Tehran",
+    tasks: ["say what you want to buy", "ask for another colour or size", "ask to try it on", "buy it and pay"] },
+  { role: "a ticket clerk at Tehran railway station",
+    tasks: ["ask for a ticket to Isfahan", "say which day you want to travel", "ask when the train leaves or arrives", "ask the price and pay"] },
+  { role: "a friendly tour guide in Naqsh-e Jahan Square in Isfahan",
+    tasks: ["greet and say you are a tourist", "ask what a building or place is", "say the place is beautiful", "ask if you can take a photo, or ask them to take one"] },
+  { role: "Parsa, your Iranian friend, saying goodbye before you fly home",
+    tasks: ["say you are going back home", "say what you liked in Iran", "say you will come again or invite them to visit you", "thank them and say goodbye"] },
 ];
 
 const LEVELS = [
