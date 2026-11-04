@@ -1001,7 +1001,7 @@ function tripLevel(){var n=cnt(S.pass);return n<4?0:n<10?1:2}
 function tripKnown(){return Object.keys(S.srs).sort(function(a,b){return(S.srs[b].b||0)-(S.srs[a].b||0)}).map(function(id){var w=ALL.filter(function(x){return x.id===id})[0];return w&&w.fa}).filter(function(f){return f&&f.length<25}).slice(0,60)}
 function tripStars(n){return'⭐'.repeat(n)+'☆'.repeat(3-n)}
 function aiChapter(i){var lk=tripLock(i);if(lk){if(lk.indexOf('⭐')===0)freeGate('هذا الفصل من الرحلة');else toast(lk.replace('🔒 ',''));return}
-if(tripDone(i)){S.trip[i].done=[];save()}AIC.c=i;AIC.s=null;AIC.finished=false;AIC.msgs=[];AIC.err='';AIC.hints=[];AIC.showHints=false;AIC.hintsUsed=0;AIC.manual=0;if(tripLevel()===0)TR=true;render();scrollTo(0,0);aiAsk()}
+if(tripDone(i)){S.trip[i].done=[];S.trip[i].rs=Date.now();save()}AIC.c=i;AIC.s=null;AIC.finished=false;AIC.msgs=[];AIC.err='';AIC.hints=[];AIC.showHints=false;AIC.hintsUsed=0;AIC.manual=0;if(tripLevel()===0)TR=true;render();scrollTo(0,0);aiAsk()}
 function tripMark(n){var i=AIC.c,t=trip(i);if(t.done.indexOf(n)>=0)return;if(!confirm('هل أنجزت هذه المهمة بالفارسية؟\n«'+TRIP[i].tasks[n-1]+'»'))return;AIC.manual++;tripAdd([n])}
 function tripAdd(nums){var i=AIC.c;S.trip=S.trip||{};var t=S.trip[i]||{done:[]};nums.forEach(function(n){if(n>=1&&n<=TRIP[i].tasks.length&&t.done.indexOf(n)<0)t.done.push(n)});S.trip[i]=t;save();
 if(t.done.length>=TRIP[i].tasks.length&&!AIC.finished){AIC.finished=true;setTimeout(tripFinish,700)}}
