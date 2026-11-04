@@ -78,7 +78,7 @@ const FORMAT =
   'TR: its Latin transliteration (like: salām, khoshhālam, che mikhāhid?)\n' +
   'AR: its translation into Arabic\n' +
   "FIX: the learner's last message rewritten in correct Persian, or only - if it had no mistake. Check every word's spelling " +
-  "(example: the learner wrote «خوبم ممنون شما چمور», so FIX: خوبم، ممنون. شما چطورید؟). Never put your own reply here.\n" +
+  "and wrong words (examples: «خوبم ممنون شما چمور» → FIX: خوبم، ممنون. شما چطورید؟; «من از عربی هستم» → FIX: من عرب هستم.). Never put your own reply here.\n" +
   'WHY: only if FIX is not -: a very short explanation in Arabic of the mistake (example: «چطور» تُكتب بالطاء)، otherwise -';
 
 function chapterSystem(c, done, known, level) {
@@ -90,9 +90,9 @@ function chapterSystem(c, done, known, level) {
     (left.length ? `Still to do: ${left.join('; ')}. Lead the conversation naturally so the learner can do them, but never do them for the learner. `
       : 'The learner has done every task: wrap up the scene warmly. ') +
     (known.length ? `Prefer words the learner already knows: ${known.join('، ')}. ` : '') +
-    'Answer in exactly these seven lines and nothing else:\n' + FORMAT + '\n' +
-    "DONE: the numbers of the tasks the learner accomplished in their last message, separated by commas, or - if none\n" +
-    'HINTS: two short replies the learner could say next in Persian, each followed by = and its meaning translated into Arabic (Arabic words only, no Persian), separated by |';
+    // The app shows hand-written phrases for each task as hints, so the model is not asked for any here.
+    'Answer in exactly these six lines and nothing else:\n' + FORMAT + '\n' +
+    "DONE: the numbers of the tasks the learner accomplished in their last message (in correct or understandable Persian), separated by commas, or - if none";
 }
 
 const system = (s) =>
@@ -107,7 +107,7 @@ const system = (s) =>
   'TR: its Latin transliteration (like: salām, khoshhālam, che mikhāhid?)\n' +
   'AR: its translation into Arabic\n' +
   "FIX: the learner's last message rewritten in correct Persian, or only - if it had no mistake. Check every word's spelling " +
-  "(example: the learner wrote «خوبم ممنون شما چمور», so FIX: خوبم، ممنون. شما چطورید؟). Never put your own reply here.\n" +
+  "and wrong words (examples: «خوبم ممنون شما چمور» → FIX: خوبم، ممنون. شما چطورید؟; «من از عربی هستم» → FIX: من عرب هستم.). Never put your own reply here.\n" +
   'WHY: only if FIX is not -: a very short explanation in Arabic of the mistake (example: «چطور» تُكتب بالطاء)، otherwise -';
 
 // A FIX line that only says the message was fine, or repeats it unchanged, is not a correction.
