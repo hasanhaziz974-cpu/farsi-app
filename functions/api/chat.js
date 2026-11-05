@@ -23,6 +23,7 @@ export const MODELS = [
   '@cf/google/gemma-3-12b-it',
 ];
 const LIMIT = { list: 100, member: 40, trial: 15, free: 3 }; // free: after the trial or subscription ended
+const CHECK_MODELS = ['@cf/openai/gpt-oss-120b', '@cf/meta/llama-3.3-70b-instruct-fp8-fast']; // checking trip replies
 const FREE_CHAPTER = 10; // messages a day in the free first chapter of the trip
 const MAX_TURNS = 12, MAX_CHARS = 300;
 
@@ -80,11 +81,6 @@ export const CHAPTERS = [
     tasks: ["say you are going back home", "say what you liked in Iran", "say you will come again or invite them to visit you", "thank them and say goodbye"] },
 ];
 
-const LEVELS = [
-  'The learner is a complete beginner: use very short sentences (3 to 6 words) and only the most common words.',
-  'The learner knows basic everyday words: short simple sentences (up to 8 words).',
-  'The learner is at an elementary level: simple natural sentences, a few new words are fine.',
-];
 
 const RULES =
   'Write standard Persian as in a textbook, not colloquial spelling (ممنونم or متشکرم, می‌کنم, می‌خواهم; never میکونم or میخوام). ' +
@@ -98,22 +94,35 @@ const FORMAT =
   "and wrong words (examples: «خوبم ممنون شما چمور» → FIX: خوبم، ممنون. شما چطورید؟; «من از عربی هستم» → FIX: من عرب هستم.). Never put your own reply here.\n" +
   'WHY: only if FIX is not -: a very short explanation in Arabic of the mistake (example: «چطور» تُكتب بالطاء)، otherwise -';
 
-function chapterSystem(c, done, known, level) {
+// Trip chapters are scripted (the character's lines are written in the app); the model only checks the
+// learner's reply to the current task: does it do the task, and what is its correct form.
+function checkSystem(c, k, line) {
   const ch = CHAPTERS[c];
-  const left = ch.tasks.map((t, i) => (done.includes(i + 1) ? null : `${i + 1}) ${t}`)).filter(Boolean);
-  return `You are ${ch.role}. You are talking with an Arabic-speaking learner of Persian. Stay in your role and in the scene. ` +
-    `${LEVELS[level]} Reply in simple, natural, correct modern Persian (Iran), 1 or 2 short sentences. ` + RULES +
-    `The learner's mission in this scene is to do these things in Persian: ${ch.tasks.map((t, i) => `${i + 1}) ${t}`).join('; ')}. ` +
-    'These are things the LEARNER says, not you. Speak only as yourself: never say the learner\'s lines, never ask the questions ' +
-    'the learner is supposed to ask (if a task is to ask you something, wait for the learner to ask it, then answer), and never ' +
-    'mention, hint at or suggest the tasks. ' +
-    (left.length ? `Still to do: ${left.join('; ')}. Simply react to what the learner said and keep the scene going, leaving room for them. `
-      : 'The learner has done every task: wrap up the scene warmly. ') +
-    (known.length ? `Prefer words the learner already knows: ${known.join('، ')}. ` : '') +
-    // The app shows hand-written phrases for each task as hints, so the model is not asked for any here.
-    'Answer in exactly these seven lines and nothing else:\n' + FORMAT + '\n' +
-    "DONE: the numbers of the tasks the learner accomplished in their last message (in correct or understandable Persian), separated by commas, or - if none\n" +
-    'NEXT: the number of the task your reply invites the learner to do now, or - if your reply invites none';
+  return 'You are a kind teacher of Persian (Iran) for Arabic speakers. In a role-play, ' + ch.role +
+    ` just said: «${line}». Now the learner should ${ch.tasks[k]}. The learner's reply follows. Judge only that reply. ` +
+    'Arabic letters typed instead of Persian ones (أ for ا, ي for ی, ك for ک, ة for ه) are not mistakes. ' +
+    'Answer in exactly these four lines and nothing else:\n' +
+    'OK: yes if the reply does the task in Persian a listener would understand (small spelling mistakes are fine), otherwise no\n' +
+    "FIX: the learner's whole reply rewritten in correct, natural Persian (the full sentence), or only - if it had no mistake\n" +
+    'WHY: if FIX is not -, a very short explanation in Arabic of the mistake; otherwise -\n' +
+    'TIP: if OK is no, one short sentence in Arabic telling the learner what to say; otherwise -';
+}
+
+export function parseCheck(text, said) {
+  const out = { ok: '', fix: '', why: '', tip: '' };
+  const clean = String(text || '').replace(/<think>[\s\S]*?<\/think>/g, '').replace(/\*\*/g, '')
+    .replace(/\s+(FIX|WHY|TIP)\s*[:：]/g, '\n$1:');
+  let cur = null;
+  for (const line of clean.split('\n')) {
+    const m = line.match(/^\s*(OK|FIX|WHY|TIP)\s*[:：]\s*(.*)$/i);
+    if (m) { cur = m[1].toLowerCase(); out[cur] = m[2].trim(); }
+    else if (cur && line.trim()) out[cur] += ' ' + line.trim();
+  }
+  if (!out.ok) return null; // not an answer in the asked form
+  for (const k of Object.keys(out)) out[k] = out[k].replace(FOREIGN, ' ').replace(/\s{2,}/g, ' ').trim();
+  const fix = correction(out.fix, out.why, said);
+  const tip = out.tip && out.tip !== '-' && !/[A-Za-z]/.test(out.tip) ? out.tip.slice(0, 200) : '';
+  return { ok: /^(yes|y|true|نعم|بله|آری)/i.test(out.ok), fix: fix.slice(0, 400), tip, dropped: !fix && out.fix && out.fix !== '-' ? out.fix : '' };
 }
 
 const system = (s) =>
@@ -284,8 +293,8 @@ export async function onRequest({ request, env }) {
 
   let body;
   try { body = await request.json(); } catch (e) { return json({ error: 'body' }, 400); }
-  // The free first chapter needs about six messages (the opening and four tasks), more than the free daily
-  // chat allowance, so without a subscription it gets its own larger allowance.
+  // The free first chapter can need several checks of the learner's replies (four tasks, and retries), more
+  // than the free daily chat allowance, so without a subscription it gets its own larger allowance.
   if (!st.ok && body.c === 0) limit = Math.max(limit, FREE_CHAPTER);
   if (used >= limit) return json({ error: 'limit', left: 0, free: !st.ok, msg: st.ok ? `وصلت إلى حدّ اليوم (${limit} رسالة). عُد غداً لمحادثة جديدة!` : `انتهت رسائلك المجانية لليوم (${limit}). اشترك لتتحدث مع پارسا أكثر.` }, 429);
   const chapter = body.c != null;
@@ -294,14 +303,38 @@ export async function onRequest({ request, env }) {
     return json({ error: 'scenario' }, 400);
   }
   if (chapter && c > 0 && !st.ok) return json({ error: 'free', msg: 'هذا الفصل للمشتركين. الفصل الأول مجاني.' }, 403);
-  const done = (Array.isArray(body.done) ? body.done : []).map(Number).filter((n) => n >= 1 && n <= 6);
-  const known = (Array.isArray(body.known) ? body.known : []).filter((w) => typeof w === 'string' && /[\u0600-\u06FF]/.test(w))
-    .map((w) => w.trim().slice(0, 30)).slice(0, 60);
-  const level = Math.max(0, Math.min(2, Number(body.level) || 0));
+  const counted = async (obj) => {
+    const n = used + 1;
+    const cookie = `pc=${await signValue(kv, { e: email, d: today(), n })}; Path=/api/chat; Max-Age=172800; HttpOnly; Secure; SameSite=Lax`;
+    return json({ ...obj, left: Math.max(0, limit - n) }, 200, { 'Set-Cookie': cookie });
+  };
+
+  if (chapter) {
+    const k = Number(body.k), said = String(body.said || '').trim().slice(0, MAX_CHARS), line = String(body.line || '').trim().slice(0, MAX_CHARS);
+    if (!Number.isInteger(k) || k < 0 || k >= CHAPTERS[c].tasks.length || !said) return json({ error: 'check' }, 400);
+    const messages = [{ role: 'system', content: checkSystem(c, k, line) }, { role: 'user', content: said }];
+    const first = admin && MODELS.includes(body.model) ? body.model : (env.CHECK_MODEL || CHECK_MODELS[0]);
+    const order = [...new Set([first, ...CHECK_MODELS, ...MODELS])].slice(0, 3);
+    const failed = [];
+    for (const m of order) {
+      try {
+        const r = parseCheck(await ask(env, m, messages, 250), said);
+        if (r) {
+          const { dropped, ...shown } = r;
+          return counted({ ...shown, model: admin ? [m, ...failed, ...(dropped ? [`FIX hidden: ${dropped}`] : [])].join(' | ') : undefined });
+        }
+        failed.push(`${m.split('/').pop()}: no answer`);
+      } catch (e) {
+        failed.push(`${m.split('/').pop()}: ${String(e && e.message).slice(0, 120)}`);
+        if (/neuron|quota|daily|4006/i.test(String(e && e.message))) return json({ error: 'busy', msg: 'انتهى رصيد المحادثة لهذا اليوم. عُد غداً!' }, 503);
+      }
+    }
+    return json({ error: 'ai', msg: 'تعذّر التحقق من جوابك الآن. حاول بعد قليل.', model: admin ? failed.join(' | ') : undefined }, 502);
+  }
   const msgs = (Array.isArray(body.msgs) ? body.msgs : []).slice(-MAX_TURNS)
     .filter((m) => m && (m.r === 'u' || m.r === 'a') && typeof m.t === 'string' && m.t.trim())
     .map((m) => ({ r: m.r, t: m.t.trim().slice(0, MAX_CHARS) }));
-  const messages = [{ role: 'system', content: chapter ? chapterSystem(c, done, known, level) : system(s) }];
+  const messages = [{ role: 'system', content: system(s) }];
   if (!msgs.length || msgs[0].r !== 'u') messages.push({ role: 'user', content: '(Start the scene in your role with a short greeting and a question.)' });
   for (const m of msgs) messages.push({ role: m.r === 'u' ? 'user' : 'assistant', content: asText(m) });
 
@@ -311,7 +344,7 @@ export async function onRequest({ request, env }) {
   const failed = []; // admin only: why a model was skipped
   for (const m of order.slice(0, 3)) {
     try {
-      const text = await ask(env, m, messages, chapter ? 450 : 350);
+      const text = await ask(env, m, messages, 350);
       const said = msgs.length && msgs[msgs.length - 1].r === 'u' ? msgs[msgs.length - 1].t : '';
       if (text && text.trim()) { reply = parse(text, said); model = m; break; }
       failed.push(`${m.split('/').pop()}: empty`);
@@ -323,8 +356,6 @@ export async function onRequest({ request, env }) {
     }
   }
   if (!reply) return json({ error: 'ai', msg: 'تعذّر الردّ الآن. حاول بعد قليل.' }, 502);
-  const n = used + 1;
-  const cookie = `pc=${await signValue(kv, { e: email, d: today(), n })}; Path=/api/chat; Max-Age=172800; HttpOnly; Secure; SameSite=Lax`;
   const { dropped, ...shown } = reply;
-  return json({ ...shown, left: Math.max(0, limit - n), model: admin ? [model, ...failed, ...(dropped ? [`FIX hidden: ${dropped}`] : [])].join(' | ') : undefined }, 200, { 'Set-Cookie': cookie });
+  return counted({ ...shown, model: admin ? [model, ...failed, ...(dropped ? [`FIX hidden: ${dropped}`] : [])].join(' | ') : undefined });
 }
