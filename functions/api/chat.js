@@ -91,7 +91,7 @@ const RULES =
   'Never put words from Turkish, English, Arabic or any other language into the Persian line. Use Persian letters ی and ک. ' +
   'Write explanations only in Arabic. Never correct the learner for typing Arabic letters (أ for ا, ي for ی, ك for ک, ة for ه): that is not a mistake. ';
 const FORMAT =
-  'FA: your reply in Persian script\n' +
+  'FA: your own reply, in your role, in Persian script. It answers the learner and moves the scene on; never repeat or correct the learner\'s sentence here\n' +
   'TR: its Latin transliteration (like: salām, khoshhālam, che mikhāhid?)\n' +
   'AR: its translation into Arabic\n' +
   "FIX: the learner's whole last message rewritten in correct Persian (the full sentence, not a list of changes), or only - if it had no mistake. Check every word's spelling " +
@@ -121,7 +121,7 @@ const system = (s) =>
   'Never put words from Turkish, English, Arabic or any other language into the Persian line. Use Persian letters ی and ک. ' +
   'Write explanations only in Arabic. Never correct the learner for typing Arabic letters (أ for ا, ي for ی, ك for ک, ة for ه): that is not a mistake. ' +
   'Answer in exactly these five lines and nothing else:\n' +
-  'FA: your reply in Persian script\n' +
+  'FA: your own reply, in your role, in Persian script. It answers the learner and moves the conversation on; never repeat or correct the learner\'s sentence here\n' +
   'TR: its Latin transliteration (like: salām, khoshhālam, che mikhāhid?)\n' +
   'AR: its translation into Arabic\n' +
   "FIX: the learner's whole last message rewritten in correct Persian (the full sentence, not a list of changes), or only - if it had no mistake. Check every word's spelling " +
@@ -186,7 +186,10 @@ export function correction(fix, why, said, reply = '') {
   }
   if (!said || !fa || NO_FIX.test(fa) || /[A-Za-z]/.test(fa) || !/[\u0600-\u06FF]/.test(fa)) return '';
   const a = norm(said), b = norm(fa);
-  if (a === b || distance(a, b) > Math.max(2, Math.round(0.4 * Math.max(a.length, b.length)))) return '';
+  // Either the whole sentence corrected, or only its wrong part corrected (close to one part of it).
+  const whole = distance(a, b) <= Math.max(2, Math.round(0.4 * Math.max(a.length, b.length)));
+  const part = b.length >= 4 && b.length < a.length && within(b, a) <= Math.max(1, Math.round(0.3 * b.length));
+  if (a === b || a.includes(b) || !(whole || part)) return '';
   // The model sometimes puts a sentence of its own reply into the correction. A reply sentence that is
   // close to part of what the learner wrote is fine (the model may echo the corrected sentence).
   if (String(reply).split(/[.،,؟?!]/).map(norm).some((x) => x.length > 4 && b.includes(x) && !a.includes(x)
