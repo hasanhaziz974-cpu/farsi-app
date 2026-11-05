@@ -46,5 +46,6 @@ export async function onRequestPost({ request, env }) {
   await kv.put(key, JSON.stringify({ h: await codeHash(kv, email, code), at: Date.now(), tries: 0, day, n: sends + 1 }),
     { expirationTtl: 24 * 3600 });
   await kv.put('mails:' + day, String(total + 1), { expirationTtl: 3 * 24 * 3600 });
+  if (total === 0) await kv.delete('mailerr'); // the sender works again: the old failure is no longer reported
   return json({ ok: true, minutes: CODE_MINUTES });
 }
