@@ -94,7 +94,7 @@ const FORMAT =
   'FA: your reply in Persian script\n' +
   'TR: its Latin transliteration (like: salām, khoshhālam, che mikhāhid?)\n' +
   'AR: its translation into Arabic\n' +
-  "FIX: the learner's last message rewritten in correct Persian, or only - if it had no mistake. Check every word's spelling " +
+  "FIX: the learner's whole last message rewritten in correct Persian (the full sentence, not a list of changes), or only - if it had no mistake. Check every word's spelling " +
   "and wrong words (examples: «خوبم ممنون شما چمور» → FIX: خوبم، ممنون. شما چطورید؟; «من از عربی هستم» → FIX: من عرب هستم.). Never put your own reply here.\n" +
   'WHY: only if FIX is not -: a very short explanation in Arabic of the mistake (example: «چطور» تُكتب بالطاء)، otherwise -';
 
@@ -124,7 +124,7 @@ const system = (s) =>
   'FA: your reply in Persian script\n' +
   'TR: its Latin transliteration (like: salām, khoshhālam, che mikhāhid?)\n' +
   'AR: its translation into Arabic\n' +
-  "FIX: the learner's last message rewritten in correct Persian, or only - if it had no mistake. Check every word's spelling " +
+  "FIX: the learner's whole last message rewritten in correct Persian (the full sentence, not a list of changes), or only - if it had no mistake. Check every word's spelling " +
   "and wrong words (examples: «خوبم ممنون شما چمور» → FIX: خوبم، ممنون. شما چطورید؟; «من از عربی هستم» → FIX: من عرب هستم.). Never put your own reply here.\n" +
   'WHY: only if FIX is not -: a very short explanation in Arabic of the mistake (example: «چطور» تُكتب بالطاء)، otherwise -';
 
@@ -161,8 +161,29 @@ function within(x, t) {
 }
 
 // A correction is shown only when it is Persian, differs from what the learner wrote, and is close to it.
+// "wrong → right" pairs (some models list the changed words instead of the sentence): applied to
+// what the learner wrote, they give the corrected sentence. Returns it, or '' when nothing applies.
+function fromPairs(fix, said) {
+  let out = String(said), used = 0;
+  for (const part of String(fix).split(/[،,;؛\n]|\s-\s/)) {
+    const m = part.split(/\s*(?:→|->|=>|⟵|←)\s*/);
+    if (m.length !== 2 || !m[0].trim() || !m[1].trim()) continue;
+    const [a, b] = /←|⟵/.test(part) ? [m[1].trim(), m[0].trim()] : [m[0].trim(), m[1].trim()];
+    const words = out.split(/(\s+|[.,،؟?!]+)/);
+    const i = words.findIndex((w) => w && norm(w) === norm(a));
+    if (i >= 0) { words[i] = b; out = words.join(''); used++; }
+  }
+  return used ? out : '';
+}
+
 export function correction(fix, why, said, reply = '') {
-  const fa = String(fix || '').replace(/[\s,،\-–—]+$/, '').trim();
+  let fa = String(fix || '').replace(/[\s,،\-–—]+$/, '').trim();
+  if (said && /→|->|=>|←|⟵/.test(fa)) {
+    const whole = fromPairs(fa, said);
+    if (!whole) return '';
+    if (!why || why === '-') why = fa.replace(/\s*(?:->|=>)\s*/g, ' → ');
+    fa = whole;
+  }
   if (!said || !fa || NO_FIX.test(fa) || /[A-Za-z]/.test(fa) || !/[\u0600-\u06FF]/.test(fa)) return '';
   const a = norm(said), b = norm(fa);
   if (a === b || distance(a, b) > Math.max(2, Math.round(0.4 * Math.max(a.length, b.length)))) return '';
