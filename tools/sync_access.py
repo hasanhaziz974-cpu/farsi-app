@@ -305,6 +305,9 @@ def trials(account, project, keep):
                 print('Sign-in mail settings unchanged.')
     else:
         print('The app sign-in mail is not set up yet (add the MAIL_URL secret).')
+    last_err = cf_kv_get(kv, 'mailerr')
+    if last_err:
+        print('::warning::The last sign-in mail failed (functions/api/auth/start.js): ' + last_err[:400])
     if redeploy:
         started = call('POST', f'/accounts/{account}/pages/projects/{project}/deployments', allow=(304,))
         print('Started a new deployment of the site.' if started is not None
