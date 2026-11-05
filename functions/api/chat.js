@@ -108,8 +108,9 @@ function chapterSystem(c, done, known, level) {
       : 'The learner has done every task: wrap up the scene warmly. ') +
     (known.length ? `Prefer words the learner already knows: ${known.join('، ')}. ` : '') +
     // The app shows hand-written phrases for each task as hints, so the model is not asked for any here.
-    'Answer in exactly these six lines and nothing else:\n' + FORMAT + '\n' +
-    "DONE: the numbers of the tasks the learner accomplished in their last message (in correct or understandable Persian), separated by commas, or - if none";
+    'Answer in exactly these seven lines and nothing else:\n' + FORMAT + '\n' +
+    "DONE: the numbers of the tasks the learner accomplished in their last message (in correct or understandable Persian), separated by commas, or - if none\n" +
+    'NEXT: the number of the task your reply invites the learner to do now, or - if your reply invites none';
 }
 
 const system = (s) =>
@@ -174,11 +175,13 @@ export function correction(fix, why, said, reply = '') {
 }
 
 function parse(text, said) {
-  const out = { fa: '', tr: '', ar: '', fix: '', why: '', done: '', hints: '' };
+  const out = { fa: '', tr: '', ar: '', fix: '', why: '', done: '', next: '', hints: '' };
   let cur = null;
-  const clean = String(text || '').replace(/<think>[\s\S]*?<\/think>/g, '').replace(/\*\*/g, '');
+  // Some models put several labels on one line ("FA: … TR: …"): each label starts its own line.
+  const clean = String(text || '').replace(/<think>[\s\S]*?<\/think>/g, '').replace(/\*\*/g, '')
+    .replace(/\s+(TR|AR|FIX|WHY|DONE|NEXT|HINTS)\s*[:：]/g, '\n$1:');
   for (const line of clean.split('\n')) {
-    const m = line.match(/^\s*(FA|TR|AR|FIX|WHY|DONE|HINTS)\s*[:：]\s*(.*)$/i);
+    const m = line.match(/^\s*(FA|TR|AR|FIX|WHY|DONE|NEXT|HINTS)\s*[:：]\s*(.*)$/i);
     if (m) { cur = m[1].toLowerCase(); out[cur] = m[2].trim(); }
     else if (cur && line.trim()) out[cur] += ' ' + line.trim();
   }
@@ -196,7 +199,8 @@ function parse(text, said) {
     const meaning = ar && !/[پچژگکیA-Za-z]/.test(ar) ? ar : '';
     return fa && /[\u0600-\u06FF]/.test(fa) && !/[A-Za-z]/.test(fa) ? { fa: fa.slice(0, 120), ar: meaning.slice(0, 120) } : null;
   }).filter(Boolean).slice(0, 3);
-  return { ...out, done, hints };
+  const next = Number((out.next.match(/\d+/) || [0])[0]) || 0;
+  return { ...out, done, next: next >= 1 && next <= 6 ? next : 0, hints };
 }
 
 // The reply text, whatever shape the model answers in: {response}, the OpenAI chat shape
@@ -216,7 +220,10 @@ function textOf(res) {
 // if the chat form is refused, the same conversation is sent that way.
 async function ask(env, m, messages, max) {
   try {
-    return textOf(await env.AI.run(m, { messages, max_tokens: max, temperature: 0.6 }));
+    // OpenAI's models think before answering, and the thinking counts towards max_tokens.
+    const openai = m.startsWith('@cf/openai/');
+    return textOf(await env.AI.run(m, openai ? { messages, max_tokens: 2000, reasoning_effort: 'low' }
+      : { messages, max_tokens: max, temperature: 0.6 }));
   } catch (e) {
     if (!m.startsWith('@cf/openai/') || /neuron|quota|daily|4006/i.test(String(e && e.message))) throw e;
     return textOf(await env.AI.run(m, { input: messages, reasoning: { effort: 'low' } }));
