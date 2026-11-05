@@ -24,7 +24,7 @@ jobs:
           MAIL_KEY: ${{ secrets.MAIL_KEY }}
           # access: Cloudflare Access signs people in (the app's sign-in can be tried at /login).
           # own: the app's own sign-in only; the Access applications on the site are removed.
-          AUTH_MODE: access
+          AUTH_MODE: own
           ACCESS_POLICY_NAME: ${{ vars.ACCESS_POLICY_NAME }}
           ACCESS_APP_DOMAIN: parsa-farsi.pages.dev
           # Anyone may sign in and get a 7-day trial (functions/_middleware.js); remove to admit only the list.
