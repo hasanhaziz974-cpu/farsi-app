@@ -28,13 +28,20 @@ export async function onRequestPost({ request, env }) {
   if (total >= MAX_MAILS_PER_DAY) return json({ error: 'busy', msg: 'وصلنا إلى حدّ الرسائل لهذا اليوم. حاول بعد ساعات.' }, 429);
 
   const code = newCode();
+  let status = 0;
   const sent = await fetch(env.MAIL_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ key: env.MAIL_KEY, to: email, code, minutes: CODE_MINUTES }),
     redirect: 'follow',
-  }).then((r) => r.text()).catch(() => '');
-  if (!/"ok"\s*:\s*true/.test(sent)) return json({ error: 'mail', msg: 'تعذّر إرسال الرمز الآن. حاول بعد قليل.' }, 502);
+  }).then((r) => { status = r.status; return r.text(); }).catch((e) => 'fetch failed: ' + String(e && e.message));
+  if (!/"ok"\s*:\s*true/.test(sent)) {
+    // Kept for tools/sync_access.py to report (no email addresses, no code): why the mail sender refused.
+    const why = String(sent).replace(/<[^>]*>/g, ' ').replace(/[^\s@]+@[^\s@]+/g, '[email]').replace(/\b\d{6}\b/g, '[code]').replace(/AKfyc[\w-]+|user_content_key=[\w-]+/g, '[id]')
+      .replace(/\s+/g, ' ').trim().slice(0, 300);
+    await kv.put('mailerr', JSON.stringify({ at: new Date().toISOString(), status, why }), { expirationTtl: 7 * 24 * 3600 });
+    return json({ error: 'mail', msg: 'تعذّر إرسال الرمز الآن. حاول بعد قليل.' }, 502);
+  }
 
   await kv.put(key, JSON.stringify({ h: await codeHash(kv, email, code), at: Date.now(), tries: 0, day, n: sends + 1 }),
     { expirationTtl: 24 * 3600 });
