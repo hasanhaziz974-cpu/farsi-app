@@ -104,7 +104,10 @@ function chapterSystem(c, done, known, level) {
   return `You are ${ch.role}. You are talking with an Arabic-speaking learner of Persian. Stay in your role and in the scene. ` +
     `${LEVELS[level]} Reply in simple, natural, correct modern Persian (Iran), 1 or 2 short sentences. ` + RULES +
     `The learner's mission in this scene is to do these things in Persian: ${ch.tasks.map((t, i) => `${i + 1}) ${t}`).join('; ')}. ` +
-    (left.length ? `Still to do: ${left.join('; ')}. Lead the conversation naturally so the learner can do them, but never do them for the learner. `
+    'These are things the LEARNER says, not you. Speak only as yourself: never say the learner\'s lines, never ask the questions ' +
+    'the learner is supposed to ask (if a task is to ask you something, wait for the learner to ask it, then answer), and never ' +
+    'mention, hint at or suggest the tasks. ' +
+    (left.length ? `Still to do: ${left.join('; ')}. Simply react to what the learner said and keep the scene going, leaving room for them. `
       : 'The learner has done every task: wrap up the scene warmly. ') +
     (known.length ? `Prefer words the learner already knows: ${known.join('، ')}. ` : '') +
     // The app shows hand-written phrases for each task as hints, so the model is not asked for any here.
