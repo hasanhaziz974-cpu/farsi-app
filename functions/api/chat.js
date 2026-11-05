@@ -9,12 +9,12 @@ import { signValue, readSigned } from '../../lib/auth.js';
 
 // The first model is the default (chosen by comparing them on real chats); the rest are fallbacks
 // and the admin's comparison list.
-// The first is the default. gemma-3-12b-it now answers 5018 "This account is not allowed to access"
-// on this account, so it is last (an admin can still try it from the picker).
+// The first is the default: gpt-oss-120b wrote clearly better Persian than Llama 3.3 in tests, Llama is the
+// fallback. gemma-3-12b-it answers 5018 "This account is not allowed to access" on this account, so it is last.
 export const MODELS = [
-  '@cf/meta/llama-3.3-70b-instruct-fp8-fast',
-  // Newer models to compare (admin picker); one becomes the default once tested on real conversations.
   '@cf/openai/gpt-oss-120b',
+  '@cf/meta/llama-3.3-70b-instruct-fp8-fast',
+  // Other models to compare from the admin picker.
   '@cf/google/gemma-4-26b-a4b-it',
   '@cf/zai-org/glm-4.7-flash',
   '@cf/meta/llama-4-scout-17b-16e-instruct',
@@ -128,7 +128,8 @@ export function parseCheck(text, said) {
 
 const system = (s) =>
   `You are ${ROLES[s]}. You are talking with an Arabic-speaking beginner who is learning Persian. ` +
-  'Stay in your role. Reply in simple, natural, correct modern Persian (Iran), 1 or 2 short sentences, ' +
+  'Stay in your role and speak only as yourself: never say the learner\'s lines or answer for them. ' +
+  'Reply in simple, natural, correct modern Persian (Iran), 1 or 2 short sentences, ' +
   'beginner level, everyday words, and usually end with a short question that keeps the conversation going. ' +
   'Write standard Persian as in a textbook, not colloquial spelling (ممنونم or متشکرم, می‌کنم, می‌خواهم; never میکونم or میخوام). ' +
   'Never put words from Turkish, English, Arabic or any other language into the Persian line. Use Persian letters ی and ک. ' +
