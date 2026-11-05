@@ -13,6 +13,10 @@ import { signValue, readSigned } from '../../lib/auth.js';
 // on this account, so it is last (an admin can still try it from the picker).
 export const MODELS = [
   '@cf/meta/llama-3.3-70b-instruct-fp8-fast',
+  // Newer models to compare (admin picker); one becomes the default once tested on real conversations.
+  '@cf/openai/gpt-oss-120b',
+  '@cf/google/gemma-4-26b-a4b-it',
+  '@cf/zai-org/glm-4.7-flash',
   '@cf/meta/llama-4-scout-17b-16e-instruct',
   '@cf/mistralai/mistral-small-3.1-24b-instruct',
   '@cf/qwen/qwen3-30b-a3b-fp8',
@@ -195,6 +199,30 @@ function parse(text, said) {
   return { ...out, done, hints };
 }
 
+// The reply text, whatever shape the model answers in: {response}, the OpenAI chat shape
+// {choices: [{message: {content}}]}, or the OpenAI Responses shape {output: [{content: [{text}]}]}.
+function textOf(res) {
+  if (typeof res === 'string') return res;
+  if (!res) return '';
+  let t = res.response ?? (res.choices && res.choices[0] && res.choices[0].message && res.choices[0].message.content) ?? res.output_text;
+  if (t == null && Array.isArray(res.output)) {
+    t = res.output.filter((o) => o && o.type === 'message')
+      .flatMap((o) => (Array.isArray(o.content) ? o.content : []).map((c) => (c && (c.text || '')) || '')).join('');
+  }
+  return t == null ? '' : typeof t === 'string' ? t : JSON.stringify(t);
+}
+
+// Asks one model. OpenAI's open models on Workers AI take the Responses input ({input, reasoning});
+// if the chat form is refused, the same conversation is sent that way.
+async function ask(env, m, messages, max) {
+  try {
+    return textOf(await env.AI.run(m, { messages, max_tokens: max, temperature: 0.6 }));
+  } catch (e) {
+    if (!m.startsWith('@cf/openai/') || /neuron|quota|daily|4006/i.test(String(e && e.message))) throw e;
+    return textOf(await env.AI.run(m, { input: messages, reasoning: { effort: 'low' } }));
+  }
+}
+
 const asText = (m) => (m.r === 'a' ? `FA: ${m.t}` : m.t);
 const json = (body, status = 200, headers = {}) =>
   Response.json(body, { status, headers: { 'Cache-Control': 'no-store', ...headers } });
@@ -249,16 +277,13 @@ export async function onRequest({ request, env }) {
   const failed = []; // admin only: why a model was skipped
   for (const m of order.slice(0, 3)) {
     try {
-      const res = await env.AI.run(m, { messages, max_tokens: chapter ? 450 : 350, temperature: 0.6 });
-      // Most models answer {response}; some answer in the OpenAI shape {choices: [{message: {content}}]}.
-      let text = typeof res === 'string' ? res : res && (res.response ?? (res.choices && res.choices[0] && res.choices[0].message && res.choices[0].message.content));
-      if (text && typeof text !== 'string') text = JSON.stringify(text);
+      const text = await ask(env, m, messages, chapter ? 450 : 350);
       const said = msgs.length && msgs[msgs.length - 1].r === 'u' ? msgs[msgs.length - 1].t : '';
       if (text && text.trim()) { reply = parse(text, said); model = m; break; }
       failed.push(`${m.split('/').pop()}: empty`);
     } catch (e) {
       failed.push(`${m.split('/').pop()}: ${String(e && e.message).slice(0, 120)}`);
-      if (/neuron|limit|quota|429|capacity/i.test(String(e && e.message))) {
+      if (/neuron|quota|daily|4006/i.test(String(e && e.message))) { // the account's free daily allocation is used up
         return json({ error: 'busy', msg: 'انتهى رصيد المحادثة لهذا اليوم. عُد غداً!' }, 503);
       }
     }
