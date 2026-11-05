@@ -79,6 +79,18 @@ export const CHAPTERS = [
     tasks: ["greet and say you are a tourist", "ask what a building or place is", "say the place is beautiful", "ask if you can take a photo, or ask them to take one"] },
   { role: "Parsa, your Iranian friend, saying goodbye before you fly home",
     tasks: ["say you are going back home", "say what you liked in Iran", "say you will come again or invite them to visit you", "thank them and say goodbye"] },
+  { role: "a friendly real estate agent in Tehran",
+    tasks: ["say you are looking for a small apartment", "ask how much the monthly rent is", "ask how many rooms it has or which floor it is on", "say you want it and thank them"] },
+  { role: "a clerk at a currency exchange office in Tehran",
+    tasks: ["say you want to change dollars", "ask the dollar exchange rate", "say how many dollars you want to change", "take the money and thank them"] },
+  { role: "a salesperson in a mobile phone shop in Tehran",
+    tasks: ["say you want a SIM card", "ask about internet (data) packages", "ask how much it costs", "pay and thank them"] },
+  { role: "a kind doctor at a clinic in Tehran",
+    tasks: ["say how you feel (fever, cough, pain...)", "say since when", "ask whether it is serious", "ask how to take the medicine and thank them"] },
+  { role: "a friendly old man from Shiraz sitting in the garden of Hafez's tomb",
+    tasks: ["greet them and say you have just arrived in Shiraz", "say the place is beautiful", "ask about a good place to eat", "thank them and say goodbye"] },
+  { role: "Parsa, your Iranian friend, at his family home on Nowruz",
+    tasks: ["wish them a happy Nowruz", "ask about the Haft-Sin table", "say how you celebrate holidays in your country", "wish them a happy new year"] },
 ];
 
 
