@@ -103,7 +103,8 @@ function checkSystem(c, k, line) {
     'Arabic letters typed instead of Persian ones (أ for ا, ي for ی, ك for ک, ة for ه) are not mistakes. ' +
     'Answer in exactly these four lines and nothing else:\n' +
     'OK: yes if the reply does the task in Persian a listener would understand (small spelling mistakes are fine), otherwise no\n' +
-    "FIX: the learner's whole reply rewritten in correct, natural Persian (the full sentence), or only - if it had no mistake\n" +
+    "FIX: the learner's whole reply rewritten in correct, natural Persian (the full sentence), or only - if it had no mistake. " +
+    'Check every word letter by letter: a misspelled word (like بجاست for کجاست, چمور for چطور) is a mistake that needs FIX even when OK is yes\n' +
     'WHY: if FIX is not -, a very short explanation in Arabic of the mistake; otherwise -\n' +
     'TIP: if OK is no, one short sentence in Arabic telling the learner what to say; otherwise -';
 }
