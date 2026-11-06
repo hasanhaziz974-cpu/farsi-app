@@ -254,7 +254,7 @@ return{id:w.id,w:w,b:b,isNew:!c,retry:p.retry,mode:mode,tr:b<=2,o:sh([w].concat(
 function srsRate(id,ok,retry){planReviewed();var c=srsOf(id),b=c?c.b:0;
 if(ok){if(retry)srsPut(id,{b:Math.max(1,b),d:Date.now()+DAY});else{b=Math.min(b+1,5);srsPut(id,{b:b,d:Date.now()+[1,2,4,8,16][b-1]*DAY})}}else srsPut(id,{b:1,d:Date.now()+6e4});
 gain(ok?3:1)}
-function review(){if(SSV)return savedView();if(MV)return mistView();var nss=Object.keys(S.ss||{}).filter(senById).length,nm=mistLive().length,md=mistDue().length,h='<div class="rowf"><h2>المراجعة اليومية</h2>'+(nss?'<button class="back" onclick="SSV=true;render()">⭐ جملي ('+nss+')</button>':'')+(nm?'<button class="back" onclick="MV={};render()">📕 أخطائي'+(md?' ('+md+')':'')+'</button>':'')+'</div>';
+function review(){if(SSV)return savedView();if(MV)return mistView();var nss=Object.keys(S.ss||{}).filter(senById).length,md=mistDue().length,h='<div class="rowf"><h2>المراجعة اليومية</h2>'+(nss?'<button class="back" onclick="SSV=true;render()">⭐ جملي ('+nss+')</button>':'')+'<button class="back" onclick="MV={};render()">📕 أخطائي'+(md?' ('+md+')':'')+'</button>'+'</div>';
 if(!RC){var p=pickNext();if(!p)return h+'<div class="det"><div class="big">✓</div><p>لا توجد كلمات مستحقة الآن. عد لاحقاً أو ابدأ درساً جديداً.</p></div>';RC=makeRC(p);R.show=false}
 var w=RC.w,rv=RC.a!==null,left=queue().q.length+RSQ.length,
 lab={flip:'تذكّر المعنى',rec:'اختر المعنى',aud:'استمع واختر المعنى',rev:'اختر الكلمة الفارسية'}[RC.mode],
