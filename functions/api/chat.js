@@ -109,11 +109,14 @@ const FORMAT =
 
 // Trip chapters are scripted (the character's lines are written in the app); the model only checks the
 // learner's reply to the current task: does it do the task, and what is its correct form.
-function checkSystem(c, k, line) {
+function checkSystem(c, k, line, voice) {
   const ch = CHAPTERS[c];
   return 'You are a kind teacher of Persian (Iran) for Arabic speakers. In a role-play, ' + ch.role +
     ` just said: «${line}». Now the learner should ${ch.tasks[k]}. The learner's reply follows. Judge only that reply. ` +
     'Arabic letters typed instead of Persian ones (أ for ا, ي for ی, ك for ک, ة for ه) are not mistakes. ' +
+    (voice ? 'The reply was SPOKEN and turned into text by speech recognition, so its spelling may be wrong because of the ' +
+      'recognition, not the learner: ignore spelling and word splitting, and judge only whether the right words and grammar were used; ' +
+      'OK is yes if it sounds like a reply that does the task. ' : '') +
     'Answer in exactly these four lines and nothing else:\n' +
     'OK: yes if the reply does the task in Persian a listener would understand (small spelling mistakes are fine), otherwise no\n' +
     "FIX: the learner's whole reply rewritten in correct, natural Persian (the full sentence), or only - if it had no mistake. " +
@@ -326,7 +329,11 @@ export async function onRequest({ request, env }) {
     try {
       let b64 = '';
       for (let i = 0; i < audio.length; i += 0x8000) b64 += String.fromCharCode.apply(null, audio.subarray(i, i + 0x8000));
-      const r = await env.AI.run('@cf/openai/whisper-large-v3-turbo', { audio: btoa(b64), language: 'fa', vad_filter: true });
+      // The character's last line and the task's phrases, sent by the app, help Whisper with the expected words.
+      let hint = '';
+      try { hint = decodeURIComponent(request.headers.get('X-Hint') || ''); } catch (e) { hint = ''; }
+      hint = hint.replace(/[^\u0600-\u06FF\u200c\s.,،؟?!]/g, '').slice(0, 300).trim();
+      const r = await env.AI.run('@cf/openai/whisper-large-v3-turbo', { audio: btoa(b64), language: 'fa', vad_filter: true, ...(hint ? { initial_prompt: hint } : {}) });
       text = String((r && r.text) || '').trim();
     } catch (e) {
       fail = String(e && e.message).slice(0, 120);
@@ -356,18 +363,19 @@ export async function onRequest({ request, env }) {
   if (chapter) {
     const k = Number(body.k), said = String(body.said || '').trim().slice(0, MAX_CHARS), line = String(body.line || '').trim().slice(0, MAX_CHARS);
     if (!Number.isInteger(k) || k < 0 || k >= CHAPTERS[c].tasks.length || !said) return json({ error: 'check' }, 400);
-    const messages = [{ role: 'system', content: checkSystem(c, k, line) }, { role: 'user', content: said }];
+    const messages = [{ role: 'system', content: checkSystem(c, k, line, !!body.voice) }, { role: 'user', content: said }];
     const first = admin && MODELS.includes(body.model) ? body.model : (env.CHECK_MODEL || CHECK_MODELS[0]);
     const order = [...new Set([first, ...CHECK_MODELS, ...MODELS])].slice(0, 3);
     const failed = [];
     for (const m of order) {
       try {
-        const r = parseCheck(await ask(env, m, messages, 250), said);
+        const raw = await ask(env, m, messages, 250);
+        const r = parseCheck(raw, said);
         if (r) {
           const { dropped, ...shown } = r;
           return counted({ ...shown, model: admin ? [m, ...failed, ...(dropped ? [`FIX hidden: ${dropped}`] : [])].join(' | ') : undefined });
         }
-        failed.push(`${m.split('/').pop()}: no answer`);
+        failed.push(`${m.split('/').pop()}: no answer «${String(raw).replace(/\s+/g, ' ').slice(0, 80)}»`);
       } catch (e) {
         failed.push(`${m.split('/').pop()}: ${String(e && e.message).slice(0, 120)}`);
         if (/neuron|quota|daily|4006/i.test(String(e && e.message))) return json({ error: 'busy', msg: 'انتهى رصيد المحادثة لهذا اليوم. عُد غداً!' }, 503);
