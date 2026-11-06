@@ -1039,16 +1039,17 @@ mr.onstop=function(){st.getTracks().forEach(function(x){x.stop()});clearTimeout(
 mr.start();REC.t=setTimeout(function(){if(REC.on)try{mr.stop()}catch(e){}},15000);render();aiBottom()})
 .catch(function(){toast('اسمح للتطبيق باستعمال الميكروفون من إعدادات المتصفح، ثم أعد المحاولة')})}
 function aiVoice(b){if(b.size<1200){toast('التسجيل قصير جداً. اضغط «تكلّم» وقل جملة كاملة.');return}AIC.busy=true;AIC.listening=true;AIC.err='';render();aiBottom();
-fetch('/api/chat?'+(AIC.c!=null?'c='+AIC.c:'s='+AIC.s),{method:'POST',headers:{'Content-Type':b.type||'audio/webm'},credentials:'same-origin',body:b})
+var hint=AIC.c!=null&&tripExp()>=0?[AIC.msgs.filter(function(m){return m.r==='a'}).slice(-1).map(function(m){return m.t}).join('')].concat(TRIP[AIC.c].say[tripExp()].map(function(p){return p[0]})).join(' '):(AIC.msgs.filter(function(m){return m.r==='a'}).slice(-1).map(function(m){return m.t})[0]||'');
+fetch('/api/chat?'+(AIC.c!=null?'c='+AIC.c:'s='+AIC.s),{method:'POST',headers:{'Content-Type':b.type||'audio/webm','X-Hint':encodeURIComponent(hint.slice(0,300))},credentials:'same-origin',body:b})
 .then(function(r){return r.json().catch(function(){return{}})}).then(function(j){AIC.busy=false;AIC.listening=false;if(j.left!=null)AIC.left=j.left;
 if(!j.text){AIC.err=(j.msg||'تعذّر فهم التسجيل. حاول مرة أخرى.')+(AIC.admin&&j.model?' ('+j.model+')':'');render();return}
 if(AIC.c!=null)tripReply(j.text,tripPron(j.text));else{AIC.msgs.push({r:'u',t:j.text,voice:1});aiAsk()}})
 .catch(function(){AIC.busy=false;AIC.listening=false;AIC.err='تعذّر الاتصال. تأكد من الإنترنت وحاول مرة أخرى.';render()})}
 function tripPron(t){var k=tripExp();if(k<0)return null;var said=t.split(/\s+/).map(function(w){return tripNorm(w)}).filter(Boolean),best=null;
-TRIP[AIC.c].say[k].forEach(function(p){var ws=p[0].split(/\s+/).filter(function(w){return tripNorm(w)}),ok=0;
-var w=ws.map(function(x){var n=tripNorm(x),hit=/^(علی|سارا)$/.test(n)||said.indexOf(n)>=0,near=!hit&&n.length>=4&&said.some(function(y){return tripLev(n,y)<=1});ok+=hit?1:near?.5:0;return{w:x,ok:hit}});
+var joined=said.join('');TRIP[AIC.c].say[k].forEach(function(p){var ws=p[0].split(/\s+/).filter(function(w){return tripNorm(w)}),ok=0;
+var w=ws.map(function(x){var n=tripNorm(x),hit=/^(علی|سارا)$/.test(n)||said.indexOf(n)>=0||(n.length>=4&&joined.indexOf(n)>=0),near=!hit&&n.length>=3&&said.some(function(y){return tripLev(n,y)<=1});ok+=hit?1:near?.5:0;return{w:x,ok:hit}});
 var r=ws.length?ok/ws.length:0;if(!best||r>best.r)best={r:r,w:w}});
-if(!best||best.r<.5)return null;return{w:best.w,s:best.r>=.9?3:best.r>=.7?2:1}}
+if(!best||best.r<.5)return null;return{w:best.w,r:best.r,s:best.r>=.9?3:best.r>=.7?2:1}}
 function tripRetry(){var m=AIC.msgs.pop();if(m&&m.r==='u')tripReply(m.t);else render()}
 // Shown instead of the reply box once every task of the chapter is done.
 function tripEnd(){var i=AIC.c,t=trip(i),nx=i+1<TRIP.length?i+1:null,nl=nx===null?'':tripLock(nx);
@@ -1057,10 +1058,11 @@ return'<div class="det" style="margin-top:12px"><div class="big">🏆</div><b>أ
 '<button class="btn alt" onclick="aiChapter('+i+')">أعد الفصل</button><button class="btn alt" onclick="AIC.c=null;render()">خريطة الرحلة</button></div>'+
 (nx!==null&&nl?'<p class="mu" style="margin:8px 0 0">الفصل التالي: '+TRIP[nx].e+' '+TRIP[nx].t+' · '+nl.replace('🔒 ','')+'</p>':'')+'</div>'}
 function tripAccept(k){AIC.msgs.push(tripLine(AIC.c,k+1));AIC.showHints=false;tripKeep();render();aiBottom();try{gain(2)}catch(e){}tripAdd([k+1]);if(tripExp()<0)render()}
-function tripReply(t,pron){var k=tripExp();if(k<0)return;AIC.msgs.push(pron===undefined?{r:'u',t:t}:{r:'u',t:t,voice:1,pron:pron});AIC.err='';
+function tripReply(t,pron){var k=tripExp();if(k<0)return;AIC.msgs.push(pron===undefined?{r:'u',t:t}:{r:'u',t:t,voice:1,pron:pron});
+if(pron&&pron.r>=.7){tripAccept(k);return}AIC.err='';
 if(tripSaid(t).indexOf(k+1)>=0){tripAccept(k);return}
 var line=AIC.msgs.filter(function(m){return m.r==='a'}).slice(-1)[0],me=AIC.msgs[AIC.msgs.length-1];AIC.busy=true;render();aiBottom();
-fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({c:AIC.c,k:k,line:line?line.t:'',said:t,model:AIC.pick||''})})
+fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({c:AIC.c,k:k,line:line?line.t:'',said:t,voice:pron!==undefined?1:0,model:AIC.pick||''})})
 .then(function(r){return r.json().catch(function(){return{}})}).then(function(j){AIC.busy=false;if(j.left!=null)AIC.left=j.left;if(j.model)me.model=j.model;
 if(j.ok==null){AIC.err=j.msg||'تعذّر التحقق من جوابك الآن. حاول بعد قليل.';render();return}
 if(j.fix)me.fix=j.fix;else{var sp=tripSpell(t,k);if(sp)me.fix=sp.t+' — '+sp.sw.join('، ')}
