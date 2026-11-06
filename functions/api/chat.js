@@ -135,7 +135,13 @@ export function parseCheck(text, said) {
     if (m) { cur = m[1].toLowerCase(); out[cur] = m[2].trim(); }
     else if (cur && line.trim()) out[cur] += ' ' + line.trim();
   }
-  if (!out.ok) return null; // not an answer in the asked form
+  if (!out.ok) {
+    // Some answers skip the labels and start with the verdict («NO الرد…»): the verdict, and an Arabic rest as the tip.
+    const m = clean.trim().match(/^(yes|no|نعم|لا|بله|خیر)\b[\s:.\-–—،,]*([\s\S]*)$/i);
+    if (!m) return null; // not an answer in the asked form
+    out.ok = m[1];
+    if (!out.tip && /[\u0600-\u06FF]/.test(m[2]) && !/[A-Za-z]/.test(m[2])) out.tip = m[2].split('\n')[0];
+  }
   for (const k of Object.keys(out)) out[k] = out[k].replace(FOREIGN, ' ').replace(/\s{2,}/g, ' ').trim();
   const fix = correction(out.fix, out.why, said);
   const tip = out.tip && out.tip !== '-' && !/[A-Za-z]/.test(out.tip) ? out.tip.slice(0, 200) : '';
