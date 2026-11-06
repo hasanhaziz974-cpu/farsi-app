@@ -1074,6 +1074,10 @@ var w=ws.map(function(x){var n=tripNorm(x),hit=/^(علی|سارا)$/.test(n)||sa
 // Words of the phrase the learner did not say at all (a shorter correct reply) are shown in gray and not counted.
 var r=ws.length?Math.min(1,ok/Math.max(1,Math.min(ws.length,said.length))):0;if(ok>=said.length-.01)w.forEach(function(x){if(!x.ok)x.skip=1});var sk=w.filter(function(x){return x.skip}).length;if(!best||r>best.r||(r===best.r&&sk<best.sk))best={r:r,w:w,sk:sk}});
 if(!best||best.r<.5)return null;return{w:best.w,r:best.r,s:best.r>=.9?3:best.r>=.7?2:1}}
+// The task phrase closest to a near-correct reply, with the learner's own name in place of the sample name.
+function tripFixText(t,pr){var ws=pr.w.map(function(x){return x.w}),ph=ws.map(function(x){return tripNorm(x)});
+var extra=t.split(/\s+/).filter(function(y){var n=tripNorm(y);return n&&!ph.some(function(p){return p===n||(p.length>=3&&tripLev(p,n)<=1)})});
+return ws.map(function(x){return/^(علی|سارا)[.,،؟?!]*$/.test(x)&&extra.length===1?x.replace(/علی|سارا/,extra[0].replace(/[.,،؟?!]+$/,'')):x}).join(' ')}
 function tripRetry(){var m=AIC.msgs.pop();if(m&&m.r==='u')tripReply(m.t);else render()}
 // Shown instead of the reply box once every task of the chapter is done.
 function tripEnd(){var i=AIC.c,t=trip(i),nx=i+1<TRIP.length?i+1:null,nl=nx===null?'':tripLock(nx);
@@ -1090,6 +1094,9 @@ fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},cre
 .then(function(r){return r.json().catch(function(){return{}})}).then(function(j){AIC.busy=false;if(j.left!=null)AIC.left=j.left;if(j.model)me.model=j.model;
 if(j.ok==null){AIC.err=j.msg||'تعذّر التحقق من جوابك الآن. حاول بعد قليل.';render();return}
 if(j.fix)me.fix=j.fix;else{var sp=tripSpell(t,k);if(sp)me.fix=sp.t+' — '+sp.sw.join('، ')}if(me.fix)mistAdd(t,me.fix);
+// A reply the checker refused but that is close to one of the task's phrases is a mistake, not a wrong answer:
+// it is accepted with the phrase as its correction (and saved in the notebook).
+if(!j.ok){var pr=tripPron(t);if(pr&&pr.r>=.6){if(!me.fix){me.fix=tripFixText(t,pr)+' — هذه هي الجملة الصحيحة';mistAdd(t,me.fix)}tripAccept(k);return}}
 if(j.ok){tripAccept(k);return}
 AIC.msgs.push({r:'n',t:'لم تُنجز «'+TRIP[AIC.c].tasks[k]+'» بعد. '+(j.tip?j.tip+' ':'')+'جرّب مرة أخرى، أو اضغط 💡 ساعدني.'});tripKeep();render();aiBottom()})
 .catch(function(){AIC.busy=false;AIC.err='تعذّر الاتصال. تأكد من الإنترنت وحاول مرة أخرى.';render()})}
