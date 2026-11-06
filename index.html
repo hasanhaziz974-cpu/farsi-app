@@ -157,8 +157,8 @@ function esc(s){return s.replace(/'/g,"&#39;")}
 var tab="home",sub=null,Q=null,R={show:false},selL=null;
 var TABS=[["home","الدروس"],["verbs","الأفعال"],["gram","قواعد"],["talk","محادثات"],["review","المراجعة"],["me","تقدّمي"]];
 function nav(){document.getElementById("nav").innerHTML=TABS.map(function(t){return '<button class="'+(t[0]===tab||(t[0]==="home"&&(tab==="letters"||tab==="games"))?"on":"")+'" onclick="go(\''+t[0]+'\')">'+t[1]+'</button>'}).join("")}
-function go(t){tab=t;BK=null;PC=null;SSV=false;if(typeof AIC==='object'&&AIC)AIC.open=false;sub=null;Q=null;M=null;PL=null;RP=null;MG=null;LG=null;D=null;LQ=null;G=null;GQ=null;CV=null;CQ=null;RV=false;R.show=false;render()}
-function render0(){nav();top_();var m=document.getElementById("main");if(PC){m.innerHTML=pcView();return}if(PL){m.innerHTML=plView();window.scrollTo(0,0);return}
+function go(t){tab=t;BK=null;PC=null;EX=null;SSV=false;if(typeof AIC==='object'&&AIC)AIC.open=false;sub=null;Q=null;M=null;PL=null;RP=null;MG=null;LG=null;D=null;LQ=null;G=null;GQ=null;CV=null;CQ=null;RV=false;R.show=false;render()}
+function render0(){nav();top_();var m=document.getElementById("main");if(PC){m.innerHTML=pcView();return}if(EX){m.innerHTML=exView();return}if(PL){m.innerHTML=plView();window.scrollTo(0,0);return}
 if(tab==="home")m.innerHTML=sub===null?home():(M?matchView():Q?quiz():lesson());
 else if(tab==="games")m.innerHTML=gamesView();
 else if(tab==="verbs")m.innerHTML=verbsTab();
@@ -520,7 +520,7 @@ var LVL=[{n:'مبتدئ',en:'Beginner',e:'🌱',L:[0,8],G:[0,5],T:[0,6],S:1},{n:
 function plc(){return Math.min(2,Math.max(0,+S.place||0))}
 function lvlParts(k){var x=LVL[k],a=[],i;for(i=x.L[0];i<x.L[1];i++)a.push(!!(S.pass&&S.pass[i]));for(i=x.G[0];i<x.G[1];i++)a.push(!!(S.gp&&S.gp[i]));for(i=x.T[0];i<x.T[1];i++)a.push(tripDone(i));STORY.forEach(function(st,i){if(st.lv===x.S)a.push(!!(S.story&&S.story[i]))});return a}
 function lvlPct(k){var a=lvlParts(k);return Math.round(a.filter(Boolean).length/a.length*100)}
-function lvlBox(){var h='<div class="det" style="text-align:start"><b>🎯 مستواي اللغوي</b>';LVL.forEach(function(x,k){var p=lvlPct(k);h+='<div style="margin-top:8px">'+x.e+' المستوى '+(k+1)+': '+x.n+' <span class="mu">('+p+'%)</span><div class="bar"><i style="width:'+p+'%"></i></div></div>'});
+function lvlBox(){var h='<div class="det" style="text-align:start"><b>🎯 مستواي اللغوي</b>';LVL.forEach(function(x,k){var p=lvlPct(k),es=exState(k);h+='<div style="margin-top:10px">'+x.e+' المستوى '+(k+1)+': '+x.n+' <span class="mu">('+p+'%)</span><div class="bar"><i style="width:'+p+'%"></i></div><button class="lnk-no" style="color:var(--pr);font-size:14px;'+(es&&es.indexOf('✅')!==0?'opacity:.7':'')+'" onclick="exStart('+k+')">📝 اختبار نهاية المستوى'+(es?' · '+es:'')+'</button></div>'});
 return h+'<div class="btns"><button class="btn alt" onclick="pcStart()">'+(S.placeAt?'أعد اختبار تحديد المستوى':'🎯 حدّد مستواك')+'</button></div></div>'}
 function placeCard(){if(S.placeAt||cnt(S.pass)>=3)return'';return'<button class="row" style="border-color:var(--ac)" onclick="pcStart()"><div><div style="font-weight:600">🎯 تعرف بعض الفارسية؟ حدّد مستواك</div><div class="mu">15 سؤالاً في 5 دقائق، ونفتح لك الدروس التي تعرفها</div></div><span class="mu">‹</span></button>'}
 // Placement test: five questions per level, built from that level's own checked content (words with their
@@ -543,6 +543,54 @@ var q=PC.qs[PC.i],n=PC.k*5+PC.i+1;h+='<p class="mu">'+LVL[PC.k].e+' أسئلة �
 h+='<h3>'+{w:'ما معنى هذه الكلمة؟',au:'استمع واختر المعنى',g:'ما معنى هذه الجملة؟',r:'ما معنى هذه الجملة؟'}[q.k]+'</h3><div class="card">'+(q.k==='au'?'':'<div class="fa" style="font-size:'+(q.k==='w'?34:22)+'px">'+hesc(q.fa)+'</div>')+'<button class="spk" style="margin:10px 0" aria-label="استمع" onclick="say(\''+esc(q.fa)+'\')">🔊</button></div>';
 q.o.forEach(function(o){var c=PC.a===null?'':o===q.a?' ok':o===PC.a?' no':'';h+='<button class="opt'+c+'" onclick="pcAns(\''+esc(o).replace(/"/g,'&quot;')+'\')">'+hesc(o)+'</button>'});
 if(PC.a!==null)h+='<div class="btns"><button class="btn" onclick="pcNext()">التالي</button></div>';else h+='<p class="mu" style="text-align:center"><button class="lnk-no" onclick="pcAns(\'\')">لا أعرف</button></p>';return h}
+// 📝 End-of-level exam (subscribers): 20 questions from the level's own content — 5 words, 3 grammar,
+// 4 listening, 3 reading, 3 writing (type a trip phrase from its meaning) and 2 speaking (read a phrase
+// aloud; Whisper's text is compared word by word). 70% passes. S.exam[k] = {p: best %, ok: passed, at}.
+// It opens at 80% of the level; after a fail it can be taken again the next day.
+var EX=null,EXSK={v:'المفردات',g:'القواعد',l:'الاستماع',r:'القراءة',w:'الكتابة',s:'الكلام'};
+function exScore(t,target){var said=String(t).split(/\s+/).map(function(w){return tripNorm(w)}).filter(Boolean),joined=said.join(''),ws=target.split(/\s+/).filter(function(w){return tripNorm(w)}),ok=0;
+ws.forEach(function(x){var n=tripNorm(x);if(/^(علی|سارا)$/.test(n)||said.indexOf(n)>=0||(n.length>=4&&joined.indexOf(n)>=0))ok++;else if(n.length>=3&&said.some(function(y){return tripLev(n,y)<=1}))ok+=.5});return ws.length?ok/ws.length:0}
+function exWait(k){var e=S.exam&&S.exam[k];return e&&!e.ok&&e.at&&Date.now()-e.at<DAY?Math.ceil((e.at+DAY-Date.now())/36e5):0}
+function exState(k){if(webFree())return'⭐ للمشتركين';var e=S.exam&&S.exam[k];if(e&&e.ok)return'✅ نجحت ('+e.p+'%)';if(lvlPct(k)<80)return'🔒 أكمل 80% من المستوى';var w=exWait(k);return w?'⏳ أعده بعد '+w+' ساعة':''}
+function exQs(k){var x=LVL[k],ws=sh(ALL.filter(function(w){return w.l>=x.L[0]&&w.l<x.L[1]&&!/\s/.test(w.fa.trim())})),gs=[],ss=[],ph=[],ln=[];
+GR.slice(x.G[0],x.G[1]).forEach(function(g){g.e.forEach(function(e){gs.push(e)})});STORY.forEach(function(st){if(st.lv===x.S)st.s.forEach(function(l){ss.push(l)})});
+TRIP.slice(x.T[0],x.T[1]).forEach(function(c){c.say.forEach(function(ps){ps.forEach(function(p){if(!/علی|سارا/.test(p[0]))ph.push(p)})});c.ln.forEach(function(l){ln.push(l)})});gs=sh(gs);ss=sh(ss);ph=sh(ph);ln=sh(ln);
+var wa=ALL.map(function(w){return w.ar}),wf=ALL.filter(function(w){return!/\s/.test(w.fa.trim())}).map(function(w){return w.fa}),sa=[];GR.forEach(function(g){g.e.forEach(function(e){sa.push(e[2])})});STORY.forEach(function(st){st.s.forEach(function(l){sa.push(l[2])})});TRIP.forEach(function(c){c.ln.forEach(function(l){sa.push(l[2])})});
+function mc(r,pool){return sh([r].concat(sh(pool.filter(function(v){return v!==r})).slice(0,3)))}
+var q=[];ws.slice(0,3).forEach(function(w){q.push({t:'mc',sk:'v',p:'ما معنى هذه الكلمة؟',fa:w.fa,a:w.ar,o:mc(w.ar,wa)})});
+ws.slice(3,5).forEach(function(w){q.push({t:'mc',sk:'v',p:'اختر الكلمة الفارسية التي معناها: «'+w.ar+'»',a:w.fa,o:mc(w.fa,wf),fo:1})});
+gs.slice(0,3).forEach(function(e){q.push({t:'mc',sk:'g',p:'ما معنى هذه الجملة؟',fa:e[0],a:e[2],o:mc(e[2],sa)})});
+ws.slice(5,7).forEach(function(w){q.push({t:'mc',sk:'l',p:'استمع واختر المعنى',au:w.fa,a:w.ar,o:mc(w.ar,wa)})});
+ln.slice(0,2).forEach(function(l){q.push({t:'mc',sk:'l',p:'استمع إلى الجملة واختر معناها',au:l[0],a:l[2],o:mc(l[2],sa)})});
+ss.slice(0,3).forEach(function(l){q.push({t:'mc',sk:'r',p:'اقرأ واختر المعنى',fa:l[0],a:l[2],o:mc(l[2],sa)})});
+ph.slice(0,3).forEach(function(p){q.push({t:'wr',sk:'w',p:'اكتب بالفارسية: «'+p[1]+'»',a:p[0]})});
+ph.slice(3,5).forEach(function(p){q.push({t:'sp',sk:'s',p:'اقرأ هذه الجملة بصوتك',fa:p[0],ar:p[1],a:p[0]})});return q}
+function exStart(k){var st=exState(k);if(st&&st.indexOf('✅')!==0){if(webFree())freeGate('اختبار نهاية المستوى');else toast(st.replace(/^\S+ /,''));return}EX={k:k,qs:exQs(k),i:0,a:null,sc:{},res:null};render();scrollTo(0,0)}
+function exMark(ok){var q=EX.qs[EX.i];EX.sc[q.sk]=EX.sc[q.sk]||[0,0];EX.sc[q.sk][1]++;if(ok){EX.sc[q.sk][0]++;sfx('ok')}else sfx('no');q.ok=ok}
+function exAns(o){if(EX.a!==null)return;var q=EX.qs[EX.i];EX.a=o;exMark(o===q.a);render()}
+function exWrite(){if(EX.a!==null)return;var el=document.getElementById('exin'),t=el?el.value.trim():'';if(!t){toast('اكتب الجملة أولاً');return}var q=EX.qs[EX.i];EX.a=t;exMark(exScore(t,q.a)>=.75);render()}
+function exMic(){var q=EX.qs[EX.i];if(EX.a!==null||EX.busy)return;if(REC.on){try{REC.mr.stop()}catch(e){}return}
+navigator.mediaDevices.getUserMedia({audio:true}).then(function(st){var ty=['audio/webm;codecs=opus','audio/webm','audio/mp4'].filter(function(x){try{return MediaRecorder.isTypeSupported(x)}catch(e){return false}})[0];
+var mr=new MediaRecorder(st,ty?{mimeType:ty}:undefined),ch=[];REC={on:true,mr:mr};mr.ondataavailable=function(e){if(e.data&&e.data.size)ch.push(e.data)};
+mr.onstop=function(){st.getTracks().forEach(function(x){x.stop()});clearTimeout(REC.t);REC={on:false};var b=new Blob(ch,{type:(mr.mimeType||ty||'audio/webm').split(';')[0]});if(b.size<1200){toast('التسجيل قصير جداً');render();return}EX.busy=true;render();
+fetch('/api/chat?s=0',{method:'POST',headers:{'Content-Type':b.type||'audio/webm','X-Hint':encodeURIComponent(q.a)},credentials:'same-origin',body:b}).then(function(r){return r.json().catch(function(){return{}})}).then(function(j){EX.busy=false;if(!j.text){toast(j.msg||'لم أفهم التسجيل. أعد المحاولة.');render();return}EX.a=j.text;exMark(exScore(j.text,q.a)>=.7);render()}).catch(function(){EX.busy=false;toast('تعذّر الاتصال. أعد المحاولة.');render()})};
+mr.start();REC.t=setTimeout(function(){if(REC.on)try{mr.stop()}catch(e){}},15000);render()}).catch(function(){toast('اسمح للتطبيق باستعمال الميكروفون، ثم أعد المحاولة')})}
+function exNext(){EX.i++;EX.a=null;if(EX.i<EX.qs.length){render();scrollTo(0,0);return}
+var ok=EX.qs.filter(function(q){return q.ok}).length,p=Math.round(ok/EX.qs.length*100),k=EX.k,e=S.exam&&S.exam[k]||{};S.exam=S.exam||{};
+S.exam[k]={p:Math.max(e.p||0,p),ok:!!e.ok||p>=70,at:Date.now()};save();EX.res=p;if(p>=70){gain(e.ok?20:100);celebrate(['🎓 نجحت في اختبار المستوى '+(k+1)+'!'])}render();scrollTo(0,0)}
+function exView(){var h='<button class="back" onclick="'+(EX.res==null?"if(confirm('الخروج من الاختبار؟ لن تُحفظ إجاباتك.')){EX=null;render()}":'EX=null;render()')+'">› '+(EX.res==null?'خروج':'رجوع')+'</button><h2>📝 اختبار المستوى '+(EX.k+1)+': '+LVL[EX.k].n+'</h2>';
+if(EX.res!=null){var pass=EX.res>=70;h+='<div class="det"><div class="big">'+(pass?'🎓':'📚')+'</div><p style="font-size:22px"><b>'+EX.res+'%</b> · '+(pass?'نجحت!':'لم تنجح هذه المرة')+'</p>'+(pass?'<p>أتممت المستوى '+(EX.k+1)+' ('+LVL[EX.k].n+') في «الفارسية من الصفر».</p>':'<p class="mu">النجاح من 70%. يمكنك إعادة الاختبار غداً، وراجع قبله المهارات الأضعف:</p>');
+Object.keys(EX.sc).forEach(function(k){var x=EX.sc[k],pc=Math.round(x[0]/x[1]*100);h+='<div style="text-align:start;margin-top:8px">'+EXSK[k]+' <span class="mu">('+x[0]+' من '+x[1]+')</span><div class="bar"><i style="width:'+pc+'%;'+(pc<60?'background:var(--no)':'')+'"></i></div></div>'});
+return h+'<div class="btns"><button class="btn" onclick="EX=null;go(\'me\')">تقدّمي</button></div></div>'}
+var q=EX.qs[EX.i];h+='<p class="mu">'+EXSK[q.sk]+' · سؤال '+(EX.i+1)+' من '+EX.qs.length+'</p><div class="bar"><i style="width:'+Math.round(EX.i/EX.qs.length*100)+'%"></i></div><h3>'+hesc(q.p)+'</h3>';
+if(q.t==='mc'){if(q.fa||q.au)h+='<div class="card">'+(q.fa?'<div class="fa" style="font-size:'+(q.fa.length<12?34:22)+'px">'+hesc(q.fa)+'</div>':'')+(q.au?'<button class="spk" style="margin:10px 0;width:64px;height:64px;font-size:30px" aria-label="استمع" onclick="say(\''+esc(q.au)+'\')">🔊</button>':'')+'</div>';
+q.o.forEach(function(o){var c=EX.a===null?'':o===q.a?' ok':o===EX.a?' no':'';h+='<button class="opt'+c+(q.fo?' fa':'')+'"'+(q.fo?' style="font-size:22px"':'')+' onclick="exAns(\''+esc(o).replace(/"/g,'&quot;')+'\')">'+hesc(o)+'</button>'})}
+else if(q.t==='wr'){h+=EX.a===null?'<textarea id="exin" dir="rtl" lang="fa" rows="2" maxlength="200" placeholder="اكتب بالفارسية…" style="width:100%;font:inherit;font-size:20px;border-radius:10px;border:1px solid var(--bd);background:var(--bg);color:var(--tx);padding:10px;box-sizing:border-box"></textarea><div class="btns"><button class="btn" onclick="exWrite()">تحقّق</button></div>':
+'<div class="det" style="text-align:start"><div class="fa" style="font-size:20px">'+hesc(EX.a)+'</div><div class="fbk '+(q.ok?'ok':'no')+'" style="margin-top:6px">'+(q.ok?'✅ صحيح':'❌ الصواب:')+' <span class="fa">'+hesc(q.a)+'</span></div></div>'}
+else{h+='<div class="card"><div class="fa" style="font-size:24px">'+hesc(q.fa)+'</div><div class="mu">'+hesc(q.ar)+'</div></div>';
+h+=EX.a===null?'<div class="btns"><button class="btn'+(REC.on?' alt':'')+'"'+(EX.busy?' disabled':'')+' onclick="exMic()">'+(EX.busy?'🎧 أستمع…':REC.on?'⏹️ إيقاف':'🎤 اضغط وتكلّم')+'</button></div>'+(REC.on?'<p style="color:var(--no);text-align:center">🔴 أسجّل… اقرأ الجملة ثم اضغط «إيقاف»</p>':''):
+'<div class="det" style="text-align:start"><div class="mu">سمعتُ:</div><div class="fa" style="font-size:20px">🎤 '+hesc(EX.a)+'</div><div class="fbk '+(q.ok?'ok':'no')+'" style="margin-top:6px">'+(q.ok?'✅ نطق واضح':'❌ لم تُفهم الجملة جيداً')+'</div></div>'}
+if(EX.a!==null)h+='<div class="btns"><button class="btn" onclick="exNext()">'+(EX.i+1<EX.qs.length?'التالي':'النتيجة')+'</button></div>';return h}
 function unlocked(i){return i===0||!!(S.pass&&S.pass[i-1])||i<=LVL[plc()].L[0]}
 function toast(m){try{var o=document.querySelector('.tst');if(o&&o.remove)o.remove()}catch(e){}var d=document.createElement('div');d.className='tst';d.textContent=m;d.style.cssText='position:fixed;left:16px;right:16px;bottom:90px;max-width:480px;margin:auto;background:var(--tx);color:var(--bg);padding:12px 16px;border-radius:12px;text-align:center;z-index:9';document.body.appendChild(d);setTimeout(function(){d.remove()},2600)}
 function locked(){toast('أنهِ مراحل الدرس السابق أولاً')}
