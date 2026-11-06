@@ -35,6 +35,8 @@ function collectTexts(A) {
   A.GR.forEach(g => g.e.forEach(e => add(e[0])));
   A.PRV.forEach(p => add(p[0]));
   A.CHEER.forEach(c => add(c[0]));
+  A.STORY.forEach(x => x.s.forEach(l => add(l[0])));
+  Object.keys(A.GLS).forEach(w => add(w));
   A.TRIP.forEach(t => { t.ln.forEach(l => add(l[0])); t.say.forEach(ps => ps.forEach(p => add(p[0]))); });
   A.V.forEach(v => A.TN.forEach((n, t) => A.forms(v, t).forEach(x => add(x[0]))));
   const items = [...set].map(t => ({ t, n: A.hs(t) + '.mp3' })), seen = {};
