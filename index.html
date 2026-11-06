@@ -157,8 +157,8 @@ function esc(s){return s.replace(/'/g,"&#39;")}
 var tab="home",sub=null,Q=null,R={show:false},selL=null;
 var TABS=[["home","الدروس"],["verbs","الأفعال"],["gram","قواعد"],["talk","محادثات"],["review","المراجعة"],["me","تقدّمي"]];
 function nav(){document.getElementById("nav").innerHTML=TABS.map(function(t){return '<button class="'+(t[0]===tab||(t[0]==="home"&&(tab==="letters"||tab==="games"))?"on":"")+'" onclick="go(\''+t[0]+'\')">'+t[1]+'</button>'}).join("")}
-function go(t){tab=t;BK=null;PC=null;EX=null;SSV=false;if(typeof AIC==='object'&&AIC)AIC.open=false;sub=null;Q=null;M=null;PL=null;RP=null;MG=null;LG=null;D=null;LQ=null;G=null;GQ=null;CV=null;CQ=null;RV=false;R.show=false;render()}
-function render0(){nav();top_();var m=document.getElementById("main");if(PC){m.innerHTML=pcView();return}if(EX){m.innerHTML=exView();return}if(PL){m.innerHTML=plView();window.scrollTo(0,0);return}
+function go(t){tab=t;BK=null;PC=null;EX=null;SSV=false;if(typeof AIC==='object'&&AIC)AIC.open=false;sub=null;Q=null;M=null;RP=null;MG=null;LG=null;D=null;LQ=null;G=null;GQ=null;CV=null;CQ=null;RV=false;R.show=false;render()}
+function render0(){nav();top_();var m=document.getElementById("main");if(PC){m.innerHTML=pcView();return}if(EX){m.innerHTML=exView();return}
 if(tab==="home")m.innerHTML=sub===null?home():(M?matchView():Q?quiz():lesson());
 else if(tab==="games")m.innerHTML=gamesView();
 else if(tab==="verbs")m.innerHTML=verbsTab();
@@ -169,7 +169,7 @@ else if(tab==="review")m.innerHTML=review();
 else m.innerHTML=me();
 window.scrollTo(0,0)}
 function known(l){return ALL.filter(function(w){return w.l===l&&S.srs[w.id]}).length}
-function home(){var fw=firstWin(),h=fw+freeBanner()+meBanner()+(fw?'':(INST?installBox():'')+heroPanel()+planCard()+remAskCard()+proverbCard())+placeCard()+'<h2>اختر درساً</h2><p class="mu">أنهِ المراحل الخمس لكل درس بإجابات صحيحة لتفتح الدرس التالي.</p>'+packHint()+plCard()+lettersCard()+gamesCard();
+function home(){var fw=firstWin(),h=fw+freeBanner()+meBanner()+(fw?'':(INST?installBox():'')+heroPanel()+planCard()+remAskCard()+proverbCard())+placeCard()+'<h2>اختر درساً</h2><p class="mu">أنهِ المراحل الخمس لكل درس بإجابات صحيحة لتفتح الدرس التالي.</p>'+packHint()+lettersCard()+gamesCard();
 LES.forEach(function(l,i){var k=known(i),p=sp(i)*20;
 var lk=!unlocked(i),pm=!lk&&!allowed('L',i);if(lk){h+='<button class="row lkd" onclick="locked()">🔒 '+l.t+'</button>';return}h+='<button class="row" style="'+(pm?'opacity:.6':'')+'" onclick="'+(pm?'gate(\'L\','+i+')':'sub='+i+';render()')+'"><div style="flex:1"><div style="font-weight:600">'+(lk?'🔒 ':pm?'⭐ ':(S.pass&&S.pass[i]?'✅ ':''))+l.t+'</div><div class="mu">'+(lk?'أنهِ مراحل الدرس السابق لفتحه':pm?premTxt():cw(l.w.length,'كلمات','كلمة')+' · '+sp(i)+' من 5 مراحل')+'</div><div class="bar"><i style="width:'+p+'%"></i></div></div><span class="mu">‹</span></button>'});
 return h+bannerSlot()}
@@ -282,7 +282,7 @@ function rate(id,ok){planReviewed();var c=srsOf(id),b=c?c.b:0;if(ok){b=Math.min(
 function me(){var k=Object.keys(S.srs).length,m=Object.keys(S.srs).filter(function(i){return S.srs[i].b>=4}).length,live=S.last===ds(Date.now())||S.last===ds(Date.now()-DAY);
 function tile(ic,v,t){return '<div class="tile"><div class="tv">'+ic+' '+v+'</div><div class="mu">'+t+'</div></div>'}
 return '<h2>تقدّمي</h2><div class="stats">'+tile('🔥',live?S.st:0,'أيام متتالية')+tile('📚',k+' من '+ALL.length,'كلمات بدأتها')+tile('🧠',m,'كلمات ثبتت في ذاكرتك')+tile('🏆',S.dgn||0,'أهداف يومية حققتها')+'</div>'
-+lvlBox()+weekSum()+weekBox()+plBox()+badgeBox()+premBox()
++lvlBox()+weekSum()+weekBox()+badgeBox()+premBox()
 +'<h2>الإعدادات</h2>'+meCard()+reminderBox()+backupBox()+settingsBox()+installBox()+packBox()
 +'<div style="text-align:center;margin:4px 0 8px"><button class="lnk-no" onclick="resetAll()">إعادة تعيين التقدّم</button></div>'}
 function resetAll(){if(!confirm('سيُحذف كل تقدّمك في هذا الجهاز ولا يمكن التراجع. هل أنت متأكد؟'))return;S={xp:0,st:0,last:'',srs:{},v:2,prem:S.prem,rem:S.rem,remDay:S.remDay,sfx:S.sfx,resetAt:Date.now()};resetVolatile();save();render();top_()}
@@ -522,7 +522,8 @@ function lvlParts(k){var x=LVL[k],a=[],i;for(i=x.L[0];i<x.L[1];i++)a.push(!!(S.p
 function lvlPct(k){var a=lvlParts(k);return Math.round(a.filter(Boolean).length/a.length*100)}
 function lvlBox(){var h='<div class="det" style="text-align:start"><b>🎯 مستواي اللغوي</b>';LVL.forEach(function(x,k){var p=lvlPct(k),es=exState(k);h+='<div style="margin-top:10px">'+x.e+' المستوى '+(k+1)+': '+x.n+' <span class="mu">('+p+'%)</span><div class="bar"><i style="width:'+p+'%"></i></div><button class="lnk-no" style="color:var(--pr);font-size:14px;'+(es&&es.indexOf('✅')!==0?'opacity:.7':'')+'" onclick="exStart('+k+')">📝 اختبار نهاية المستوى'+(es?' · '+es:'')+'</button></div>'});
 return h+'<div class="btns"><button class="btn alt" onclick="pcStart()">'+(S.placeAt?'أعد اختبار تحديد المستوى':'🎯 حدّد مستواك')+'</button></div></div>'}
-function placeCard(){if(S.placeAt||cnt(S.pass)>=3)return'';return'<button class="row" style="border-color:var(--ac)" onclick="pcStart()"><div><div style="font-weight:600">🎯 تعرف بعض الفارسية؟ حدّد مستواك</div><div class="mu">15 سؤالاً في 5 دقائق، ونفتح لك الدروس التي تعرفها</div></div><span class="mu">‹</span></button>'}
+// Shown to new learners only (the older one-skill placement test, S.pl, was replaced by this one).
+function placeCard(){if(S.placeAt||S.pl||S.plSkip||cnt(S.pass)>=3)return'';return'<div class="det" style="text-align:start"><b>🎯 تعرف بعض الفارسية؟ حدّد مستواك</b><p class="mu">15 سؤالاً في 5 دقائق: كلمات واستماع وقواعد وقراءة، ونفتح لك ما تعرفه. أو ابدأ من الصفر.</p><div class="btns"><button class="btn" onclick="pcStart()">حدّد مستواي</button><button class="btn alt" onclick="S.plSkip=true;save();render()">ابدأ من الصفر</button></div></div>'}
 // Placement test: five questions per level, built from that level's own checked content (words with their
 // audio, grammar examples, story sentences). It stops at the first level with fewer than 4 right.
 var PC=null;
@@ -689,33 +690,6 @@ while(act<6&&i<m.files.length&&!PK.cancel){(function(f){i++;act++;var u=packUrl(
 c.match(u).then(function(h){if(h)return;return fetch(u).then(function(r){if(!r.ok)throw 0;return c.put(u,r)})}).then(function(){PK.done++},function(){fail++}).then(function(){act--;packUi();next()})})(m.files[i])}}
 next()}).catch(function(){PK.busy=false;toast('التخزين غير متاح على هذا الجهاز');packUi()})}
 
-var PL=null,PBANDS=[[0,1],[2,3,4,5,6],[7,8,9,10,11,12],[13,14,15,16]],LPASS=[0,2,7,13,17],GPASS=[0,0,2,4,7],DPASS=[0,0,2,5,10];
-var PLV=[{n:'مبتدئ',d:'تبدأ من الدرس الأول، وهو المناسب لك تماماً.'},{n:'أساسي',d:'تعرف التحيات والأرقام الأولى.'},{n:'متوسط 1',d:'تعرف مفردات الحياة اليومية الأساسية.'},{n:'متوسط 2',d:'تعرف مفردات السفر والحياة اليومية وجملها الشائعة.'},{n:'متقدم',d:'تتقن مفردات كل الدروس وتعرف بعض القواعد.'}];
-function plQs(b){var ws=ALL.filter(function(w){return PBANDS[b].indexOf(w.l)>=0}),qs=[];
-sh(ws).slice(0,b===3?2:3).forEach(function(w){var d=sh(ws.filter(function(x){return x.ar!==w.ar})).slice(0,3).map(function(x){return x.ar});qs.push({fa:w.fa,ar:w.ar,o:sh([w.ar].concat(d))})});
-if(b===3){var g=[];GR.slice(4).forEach(function(r){r.e.forEach(function(e){g.push(e)})});var e=sh(g)[0],d=sh(g.filter(function(x){return x[2]!==e[2]})).slice(0,3).map(function(x){return x[2]});qs.push({fa:e[0],ar:e[2],o:sh([e[2]].concat(d))})}
-return sh(qs)}
-function startPlace(){PL={st:0,b:0,i:0,sc:[0,0,0,0],qs:null,lv:0};render()}
-function plStart(){PL.st=1;PL.b=0;PL.i=0;PL.qs=plQs(0);render()}
-function plAns(k){var q=PL.qs[PL.i];if(k>=0&&q.o[k]===q.ar)PL.sc[PL.b]++;PL.i++;
-if(PL.i>=3){if(PL.sc[PL.b]>=2&&PL.b<3){PL.b++;PL.i=0;PL.qs=plQs(PL.b)}else{PL.lv=PL.sc[PL.b]>=2?4:PL.b;PL.st=2}}render()}
-function plView(){var h='<button class="back" onclick="PL=null;render()">› إنهاء</button>';
-if(PL.st===0)return h+'<h2>🎯 اختبار تحديد المستوى</h2><div class="det" style="text-align:start;line-height:1.9">اختبار قصير يقدّر مستواك الحالي في الفارسية ويقترح عليك نقطة البداية.<br>• 3 أسئلة لكل مستوى، وحتى 12 سؤالاً كحد أقصى<br>• يتوقف مبكراً إن كنت مبتدئاً<br>• اضغط «لا أعرف» بدل التخمين، فالنتيجة أدق<br>• لن تخسر شيئاً، وأنت من يقرر بعد النتيجة</div><div class="btns"><button class="btn" onclick="pcStart()">ابدأ الاختبار</button></div>';
-if(PL.st===2){var v=PLV[PL.lv],sl=LPASS[PL.lv],nm=sl<LES.length?LES[sl].t:'مراجعة القواعد والأفعال';
-h+='<h2>🎯 نتيجتك التقريبية</h2><div class="det"><div class="big">'+v.n+'</div><p>'+v.d+'</p><p class="mu">نتيجة المستويات: '+PL.sc.slice(0,Math.min(PL.b+1,4)).map(function(x,i){return (i+1)+': '+x+'/3'}).join(' · ')+'</p></div><p class="mu">هذا تقدير سريع وليس تقييماً رسمياً.</p>';
-if(PL.lv>0)h+='<div class="det" style="text-align:start">نقترح أن تبدأ من: <b>'+nm+'</b><br><span class="mu">وسنفتح لك الدروس التي قبله، وتبقى متاحة للمراجعة.</span></div><div class="btns"><button class="btn" onclick="plApply()">ابدأ من هناك</button></div><div class="btns"><button class="btn alt" onclick="plKeep()">أفضّل البدء من الدرس الأول</button></div>';
-else h+='<div class="btns"><button class="btn" onclick="plKeep()">ابدأ من الدرس الأول</button></div>';
-return h}
-var q=PL.qs[PL.i];
-h+='<div class="bar"><i style="width:'+Math.round((PL.b*3+PL.i)/12*100)+'%"></i></div><p class="mu" style="margin-top:8px">المستوى '+(PL.b+1)+' من 4 · السؤال '+(PL.i+1)+' من 3</p><div class="det"><p class="mu">ما معنى هذا؟</p><div class="fa" style="font-size:32px">'+q.fa+'</div><button class="spk" style="margin-top:6px" aria-label="استمع" onclick="say(\''+esc(q.fa)+'\')">🔊</button></div>';
-q.o.forEach(function(o,k){h+='<button class="opt" onclick="plAns('+k+')">'+o+'</button>'});
-return h+'<button class="opt" style="color:var(--mu);border-style:dashed" onclick="plAns(-1)">لا أعرف</button>'}
-function plApply(){var lv=PL.lv,i;S.pass=S.pass||{};S.gp=S.gp||{};S.dp=S.dp||{};
-for(i=0;i<Math.min(LPASS[lv],LES.length);i++)S.pass[i]=true;for(i=0;i<GPASS[lv];i++)S.gp[i]=true;for(i=0;i<DPASS[lv];i++)S.dp[i]=true;
-S.pl={lv:lv,t:Date.now()};save();PL=null;tab='home';sub=null;render();toast('فُتحت لك الدروس حتى مستواك')}
-function plKeep(){S.pl={lv:PL.lv,t:Date.now(),kept:true};save();PL=null;render()}
-function plCard(){return(!S.pl&&!S.plSkip&&S.xp<40&&!cnt(S.pass))?'<div class="det" style="text-align:start"><b>🎯 هل لديك خلفية بالفارسية؟</b><p class="mu">اختبار قصير يحدد مستواك ويفتح لك الدروس المناسبة. أو ابدأ من الصفر.</p><div class="btns"><button class="btn" onclick="startPlace()">حدّد مستواي</button><button class="btn alt" onclick="S.plSkip=true;save();render()">ابدأ من الصفر</button></div></div>':''}
-function plBox(){return S.pl?'<div class="det">🎯 مستواك التقريبي: <b>'+PLV[S.pl.lv].n+'</b><div class="btns"><button class="btn alt" onclick="startPlace()">أعد اختبار المستوى</button></div></div>':'<div class="det"><b>🎯 اختبار تحديد المستوى</b><p class="mu">اعرف مستواك وابدأ من الدرس المناسب.</p><button class="btn alt" onclick="startPlace()">ابدأ الاختبار</button></div>'}
 
 function svKey(){return Q?Q.l+'-'+Q.g:M?M.l+'-3':null}
 function svSave(){try{if(Q&&Q.daily)return;var k=svKey();if(!k)return;S.sv=S.sv||{};
@@ -946,7 +920,7 @@ function lgNext(){if(LG.i===LG.qs.length-1){LG.fin=true;LG.xp=LG.sc*(LG.mode==='
 
 /* ===== polish: robustness, sound, daily challenge, week chart, share ===== */
 function dayNo(t){return Math.floor((t-new Date(t).getTimezoneOffset()*60000)/DAY)}
-function resetVolatile(){Q=null;M=null;PL=null;RP=null;MG=null;LG=null;GQ=null;LQ=null;CQ=null;RC=null;RSQ=[];RQ=null;RV=false;sub=null;D=null;G=null;CV=null}
+function resetVolatile(){Q=null;M=null;PC=null;EX=null;RP=null;MG=null;LG=null;GQ=null;LQ=null;CQ=null;RC=null;RSQ=[];RQ=null;RV=false;sub=null;D=null;G=null;CV=null}
 function markFa(){try{document.querySelectorAll('.fa:not([lang])').forEach(function(e){e.lang='fa';e.dir='rtl'})}catch(e){}}
 function rescue(){try{resetVolatile();tab='home';render()}catch(e){location.reload()}}
 function render(){try{planCheck()}catch(e){}try{render0();markFa()}catch(e){try{console.error(e);document.getElementById('main').innerHTML='<div class="det"><div class="big">⚠️</div><p>حدث خطأ غير متوقع، وتقدّمك محفوظ.</p><div class="btns"><button class="btn" onclick="rescue()">العودة للرئيسية</button></div></div>'}catch(x){}}}
@@ -1094,7 +1068,7 @@ function freeGate(what){var pl=progLine();sheet('<h2 style="margin-top:0">⭐ ل
 // few would find it, and it is what brings learners back (and says when the trial is ending).
 function remAskCard(){try{if(!remOk()||(S.rem&&S.rem.on)||S.remAsk||S.xp<20||webFree()&&!S.st)return''}catch(e){return''}
 return'<div class="det" style="text-align:start"><b>🔔 هل نذكّرك كل يوم؟</b><div class="mu" style="margin-top:4px">إشعار واحد في الوقت الذي تختاره، ولا يصلك إن كنت درست ذلك اليوم. خمس دقائق يومياً تصنع الفرق.</div><div class="btns"><button class="btn" onclick="S.remAsk=1;save();go(\'me\');setTimeout(function(){var e=document.getElementById(\'remh\');if(e)e.scrollIntoView({block:\'center\'})},100)">اختر وقت التذكير</button><button class="btn alt" onclick="S.remAsk=1;save();render()">لاحقاً</button></div></div>'}
-function freeBanner(){if(!webFree())return'';var pl=progLine();return'<div class="det" style="text-align:start;border-color:var(--ac)"><b>🔓 أنت الآن في النسخة المجانية</b><div class="mu" style="margin-top:4px">'+(pl?pl+' ':'')+'تبقى لك مجاناً: أول '+FREE_LESSONS+' دروس والحروف ومراجعة كلماتك والألعاب، و3 رسائل يومياً مع پارسا.</div><div style="margin-top:10px">'+subBtn('اشترك لتفتح كل شيء')+'</div></div>'}
+function freeBanner(){if(!webFree())return'';var pl=progLine();return'<div class="det" style="text-align:start;border-color:var(--ac)"><b>🔓 أنت الآن في النسخة المجانية</b><div class="mu" style="margin-top:4px">'+(pl?pl+' ':'')+'تبقى لك مجاناً: أول '+FREE_LESSONS+' دروس والحروف ومراجعة كلماتك والألعاب، والفصل الأول من رحلتك (بالكتابة وبصوتك)، وأول قصتين، واختبار تحديد المستوى.</div><div style="margin-top:10px">'+subBtn('اشترك لتفتح كل شيء')+'</div></div>'}
 function meCard(){if(!ME)return'';var st=ME.ok===false?'النسخة المجانية · '+(ME.kind==='trial'?'انتهت فترتك التجريبية':'انتهى اشتراكك'):ME.kind==='list'?'مشترك دائم ✅':ME.kind==='member'?(ME.until?'مشترك حتى <span style="direction:ltr;unicode-bidi:isolate">'+ME.until+'</span> · المتبقّي: '+meDays(ME.left):'مشترك دائم ✅'):'فترة تجريبية · المتبقّي: '+meDays(ME.left);
 return'<div class="det" style="text-align:start"><b>👤 اشتراكي</b><div style="margin-top:6px">'+st+'</div><div class="mu">البريد: <span class="e" style="direction:ltr;unicode-bidi:isolate">'+String(ME.email).replace(/[<>&"']/g,'')+'</span></div>'+(ME.kind==='trial'||meSoon()||ME.ok===false?'<div class="btns">'+(ME.pay?'<button class="btn" onclick="subOpen()">💳 '+(ME.kind==='trial'?'اشترك':'جدّد اشتراكك')+'</button>':'<a class="btn alt" style="text-align:center;text-decoration:none" href="'+meMail()+'">✉️ راسلنا للاشتراك</a>')+'</div>':'')+'<div class="btns"><a class="btn alt" style="text-align:center;text-decoration:none;border-color:var(--bd);color:var(--mu)" href="/logout">تسجيل الخروج</a></div></div>'}
 
