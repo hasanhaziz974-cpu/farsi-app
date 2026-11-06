@@ -23,6 +23,7 @@ export const MODELS = [
   '@cf/google/gemma-3-12b-it',
 ];
 const LIMIT = { list: 100, member: 40, trial: 15, free: 3 }; // free: after the trial or subscription ended
+const VOICE_BYTES = 1024 * 1024; // about a minute of compressed speech; recordings stop at 15 seconds
 const CHECK_MODELS = ['@cf/openai/gpt-oss-120b', '@cf/meta/llama-3.3-70b-instruct-fp8-fast']; // checking trip replies
 const FREE_CHAPTER = 10; // messages a day in the free first chapter of the trip
 const MAX_TURNS = 12, MAX_CHARS = 300;
@@ -305,6 +306,40 @@ export async function onRequest({ request, env }) {
   if (request.headers.get('Origin') !== new URL(request.url).origin) return json({ error: 'origin' }, 403);
   if (!env.AI) return json({ error: 'not_ready', msg: 'المحادثة غير جاهزة بعد. حاول لاحقاً.' }, 503);
 
+  const counted = async (obj) => {
+    const n = used + 1;
+    const cookie = `pc=${await signValue(kv, { e: email, d: today(), n })}; Path=/api/chat; Max-Age=172800; HttpOnly; Secure; SameSite=Lax`;
+    return json({ ...obj, left: Math.max(0, limit - n) }, 200, { 'Set-Cookie': cookie });
+  };
+
+  // Voice: the learner's recording (audio/webm or audio/mp4, at most VOICE_BYTES) is turned into Persian
+  // text with Whisper; the app then scores the pronunciation and sends the text as the reply.
+  // Without a subscription it works in the free first chapter only (?c=0). It counts as one message.
+  if (/^audio\//.test(request.headers.get('Content-Type') || '')) {
+    const q = new URL(request.url).searchParams, vc = q.get('c');
+    if (!st.ok && vc !== '0') return json({ error: 'free', msg: 'التكلّم بالصوت للمشتركين. جرّبه مجاناً في الفصل الأول.' }, 403);
+    if (!st.ok && vc === '0') limit = Math.max(limit, FREE_CHAPTER);
+    if (used >= limit) return json({ error: 'limit', left: 0, free: !st.ok, msg: 'وصلت إلى حدّ اليوم. عُد غداً!' }, 429);
+    const audio = new Uint8Array(await request.arrayBuffer());
+    if (!audio.length || audio.length > VOICE_BYTES) return json({ error: 'audio', msg: 'التسجيل طويل أو فارغ. سجّل جملة قصيرة.' }, 400);
+    let text = '', fail = '';
+    try {
+      let b64 = '';
+      for (let i = 0; i < audio.length; i += 0x8000) b64 += String.fromCharCode.apply(null, audio.subarray(i, i + 0x8000));
+      const r = await env.AI.run('@cf/openai/whisper-large-v3-turbo', { audio: btoa(b64), language: 'fa', vad_filter: true });
+      text = String((r && r.text) || '').trim();
+    } catch (e) {
+      fail = String(e && e.message).slice(0, 120);
+      try { // the older model takes the bytes as a list of numbers
+        const r = await env.AI.run('@cf/openai/whisper', { audio: [...audio] });
+        text = String((r && r.text) || '').trim();
+      } catch (e2) { fail += ' | ' + String(e2 && e2.message).slice(0, 120); }
+    }
+    text = text.replace(FOREIGN, ' ').replace(/\s{2,}/g, ' ').trim().slice(0, MAX_CHARS);
+    if (!text) return json({ error: 'voice', msg: 'لم أفهم التسجيل. تكلّم بوضوح وقرّب الهاتف ثم أعد المحاولة.', model: admin ? fail : undefined }, 422);
+    return counted({ text });
+  }
+
   let body;
   try { body = await request.json(); } catch (e) { return json({ error: 'body' }, 400); }
   // The free first chapter can need several checks of the learner's replies (four tasks, and retries), more
@@ -317,11 +352,6 @@ export async function onRequest({ request, env }) {
     return json({ error: 'scenario' }, 400);
   }
   if (chapter && c > 0 && !st.ok) return json({ error: 'free', msg: 'هذا الفصل للمشتركين. الفصل الأول مجاني.' }, 403);
-  const counted = async (obj) => {
-    const n = used + 1;
-    const cookie = `pc=${await signValue(kv, { e: email, d: today(), n })}; Path=/api/chat; Max-Age=172800; HttpOnly; Secure; SameSite=Lax`;
-    return json({ ...obj, left: Math.max(0, limit - n) }, 200, { 'Set-Cookie': cookie });
-  };
 
   if (chapter) {
     const k = Number(body.k), said = String(body.said || '').trim().slice(0, MAX_CHARS), line = String(body.line || '').trim().slice(0, MAX_CHARS);
