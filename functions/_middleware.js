@@ -35,13 +35,13 @@ async function publicOnly(request, next) {
 }
 
 // Headers added to every response: no framing (protects the admin buttons from clickjacking),
-// no MIME sniffing, a strict referrer and no camera, microphone or location. Fonts never change and
+// no MIME sniffing, a strict referrer, no camera or location, and the microphone for this site only (speaking practice). Fonts never change and
 // are cached for a year; audio, signed-in content, for a week in the browser only.
 const SECURITY = {
   'X-Frame-Options': 'DENY',
   'X-Content-Type-Options': 'nosniff',
   'Referrer-Policy': 'strict-origin-when-cross-origin',
-  'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+  'Permissions-Policy': 'camera=(), microphone=(self), geolocation=()',
 };
 const CACHE = [
   [/^\/fonts\/.+\.woff2$/, 'public, max-age=31536000, immutable'],

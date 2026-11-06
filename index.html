@@ -1025,6 +1025,30 @@ function tripLev(a,b){var p=[],i,j;for(j=0;j<=b.length;j++)p[j]=j;for(i=1;i<=a.l
 function tripSpell(t,k){var vo={};TRIP[AIC.c].say[k].forEach(function(p){p[0].split(/\s+/).forEach(function(w){w=w.replace(/[.,،؟?!]/g,'');if(w)vo[tripNorm(w)]=w})});
 var sw=[],out=t.split(/(\s+)/).map(function(tok){var w=tok.replace(/[.,،؟?!]+$/,''),tail=tok.slice(w.length),n=tripNorm(w);if(n.length<4||vo[n])return tok;
 for(var v in vo)if(v.length>=4&&tripLev(n,v)===1){sw.push(w+' → '+vo[v]);return vo[v]+tail}return tok}).join('');return sw.length?{t:out,sw:sw}:null}
+// Speaking: the recording goes to /api/chat (audio body), which returns Whisper's Persian text. In a trip
+// chapter the text is compared word by word with the closest phrase of the current task (pronunciation
+// stars, words not understood in red) and then sent as the reply; in a free situation it is sent as is.
+var REC={on:false};
+function micOk(){try{return!!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia&&window.MediaRecorder)}catch(e){return false}}
+function aiMic(){if(AIC.busy)return;if(REC.on){try{REC.mr.stop()}catch(e){}return}
+if(webFree()&&AIC.c!==0){freeGate('التكلّم بالصوت');return}
+navigator.mediaDevices.getUserMedia({audio:true}).then(function(st){var ty=['audio/webm;codecs=opus','audio/webm','audio/mp4'].filter(function(x){try{return MediaRecorder.isTypeSupported(x)}catch(e){return false}})[0];
+var mr=new MediaRecorder(st,ty?{mimeType:ty}:undefined),ch=[];REC={on:true,mr:mr};
+mr.ondataavailable=function(e){if(e.data&&e.data.size)ch.push(e.data)};
+mr.onstop=function(){st.getTracks().forEach(function(x){x.stop()});clearTimeout(REC.t);REC={on:false};render();aiVoice(new Blob(ch,{type:(mr.mimeType||ty||'audio/webm').split(';')[0]}))};
+mr.start();REC.t=setTimeout(function(){if(REC.on)try{mr.stop()}catch(e){}},15000);render();aiBottom()})
+.catch(function(){toast('اسمح للتطبيق باستعمال الميكروفون من إعدادات المتصفح، ثم أعد المحاولة')})}
+function aiVoice(b){if(b.size<1200){toast('التسجيل قصير جداً. اضغط «تكلّم» وقل جملة كاملة.');return}AIC.busy=true;AIC.listening=true;AIC.err='';render();aiBottom();
+fetch('/api/chat?'+(AIC.c!=null?'c='+AIC.c:'s='+AIC.s),{method:'POST',headers:{'Content-Type':b.type||'audio/webm'},credentials:'same-origin',body:b})
+.then(function(r){return r.json().catch(function(){return{}})}).then(function(j){AIC.busy=false;AIC.listening=false;if(j.left!=null)AIC.left=j.left;
+if(!j.text){AIC.err=(j.msg||'تعذّر فهم التسجيل. حاول مرة أخرى.')+(AIC.admin&&j.model?' ('+j.model+')':'');render();return}
+if(AIC.c!=null)tripReply(j.text,tripPron(j.text));else{AIC.msgs.push({r:'u',t:j.text,voice:1});aiAsk()}})
+.catch(function(){AIC.busy=false;AIC.listening=false;AIC.err='تعذّر الاتصال. تأكد من الإنترنت وحاول مرة أخرى.';render()})}
+function tripPron(t){var k=tripExp();if(k<0)return null;var said=t.split(/\s+/).map(function(w){return tripNorm(w)}).filter(Boolean),best=null;
+TRIP[AIC.c].say[k].forEach(function(p){var ws=p[0].split(/\s+/).filter(function(w){return tripNorm(w)}),ok=0;
+var w=ws.map(function(x){var n=tripNorm(x),hit=/^(علی|سارا)$/.test(n)||said.indexOf(n)>=0,near=!hit&&n.length>=4&&said.some(function(y){return tripLev(n,y)<=1});ok+=hit?1:near?.5:0;return{w:x,ok:hit}});
+var r=ws.length?ok/ws.length:0;if(!best||r>best.r)best={r:r,w:w}});
+if(!best||best.r<.5)return null;return{w:best.w,s:best.r>=.9?3:best.r>=.7?2:1}}
 function tripRetry(){var m=AIC.msgs.pop();if(m&&m.r==='u')tripReply(m.t);else render()}
 // Shown instead of the reply box once every task of the chapter is done.
 function tripEnd(){var i=AIC.c,t=trip(i),nx=i+1<TRIP.length?i+1:null,nl=nx===null?'':tripLock(nx);
@@ -1033,7 +1057,7 @@ return'<div class="det" style="margin-top:12px"><div class="big">🏆</div><b>أ
 '<button class="btn alt" onclick="aiChapter('+i+')">أعد الفصل</button><button class="btn alt" onclick="AIC.c=null;render()">خريطة الرحلة</button></div>'+
 (nx!==null&&nl?'<p class="mu" style="margin:8px 0 0">الفصل التالي: '+TRIP[nx].e+' '+TRIP[nx].t+' · '+nl.replace('🔒 ','')+'</p>':'')+'</div>'}
 function tripAccept(k){AIC.msgs.push(tripLine(AIC.c,k+1));AIC.showHints=false;tripKeep();render();aiBottom();try{gain(2)}catch(e){}tripAdd([k+1]);if(tripExp()<0)render()}
-function tripReply(t){var k=tripExp();if(k<0)return;AIC.msgs.push({r:'u',t:t});AIC.err='';
+function tripReply(t,pron){var k=tripExp();if(k<0)return;AIC.msgs.push(pron===undefined?{r:'u',t:t}:{r:'u',t:t,voice:1,pron:pron});AIC.err='';
 if(tripSaid(t).indexOf(k+1)>=0){tripAccept(k);return}
 var line=AIC.msgs.filter(function(m){return m.r==='a'}).slice(-1)[0],me=AIC.msgs[AIC.msgs.length-1];AIC.busy=true;render();aiBottom();
 fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({c:AIC.c,k:k,line:line?line.t:'',said:t,model:AIC.pick||''})})
@@ -1103,11 +1127,11 @@ if(AIC.admin&&AIC.models.length)h+='<div class="det" style="text-align:start;pad
 h+='<button class="back" onclick="TR=!TR;render()">'+(TR?'إخفاء':'إظهار')+' النطق والترجمة</button><div style="margin-top:8px">';
 AIC.msgs.forEach(function(m,i){if(m.r==='a')h+='<div class="bub"><div style="flex:1"><div class="fa" style="font-size:21px">'+hesc(m.t)+'</div>'+(TR?(m.tr?'<div class="tr" style="font-size:14px;direction:ltr;text-align:left">'+hesc(m.tr)+'</div>':'')+(m.ar?'<div class="mu">'+hesc(m.ar)+'</div>':''):'')+(AIC.admin&&m.model?'<div class="mu" style="font-size:11px;direction:ltr;text-align:left">'+hesc(m.model)+'</div>':'')+'</div><button class="spk" aria-label="استمع" onclick="aiSay('+i+')">🔊</button></div>';
 else if(m.r==='n')h+='<div class="mu" style="margin:6px 4px;padding:8px 10px;border-inline-start:3px solid var(--ac)">'+hesc(m.t)+'</div>';
-else h+='<div class="bub b"><div style="flex:1"><div class="fa" style="font-size:19px">'+hesc(m.t)+'</div>'+(m.fix?'<div class="fbk no" style="margin-top:6px;text-align:start;font-weight:400">✍️ '+hesc(m.fix)+'</div>':'')+(AIC.admin&&m.model?'<div class="mu" style="font-size:11px;direction:ltr;text-align:left">'+hesc(m.model)+'</div>':'')+'</div></div>'});
-if(AIC.busy)h+='<div class="bub"><div class="mu">'+(AIC.c!=null?'يتحقق من جوابك…':'پارسا يكتب…')+'</div></div>';
+else h+='<div class="bub b"><div style="flex:1"><div class="fa" style="font-size:19px">'+(m.voice?'🎤 ':'')+hesc(m.t)+'</div>'+(m.pron?'<div style="margin-top:6px;font-size:14px;background:var(--sf);color:var(--tx);border-radius:8px;padding:6px 8px">نطقك '+tripStars(m.pron.s)+'<div class="fa" style="font-size:17px;margin-top:2px">'+m.pron.w.map(function(x){return'<span style="color:'+(x.ok?'var(--ok)':'var(--no)')+';font-weight:600">'+hesc(x.w)+'</span>'}).join(' ')+'</div>'+(m.pron.s<3?'<div class="mu" style="font-size:12px">الكلمات الحمراء لم تُفهم جيداً. استمع إليها في 💡 ساعدني وأعد المحاولة.</div>':'')+'</div>':'')+(m.fix?'<div class="fbk no" style="margin-top:6px;text-align:start;font-weight:400">✍️ '+hesc(m.fix)+'</div>':'')+(AIC.admin&&m.model?'<div class="mu" style="font-size:11px;direction:ltr;text-align:left">'+hesc(m.model)+'</div>':'')+'</div></div>'});
+if(AIC.busy)h+='<div class="bub"><div class="mu">'+(AIC.listening?'🎧 أستمع إلى صوتك…':AIC.c!=null?'يتحقق من جوابك…':'پارسا يكتب…')+'</div></div>';
 h+='</div>';if(AIC.err)h+='<p style="color:var(--no)">'+hesc(AIC.err)+'</p>'+(AIC.msgs.length&&!AIC.busy&&AIC.msgs[AIC.msgs.length-1].r==='u'?'<div class="btns"><button class="btn alt" onclick="'+(AIC.c!=null?'tripRetry()':'aiAsk()')+'">أعد المحاولة</button></div>':'');
 if(AIC.c!=null&&tripExp()<0)return h+tripEnd();
-h+='<div class="det" style="text-align:start;margin-top:12px"><textarea id="aiin" dir="rtl" lang="fa" rows="2" maxlength="300" placeholder="اكتب ردّك بالفارسية…" style="width:100%;font:inherit;font-size:18px;border-radius:10px;border:1px solid var(--bd);background:var(--bg);color:var(--tx);padding:10px;box-sizing:border-box" onkeydown="if(event.key===\'Enter\'&&!event.shiftKey){event.preventDefault();aiSend()}"></textarea><div class="btns" style="margin-top:8px"><button class="btn"'+(AIC.busy?' disabled':'')+' onclick="aiSend()">إرسال</button>'+(AIC.c!==null?'<button class="btn alt" style="flex:none" onclick="aiHint()">💡 ساعدني</button>':'')+'</div>'+(AIC.showHints&&aiHints().length?'<div style="margin-top:8px"><div class="mu" style="font-size:13px">'+(aiHints().filter(function(x){return x.task})[0]?'لمهمة «'+hesc(aiHints().filter(function(x){return x.task})[0].task)+'»: ':'')+'اضغط اقتراحاً ليُكتب لك، ثم أرسله أو عدّله:</div>'+aiHints().map(function(x,k){return'<button class="chip" style="display:block;width:100%;text-align:start;margin-top:6px" onclick="aiUseHint('+k+')"><span class="fa" style="font-size:17px">'+hesc(x.fa)+'</span> <span class="mu">'+hesc(x.ar)+'</span></button>'}).join('')+'</div>':'')+'<p class="mu" style="margin:6px 0 0;font-size:13px">لا تملك لوحة مفاتيح فارسية؟ اكتب بالعربية، فالحروف متقاربة.'+(AIC.left!=null?' · المتبقي اليوم: '+AIC.left:'')+'</p></div>';
+h+='<div class="det" style="text-align:start;margin-top:12px"><textarea id="aiin" dir="rtl" lang="fa" rows="2" maxlength="300" placeholder="اكتب ردّك بالفارسية…" style="width:100%;font:inherit;font-size:18px;border-radius:10px;border:1px solid var(--bd);background:var(--bg);color:var(--tx);padding:10px;box-sizing:border-box" onkeydown="if(event.key===\'Enter\'&&!event.shiftKey){event.preventDefault();aiSend()}"></textarea><div class="btns" style="margin-top:8px"><button class="btn"'+(AIC.busy||REC.on?' disabled':'')+' onclick="aiSend()">إرسال</button>'+(micOk()?'<button class="btn alt" style="flex:none'+(REC.on?';border-color:var(--no);color:var(--no)':'')+'"'+(AIC.busy?' disabled':'')+' onclick="aiMic()">'+(REC.on?'⏹️ إيقاف':'🎤 تكلّم')+'</button>':'')+(AIC.c!==null?'<button class="btn alt" style="flex:none" onclick="aiHint()">💡 ساعدني</button>':'')+'</div>'+(REC.on?'<p style="color:var(--no);margin:6px 0 0">🔴 أسجّل صوتك… قل جملتك بالفارسية ثم اضغط «إيقاف».</p>':'')+(AIC.showHints&&aiHints().length?'<div style="margin-top:8px"><div class="mu" style="font-size:13px">'+(aiHints().filter(function(x){return x.task})[0]?'لمهمة «'+hesc(aiHints().filter(function(x){return x.task})[0].task)+'»: ':'')+'اضغط اقتراحاً ليُكتب لك، ثم أرسله أو عدّله:</div>'+aiHints().map(function(x,k){return'<button class="chip" style="display:block;width:100%;text-align:start;margin-top:6px" onclick="aiUseHint('+k+')"><span class="fa" style="font-size:17px">'+hesc(x.fa)+'</span> <span class="mu">'+hesc(x.ar)+'</span></button>'}).join('')+'</div>':'')+'<p class="mu" style="margin:6px 0 0;font-size:13px">لا تملك لوحة مفاتيح فارسية؟ اكتب بالعربية، فالحروف متقاربة.'+(AIC.left!=null?' · المتبقي اليوم: '+AIC.left:'')+'</p></div>';
 return h}
 
 // Installing the web version as an app (Chrome's "Install app"). Not used inside the Android app.
