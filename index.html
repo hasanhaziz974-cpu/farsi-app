@@ -254,7 +254,7 @@ return{id:w.id,w:w,b:b,isNew:!c,retry:p.retry,mode:mode,tr:b<=2,o:sh([w].concat(
 function srsRate(id,ok,retry){planReviewed();var c=srsOf(id),b=c?c.b:0;
 if(ok){if(retry)srsPut(id,{b:Math.max(1,b),d:Date.now()+DAY});else{b=Math.min(b+1,5);srsPut(id,{b:b,d:Date.now()+[1,2,4,8,16][b-1]*DAY})}}else srsPut(id,{b:1,d:Date.now()+6e4});
 gain(ok?3:1)}
-function review(){if(SSV)return savedView();var nss=Object.keys(S.ss||{}).filter(senById).length,h='<div class="rowf"><h2>المراجعة اليومية</h2>'+(nss?'<button class="back" onclick="SSV=true;render()">⭐ جملي ('+nss+')</button>':'')+'</div>';
+function review(){if(SSV)return savedView();if(MV)return mistView();var nss=Object.keys(S.ss||{}).filter(senById).length,nm=mistLive().length,md=mistDue().length,h='<div class="rowf"><h2>المراجعة اليومية</h2>'+(nss?'<button class="back" onclick="SSV=true;render()">⭐ جملي ('+nss+')</button>':'')+(nm?'<button class="back" onclick="MV={};render()">📕 أخطائي'+(md?' ('+md+')':'')+'</button>':'')+'</div>';
 if(!RC){var p=pickNext();if(!p)return h+'<div class="det"><div class="big">✓</div><p>لا توجد كلمات مستحقة الآن. عد لاحقاً أو ابدأ درساً جديداً.</p></div>';RC=makeRC(p);R.show=false}
 var w=RC.w,rv=RC.a!==null,left=queue().q.length+RSQ.length,
 lab={flip:'تذكّر المعنى',rec:'اختر المعنى',aud:'استمع واختر المعنى',rev:'اختر الكلمة الفارسية'}[RC.mode],
@@ -922,6 +922,29 @@ return h+'</div>'}
 // S.ss[id] = day saved; S.ssr[id] = {b,d} review state, kept apart from S.srs so word counts stay words.
 // id = 's' + hash of the Persian sentence; the text comes from the conversations and readings.
 var SEN=null,SSV=false;
+// 📕 My mistakes: every correction shown in the trip or a free conversation is kept in S.mist
+// {id: {w: what the learner wrote, r: the correct sentence, y: why, at, b: box, d: next review}}.
+// Reviewed like cards (try to correct it, then reveal): boxes 1→5 come back after MI days; box 6 is
+// mastered; a removed one keeps b=99 so the other devices do not bring it back (lib/progress.js).
+var MV=null,MI=[0,1,3,7,16,35];
+function mistAdd(wrong,fix){if(!fix||!wrong)return;var p=String(fix).split(' — '),r=p[0].trim(),y=p.slice(1).join(' — ').trim();if(!r||tripNorm(r)===tripNorm(wrong))return;
+S.mist=S.mist||{};var id='m'+hs(tripNorm(r));if(S.mist[id])return;S.mist[id]={w:String(wrong).slice(0,200),r:r.slice(0,200),y:y.slice(0,200),at:Date.now(),b:0,d:Date.now()};save()}
+function mistLive(){return Object.keys(S.mist||{}).filter(function(id){return S.mist[id].b<6})}
+function mistDue(){return mistLive().filter(function(id){return S.mist[id].d<=Date.now()})}
+function mistStart(){var q=sh(mistDue());if(!q.length){toast('لا أخطاء مستحقة الآن. عُد لاحقاً.');return}MV={q:q,i:0,show:false,ok:0};render();scrollTo(0,0)}
+function mistGrade(good){var id=MV.q[MV.i],m=S.mist[id];if(good){m.b=Math.min(6,m.b+1);m.d=Date.now()+MI[Math.min(m.b,5)]*DAY;MV.ok++;if(m.b>=6)toast('🎉 أتقنت هذا الخطأ!')}else{m.b=Math.max(0,m.b-1);m.d=Date.now();MV.q.push(id)}
+save();MV.i++;MV.show=false;if(MV.i>=MV.q.length){try{gain(5)}catch(e){}}render();scrollTo(0,0)}
+function mistDel(id){if(!confirm('حذف هذا الخطأ من دفترك؟'))return;S.mist[id].b=99;save();render()}
+function mistView(){var h='<button class="back" onclick="MV=null;render()">› رجوع للمراجعة</button><h2>📕 دفتر أخطائي</h2>';
+if(webFree()){var n=mistLive().length;return h+'<div class="det"><p>'+(n?'أخطاء محفوظة من محادثاتك: '+n+'.':'كل خطأ يُصحَّح لك في الرحلة والمحادثات يُحفظ هنا.')+'</p><p class="mu">مراجعة الأخطاء حتى إتقانها ضمن الاشتراك.</p><div class="btns"><button class="btn" onclick="freeGate(\'دفتر أخطائي\')">⭐ افتح دفتر أخطائي</button></div></div>'}
+if(MV.q){if(MV.i>=MV.q.length)return h+'<div class="det"><div class="big">✓</div><p>راجعت أخطاءك المستحقة: عرفت '+MV.ok+'.</p><div class="btns"><button class="btn" onclick="MV={};render()">دفتر أخطائي</button></div></div>';
+var m=S.mist[MV.q[MV.i]];h+='<p class="mu">صحّح هذه الجملة في ذهنك، ثم اضغط «أظهر التصحيح» · '+(MV.i+1)+' من '+MV.q.length+'</p><div class="card"><div class="fa" style="font-size:24px;color:var(--no)">'+hesc(m.w)+'</div>';
+if(!MV.show)return h+'</div><div class="btns"><button class="btn" onclick="MV.show=true;render()">أظهر التصحيح</button></div>';
+return h+'<div class="fa" style="font-size:26px;color:var(--ok);margin-top:12px">'+hesc(m.r)+'</div><button class="spk" style="margin:10px 0" aria-label="استمع" onclick="say(\''+esc(m.r).replace(/"/g,'&quot;').replace(/\\/g,'')+'\')">🔊</button>'+(m.y?'<div class="mu">'+hesc(m.y)+'</div>':'')+'</div><div class="btns"><button class="btn" onclick="mistGrade(true)">✅ عرفتها</button><button class="btn alt" onclick="mistGrade(false)">🔁 لم أعرفها</button></div>'}
+var all=mistLive().sort(function(a,b){return S.mist[b].at-S.mist[a].at}),due=mistDue().length,done=Object.keys(S.mist||{}).filter(function(id){return S.mist[id].b===6}).length;
+if(!all.length&&!done)return h+'<div class="det"><p>دفترك فارغ. كل خطأ يُصحَّح لك في «رحلتك إلى إيران» أو المحادثات يُحفظ هنا تلقائياً، لتراجعه حتى تتقنه.</p></div>';
+h+='<div class="det"><p>قيد المراجعة: <b>'+all.length+'</b>'+(done?' · أتقنتها: <b>'+done+'</b>':'')+'</p>'+(due?'<div class="btns"><button class="btn" onclick="mistStart()">ابدأ مراجعة أخطائي ('+due+')</button></div>':'<p class="mu">لا أخطاء مستحقة الآن. تعود إليك في موعدها.</p>')+'</div>';
+all.forEach(function(id){var m=S.mist[id];h+='<div class="det" style="text-align:start"><div class="fa" style="font-size:18px;color:var(--no)">'+hesc(m.w)+'</div><div class="fa" style="font-size:19px;color:var(--ok)">✍️ '+hesc(m.r)+'</div>'+(m.y?'<div class="mu" style="font-size:13px">'+hesc(m.y)+'</div>':'')+'<div style="display:flex;gap:8px;align-items:center;margin-top:4px"><button class="spk" aria-label="استمع" onclick="say(\''+esc(m.r).replace(/"/g,'&quot;').replace(/\\/g,'')+'\')">🔊</button><span class="mu" style="flex:1;font-size:12px">'+'●'.repeat(m.b)+'○'.repeat(6-m.b)+'</span><button class="lnk-no" onclick="mistDel(\''+id+'\')">حذف</button></div></div>'});return h}
 function senAll(){if(SEN)return SEN.list;SEN={by:{},list:[]};function add(l,src){var id='s'+hs(l[0]);if(SEN.by[id])return;var o={id:id,fa:l[0],tr:l[1],ar:l[2],l:-1,sent:true,src:src};SEN.by[id]=o;SEN.list.push(o)}
 DLG.forEach(function(d,i){d.l.forEach(function(l){add(l,'D'+i)})});RD.forEach(function(r,i){r.s.forEach(function(l){add(l,'R'+i)})});return SEN.list}
 function senById(id){senAll();return SEN.by[id]||null}
@@ -1066,7 +1089,7 @@ var line=AIC.msgs.filter(function(m){return m.r==='a'}).slice(-1)[0],me=AIC.msgs
 fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({c:AIC.c,k:k,line:line?line.t:'',said:t,voice:pron!==undefined?1:0,model:AIC.pick||''})})
 .then(function(r){return r.json().catch(function(){return{}})}).then(function(j){AIC.busy=false;if(j.left!=null)AIC.left=j.left;if(j.model)me.model=j.model;
 if(j.ok==null){AIC.err=j.msg||'تعذّر التحقق من جوابك الآن. حاول بعد قليل.';render();return}
-if(j.fix)me.fix=j.fix;else{var sp=tripSpell(t,k);if(sp)me.fix=sp.t+' — '+sp.sw.join('، ')}
+if(j.fix)me.fix=j.fix;else{var sp=tripSpell(t,k);if(sp)me.fix=sp.t+' — '+sp.sw.join('، ')}if(me.fix)mistAdd(t,me.fix);
 if(j.ok){tripAccept(k);return}
 AIC.msgs.push({r:'n',t:'لم تُنجز «'+TRIP[AIC.c].tasks[k]+'» بعد. '+(j.tip?j.tip+' ':'')+'جرّب مرة أخرى، أو اضغط 💡 ساعدني.'});tripKeep();render();aiBottom()})
 .catch(function(){AIC.busy=false;AIC.err='تعذّر الاتصال. تأكد من الإنترنت وحاول مرة أخرى.';render()})}
@@ -1098,7 +1121,7 @@ var one={};ALL.forEach(function(w){var f=w.fa.replace(/\u200c/g,'');if(f.indexOf
 AIC.msgs.forEach(function(m){if(m.r!=='a')return;ptoks(m.t).forEach(function(tk){pvars(tk).some(function(v){var id=one[v];if(id&&!S.srs[id]&&nw.indexOf(id)<0){nw.push(id);return true}return!!id})})});
 nw.slice(0,8).forEach(function(id){S.srs[id]={b:1,d:Date.now()}});save();gain(first?30:10);
 var fx=AIC.msgs.filter(function(m){return m.r==='u'&&m.fix}).slice(-3),h='<div style="text-align:center"><div class="big">🏆</div><h2 style="margin:4px 0">أنجزت «'+TRIP[i].t+'»!</h2><div style="font-size:26px">'+tripStars(st)+'</div><p class="mu">+'+(first?30:10)+' نقطة'+(st<3?' · '+(AIC.manual?'علّمت مهمة بنفسك':'استعملت المساعدة كثيراً')+'، فجرّب مرة أخرى لثلاث نجوم':'')+'</p></div>';
-if(fx.length)h+='<b>✍️ تعلّم من أخطائك</b>'+fx.map(function(m){return'<div class="mu" style="margin:4px 0">«'+hesc(m.t)+'» ← '+hesc(m.fix)+'</div>'}).join('');
+if(fx.length)h+='<b>✍️ تعلّم من أخطائك</b>'+fx.map(function(m){return'<div class="mu" style="margin:4px 0">«'+hesc(m.t)+'» ← '+hesc(m.fix)+'</div>'}).join('')+'<div class="mu" style="font-size:13px">📕 حُفظت في «دفتر أخطائي» في المراجعة، لتعود إليك حتى تتقنها.</div>';
 if(nw.length)h+='<b style="display:block;margin-top:8px">📚 كلمات صادفتها وأُضيفت إلى مراجعتك</b><div class="mu">'+nw.slice(0,8).map(function(id){var w=ALL.filter(function(x){return x.id===id})[0];return w?'<span class="fa" style="font-size:17px">'+w.fa+'</span> '+w.ar:''}).join(' · ')+'</div>';
 var nx=i+1<TRIP.length?i+1:null,nl=nx===null?'':tripLock(nx);
 h+='<div class="btns">'+(nx!==null&&!nl?'<button class="btn" onclick="closeSheet();aiChapter('+nx+')">الفصل التالي '+TRIP[nx].e+'</button>':'')+'<button class="btn alt" onclick="closeSheet();AIC.c=null;render()">خريطة الرحلة</button></div>'+(nx!==null&&nl?(nl.indexOf('⭐')===0?'<p style="text-align:center">پارسا ينتظرك في '+TRIP[nx].e+' «'+TRIP[nx].t+'» و'+(TRIP.length-2-i)+(TRIP.length-2-i>10?' فصلاً آخر.':' فصول أخرى.')+'</p><div class="btns">'+subBtn('اشترك لتكمل رحلتك')+'</div>':'<p class="mu" style="text-align:center">الفصل التالي: '+TRIP[nx].e+' '+TRIP[nx].t+' · '+nl.replace('🔒 ','')+'</p>'):'')+(nx===null?'<p class="mu" style="text-align:center">🎉 أنهيت فصول الرحلة المتاحة! فصول جديدة قريباً.</p>':'');
@@ -1116,7 +1139,7 @@ function aiAsk(){if(AIC.busy)return;AIC.busy=true;AIC.err='';render();aiBottom()
 fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({s:AIC.s,model:AIC.model,msgs:AIC.msgs.filter(function(m){return m.r!=='n'}).map(function(m){return{r:m.r,t:m.t}})})})
 .then(function(r){return r.json().catch(function(){return{}}).then(function(j){j.status=r.status;return j})})
 .then(function(j){AIC.busy=false;if(j.left!=null)AIC.left=j.left;if(!j.fa){AIC.err=j.msg||'تعذّر الردّ الآن. حاول بعد قليل.';render();return}
-var last=AIC.msgs[AIC.msgs.length-1];if(last&&last.r==='u'&&j.fix)last.fix=j.fix;AIC.msgs.push({r:'a',t:j.fa,tr:j.tr,ar:j.ar,model:j.model});AIC.hints=j.hints||[];AIC.showHints=false;
+var last=AIC.msgs[AIC.msgs.length-1];if(last&&last.r==='u'&&j.fix){last.fix=j.fix;mistAdd(last.t,j.fix)}AIC.msgs.push({r:'a',t:j.fa,tr:j.tr,ar:j.ar,model:j.model});AIC.hints=j.hints||[];AIC.showHints=false;
 render();aiBottom();try{gain(2)}catch(e){}})
 .catch(function(){AIC.busy=false;AIC.err='تعذّر الاتصال. تأكد من الإنترنت وحاول مرة أخرى.';render()})}
 function aiSend(){var el=document.getElementById('aiin');var t=el?el.value.trim():'';if(!t||AIC.busy)return;if(t.length>300)t=t.slice(0,300);if(AIC.c!=null){if(el)el.value='';tripReply(t);return}AIC.msgs.push({r:'u',t:t});aiAsk()}
