@@ -1083,7 +1083,7 @@ return'<div class="det" style="margin-top:12px"><div class="big">🏆</div><b>أ
 (nx!==null&&nl?'<p class="mu" style="margin:8px 0 0">الفصل التالي: '+TRIP[nx].e+' '+TRIP[nx].t+' · '+nl.replace('🔒 ','')+'</p>':'')+'</div>'}
 function tripAccept(k){AIC.msgs.push(tripLine(AIC.c,k+1));AIC.showHints=false;tripKeep();render();aiBottom();try{gain(2)}catch(e){}tripAdd([k+1]);if(tripExp()<0)render()}
 function tripReply(t,pron){var k=tripExp();if(k<0)return;AIC.msgs.push(pron===undefined?{r:'u',t:t}:{r:'u',t:t,voice:1,pron:pron});
-if(pron&&pron.r>=.7){tripAccept(k);return}AIC.err='';
+if(pron&&pron.r>=.7){var bad=pron.w.filter(function(x){return!x.ok&&!x.skip}).map(function(x){return x.w});if(bad.length)mistAdd(t,pron.w.filter(function(x){return!x.skip}).map(function(x){return x.w}).join(' ')+' — 🎤 انطق جيداً: '+bad.join('، '));tripAccept(k);return}AIC.err='';
 if(tripSaid(t).indexOf(k+1)>=0){tripAccept(k);return}
 var line=AIC.msgs.filter(function(m){return m.r==='a'}).slice(-1)[0],me=AIC.msgs[AIC.msgs.length-1];AIC.busy=true;render();aiBottom();
 fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({c:AIC.c,k:k,line:line?line.t:'',said:t,voice:pron!==undefined?1:0,model:AIC.pick||''})})
