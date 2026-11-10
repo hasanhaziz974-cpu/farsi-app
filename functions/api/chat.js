@@ -92,6 +92,18 @@ export const CHAPTERS = [
     tasks: ["greet them and say you have just arrived in Shiraz", "say the place is beautiful", "ask about a good place to eat", "thank them and say goodbye"] },
   { role: "Parsa, your Iranian friend, at his family home on Nowruz",
     tasks: ["wish them a happy Nowruz", "ask about the Haft-Sin table", "say how you celebrate holidays in your country", "wish them a happy new year"] },
+  { role: "a kind servant (khadem) at the shrine of Imam Reza in Mashhad; the learner is an Arab pilgrim",
+    tasks: ["greet you and ask where the entrance is", "ask where to leave their shoes", "ask what time the noon prayer is", "thank you and ask you to pray for them"] },
+  { role: "the groom's mother welcoming guests at a wedding hall in Tehran; the learner is a university friend of the groom",
+    tasks: ["greet you and congratulate you on the wedding", "give the gift", "say the hall or the wedding is beautiful", "wish the couple happiness"] },
+  { role: "a bank clerk at a branch near the university in Tehran; the learner, a foreign student, wants to open an account",
+    tasks: ["say they want to open an account", "say they have their passport with them", "ask when the bank card will be ready", "ask where to sign and thank you"] },
+  { role: "a clerk at the passport and immigration office in Tehran; the learner, a foreign student, wants to extend their visa",
+    tasks: ["say they want to extend their visa", "say why they want to stay (they study at the university)", "ask which documents they must bring", "ask when to come back and thank you"] },
+  { role: "a gas station attendant on the road from Tehran to the Caspian Sea; the learner and a friend are driving north",
+    tasks: ["ask you to fill the tank", "ask how far it is to the sea", "ask about a place to eat or rest nearby", "pay and thank you"] },
+  { role: "Parsa's mother teaching the learner to cook ghormeh sabzi in her kitchen",
+    tasks: ["say they want to learn to cook ghormeh sabzi", "ask what ingredients are needed", "ask how long it must cook", "thank her and say the food is delicious"] },
 ];
 
 
