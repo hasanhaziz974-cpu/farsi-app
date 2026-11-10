@@ -111,7 +111,22 @@ async function learning(kv, email) {
   const d = p && p.data;
   if (!d) return null;
   const last = Date.parse(d.last || '') || 0;
-  return { lessons: Object.keys(d.pass || {}).length, xp: Number(d.xp) || 0, words: Object.keys(d.srs || {}).length, last };
+  return { lessons: Object.keys(d.pass || {}).length, xp: Number(d.xp) || 0, words: Object.keys(d.srs || {}).length, last, saved: Number(p.t) || 0 };
+}
+
+// 📊 Today's use against the free limits. Nothing here adds writes to KV (its free limit is 1,000 writes a day):
+// sign-in mails are already counted, active learners come from the time of their last progress save, and
+// the exact AI and KV figures are on Cloudflare's own usage pages (linked).
+function usage(mails, active) {
+  const bar = (n, max) => { const p = Math.min(100, Math.round(n / max * 100));
+    return `<div style="height:8px;background:var(--bd);border-radius:6px;overflow:hidden;margin:4px 0 10px"><i style="display:block;height:100%;width:${p}%;background:${p >= 80 ? 'var(--no)' : p >= 50 ? '#C77C0E' : 'var(--ok)'}"></i></div>`; };
+  const link = (to, t) => `<a href="https://dash.cloudflare.com/?to=/:account/${to}" target="_blank" rel="noopener">${t}</a>`;
+  return `<h2>📊 استهلاك اليوم</h2><div class="card">
+<div>✉️ رسائل رمز الدخول: <b>${mails}</b> من 90 (حد Gmail اليومي)</div>${bar(mails, 90)}
+<div>💾 متعلّمون حفظوا تقدّمهم اليوم: <b>${active}</b> من نحو 200 (كل متعلّم نشط يحفظ بضع مرات، وحد الحفظ المجاني 1,000 عملية يومياً)</div>${bar(active, 200)}
+<div>🤖 الذكاء الاصطناعي والصوت: الحد المجاني 10,000 وحدة يومياً، نحو 200 إلى 250 تصحيحاً أو رداً. ${link('ai/workers-ai', 'الاستهلاك الدقيق في Cloudflare')}</div>
+<div style="margin-top:8px">🗄️ عمليات حفظ التقدّم الدقيقة: ${link('workers/kv/namespaces', 'في Cloudflare')}</div>
+<p class="mu" style="margin:10px 0 0">إذا اقترب شريط من الأحمر، أو كثر ظهور «انتهى رصيد المحادثة لهذا اليوم»، ففعّل باقة Workers المدفوعة (5 دولارات شهرياً) من ${link('workers/plans', 'Cloudflare')}.</p></div>`;
 }
 
 function learnLine(l) {
@@ -159,7 +174,7 @@ async function view(kv, msg) {
   return page(`<h1>إدارة المشتركين</h1><p class="mu">التغييرات تعمل خلال دقيقة تقريباً. · <a href="/logout">خروج</a></p>
 ${msg ? `<div class="msg">${esc(msg)}</div>` : ''}
 <div class="stats"><div><b>${activeMembers}</b><span>مشترك</span></div><div><b>${trials.filter((t) => t.left > 0).length}</b><span>في التجربة</span></div><div><b>${week}</b><span>تعلّموا هذا الأسبوع</span></div><div><b>${reminders}</b><span>فعّلوا التذكير</span></div></div>
-${mailsToday ? `<p class="mu">رسائل رمز الدخول اليوم: ${mailsToday} من 90</p>` : ''}
+${usage(mailsToday, Object.values(learn).filter((l) => l && l.saved >= Date.parse(new Date().toISOString().slice(0, 10))).length)}
 <h2>إضافة شخص</h2><form method="post" class="card"><input type="email" name="email" placeholder="name@gmail.com" required>
 <div class="row">${periodSelect()}<button name="action" value="add">إضافة</button></div>
 <p class="mu">إن كان الشخص مضافاً، تُحسب المدة من آخر يوم له.</p></form>
