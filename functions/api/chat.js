@@ -25,7 +25,6 @@ export const MODELS = [
 const LIMIT = { list: 100, member: 40, trial: 15, free: 3 }; // free: after the trial or subscription ended
 const VOICE_BYTES = 1024 * 1024; // about a minute of compressed speech; recordings stop at 15 seconds
 const CHECK_MODELS = ['@cf/openai/gpt-oss-120b', '@cf/meta/llama-3.3-70b-instruct-fp8-fast']; // checking trip replies
-const TRIAL_CHAPTERS = 6; // trip chapters open during the trial (level 1)
 const FREE_CHAPTER = 10; // messages a day in the free first chapter of the trip
 const MAX_TURNS = 12, MAX_CHARS = 300;
 
@@ -337,6 +336,9 @@ export async function onRequest({ request, env }) {
   // Voice: the learner's recording (audio/webm or audio/mp4, at most VOICE_BYTES) is turned into Persian
   // text with Whisper; the app then scores the pronunciation and sends the text as the reply.
   // Without a subscription it works in the free first chapter only (?c=0). It counts as one message.
+  // Talking with Parsa (the trip, free conversations and voice) is for subscribers; the trial does not include it.
+  if (request.method === 'POST' && st.kind === 'trial' && !admin) return json({ error: 'free', msg: 'المحادثة مع پارسا للمشتركين. اشترك لتتكلّم معه.' }, 403);
+
   if (/^audio\//.test(request.headers.get('Content-Type') || '')) {
     const q = new URL(request.url).searchParams, vc = q.get('c');
     if (!st.ok && vc !== '0') return json({ error: 'free', msg: 'التكلّم بالصوت للمشتركين. جرّبه مجاناً في الفصل الأول.' }, 403);
@@ -378,8 +380,6 @@ export async function onRequest({ request, env }) {
     return json({ error: 'scenario' }, 400);
   }
   if (chapter && c > 0 && !st.ok) return json({ error: 'free', msg: 'هذا الفصل للمشتركين. الفصل الأول مجاني.' }, 403);
-  // The trial opens the chapters of level 1 (the app's LVL[0].T); the rest is for subscribers.
-  if (chapter && st.kind === 'trial' && c >= TRIAL_CHAPTERS) return json({ error: 'free', msg: 'هذا الفصل للمشتركين. الفترة التجريبية تشمل أول ' + TRIAL_CHAPTERS + ' فصول.' }, 403);
 
   if (chapter) {
     const k = Number(body.k), said = String(body.said || '').trim().slice(0, MAX_CHARS), line = String(body.line || '').trim().slice(0, MAX_CHARS);
