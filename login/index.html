@@ -29,13 +29,22 @@ button.alt{background:transparent;color:var(--pr);border:1.5px solid var(--pr)}
 .e{direction:ltr;unicode-bidi:isolate;font-weight:700}
 a{color:var(--pr)}
 [hidden]{display:none!important}
+.fbb{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;font-weight:800;font-size:17px;padding:12px;border-radius:12px;background:#1877F2;color:#fff;text-decoration:none}
+.fbb b{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:#fff;color:#1877F2;font:900 18px/1 Arial,sans-serif}
+.or{display:flex;align-items:center;gap:10px;color:var(--mu);font-size:14px;margin:16px 0 0}.or:before,.or:after{content:'';flex:1;border-top:1px solid var(--bd)}
 </style>
 </head>
 <body>
 <main>
   <img src="/pwa/icon-192.png" alt="">
   <h1>الفارسية من الصفر</h1>
-  <p class="mu">ادخل ببريدك الإلكتروني، دون كلمة مرور.</p>
+  <p class="mu">ادخل بحساب فيسبوك أو ببريدك الإلكتروني، دون كلمة مرور.</p>
+
+  <div class="card" id="fbbox" hidden>
+    <a class="fbb" id="fb" href="/api/auth/facebook"><b>f</b> المتابعة باستخدام فيسبوك</a>
+    <div class="err" id="e0" role="alert"></div>
+    <div class="or">أو ببريدك الإلكتروني</div>
+  </div>
 
   <form class="card" id="f1" novalidate>
     <label for="email">بريدك الإلكتروني</label>
@@ -63,6 +72,14 @@ a{color:var(--pr)}
   var email = '', timer = null;
   var next = new URLSearchParams(location.search).get('next') || '/';
   if (!/^\/(?!\/)/.test(next)) next = '/';
+  // Facebook sign-in: shown when the site has it set up; ?fb=<reason> when it came back without signing in.
+  fetch('/api/auth/facebook?check=1').then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
+    if (!j || !j.on) return;
+    document.getElementById('fbbox').hidden = false;
+    document.getElementById('fb').href = '/api/auth/facebook?next=' + encodeURIComponent(next);
+  }).catch(function () {});
+  var fbm = { cancel: 'لم يكتمل الدخول بفيسبوك. حاول مرة أخرى، أو ادخل ببريدك.', state: 'انتهت مهلة الدخول بفيسبوك. حاول مرة أخرى.', token: 'تعذّر الدخول بفيسبوك الآن. حاول مرة أخرى، أو ادخل ببريدك.', noemail: 'حساب فيسبوك هذا بلا بريد إلكتروني. ادخل ببريدك هنا.', off: 'الدخول بفيسبوك غير متاح الآن. ادخل ببريدك.' }[new URLSearchParams(location.search).get('fb')];
+  if (fbm) setTimeout(function () { var e = document.getElementById('e0'); if (e && !document.getElementById('fbbox').hidden) e.textContent = fbm; else document.getElementById('e1').textContent = fbm; }, 600);
   try { var saved = localStorage.getItem('login-email'); if (saved) $('email').value = saved; } catch (e) {}
 
   function post(url, data) {

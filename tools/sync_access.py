@@ -305,6 +305,29 @@ def trials(account, project, keep):
                 print('Sign-in mail settings unchanged.')
     else:
         print('The app sign-in mail is not set up yet (add the MAIL_URL secret).')
+    # Sign in with Facebook (functions/api/auth/facebook.js): the app ID and secret go to the site as secrets.
+    fb_id, fb_secret = (os.environ.get('FACEBOOK_APP_ID') or '').strip(), (os.environ.get('FACEBOOK_APP_SECRET') or '').strip()
+    if fb_id and fb_secret:
+        if not fb_id.isdigit() or re.search(r'\s', fb_secret):
+            print('::warning::FACEBOOK_APP_ID must be the app\'s number and FACEBOOK_APP_SECRET its secret, with no spaces; '
+                  'Facebook sign-in was not set up.')
+        else:
+            digest = hashlib.sha256((fb_id + '\n' + fb_secret).encode()).hexdigest()
+            if cf_kv_get(kv, 'fbcfg') not in (digest, json.dumps(digest)):
+                env = {'FACEBOOK_APP_ID': {'type': 'plain_text', 'value': fb_id}, 'FACEBOOK_APP_SECRET': {'type': 'secret_text', 'value': fb_secret}}
+                # Sent again with the mail settings, so they stay set however the update treats variables it does not name.
+                if mail_url and mail_key and mail_url.startswith('https://script.google.com/') and not re.search(r'\s', mail_url + mail_key):
+                    env.update({'MAIL_URL': {'type': 'secret_text', 'value': mail_url}, 'MAIL_KEY': {'type': 'secret_text', 'value': mail_key}})
+                call('PATCH', f'/accounts/{account}/pages/projects/{project}',
+                     {'deployment_configs': {'production': {'env_vars': env}, 'preview': {'env_vars': env}}})
+                call('PUT', f'{kv}/values/fbcfg', digest)
+                print('Set Facebook sign-in on the site. In the Facebook app, add this valid OAuth redirect URI: '
+                      'https://<site>/api/auth/facebook')
+                redeploy = True
+            else:
+                print('Facebook sign-in settings unchanged.')
+    else:
+        print('Facebook sign-in is off (add the FACEBOOK_APP_ID and FACEBOOK_APP_SECRET secrets to turn it on).')
     last_err = cf_kv_get(kv, 'mailerr')
     if last_err:
         print('::warning::The last sign-in mail failed (functions/api/auth/start.js): ' + last_err[:400])
