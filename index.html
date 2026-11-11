@@ -169,6 +169,7 @@ function go(t){tab=t;BK=null;PC=null;EX=null;SSV=false;if(typeof AIC==='object'&
 function render0(){nav();top_();var m=document.getElementById("main");if(PC){m.innerHTML=pcView();return}if(EX){m.innerHTML=exView();return}
 if(tab==="home")m.innerHTML=sub===null?home():(M?matchView():Q?quiz():lesson());
 else if(tab==="games")m.innerHTML=gamesView();
+else if(tab==="dict"){m.innerHTML=dictView();dictFind(DQ)}
 else if(tab==="verbs")m.innerHTML=verbsTab();
 else if(tab==="letters")m.innerHTML=letters();
 else if(tab==="gram")m.innerHTML=gram();
@@ -177,7 +178,7 @@ else if(tab==="review")m.innerHTML=review();
 else m.innerHTML=me();
 window.scrollTo(0,0)}
 function known(l){return ALL.filter(function(w){return w.l===l&&S.srs[w.id]}).length}
-function home(){var fw=firstWin(),h=fw+freeBanner()+meBanner()+(fw?'':(INST?installBox():'')+heroPanel()+planCard()+remAskCard()+proverbCard())+placeCard()+'<h2>اختر درساً</h2><p class="mu">أنهِ المراحل الخمس لكل درس بإجابات صحيحة لتفتح الدرس التالي.</p>'+packHint()+lettersCard()+gamesCard();
+function home(){var fw=firstWin(),h=fw+freeBanner()+meBanner()+(fw?'':(INST?installBox():'')+heroPanel()+planCard()+dcHome()+remAskCard()+proverbCard())+placeCard()+'<h2>اختر درساً</h2><p class="mu">أنهِ المراحل الخمس لكل درس بإجابات صحيحة لتفتح الدرس التالي.</p>'+packHint()+lettersCard()+gamesCard()+dictCard()+inviteCard();
 LES.forEach(function(l,i){var k=known(i),p=sp(i)*20;
 var lk=!unlocked(i),pm=!lk&&!allowed('L',i);if(lk){h+='<button class="row lkd" onclick="locked()">🔒 '+l.t+'</button>';return}h+='<button class="row" style="'+(pm?'opacity:.6':'')+'" onclick="'+(pm?'gate(\'L\','+i+')':'sub='+i+';render()')+'"><div style="flex:1"><div style="font-weight:600">'+(lk?'🔒 ':pm?'⭐ ':(S.pass&&S.pass[i]?'✅ ':''))+l.t+'</div><div class="mu">'+(lk?'أنهِ مراحل الدرس السابق لفتحه':pm?premTxt():cw(l.w.length,'كلمات','كلمة')+' · '+sp(i)+' من 5 مراحل')+'</div><div class="bar"><i style="width:'+p+'%"></i></div></div><span class="mu">‹</span></button>'});
 return h+bannerSlot()}
@@ -207,7 +208,7 @@ svSave();render();if(Q.qs[0].mode==='aud')say(Q.qs[0].w.fa)}
 function quiz(){var h='<button class="back" onclick="Q=null;'+(Q.daily?'sub=null;':'')+'render()">› إنهاء</button>';
 if(Q.done===2)return h+Q.res;
 if(Q.done===true){var sc=Q.sc,n=Q.n,last=Q.g===4,nx=Q.l+1<LES.length,was=!!(S.pass&&S.pass[Q.l]);
-if(sc===n)S.pf=1;if(Q.daily){S.dc=ds(Date.now());S.dcn=(S.dcn||0)+1}gain(Q.sc*10+(Q.daily?20:0));if(last)quizDone();svClear(Q.l,Q.g);
+if(sc===n)S.pf=1;if(Q.daily){var dy=ds(Date.now());if(S.dc!==dy){S.dcs=S.dc===ds(Date.now()-DAY)?(S.dcs||0)+1:1}S.dc=dy;S.dcn=(S.dcn||0)+1}gain(Q.sc*10+(Q.daily?20:0));if(last)quizDone();svClear(Q.l,Q.g);
 Q.qs.forEach(function(q){var c=q.a===q.w.id;if(c&&!S.srs[q.w.id])S.srs[q.w.id]={b:1,d:Date.now()+DAY};if(!c)S.srs[q.w.id]={b:1,d:Date.now()}});
 if(!Q.daily){S.sg=S.sg||{};S.sg[Q.l]=Math.max(S.sg[Q.l]||0,Q.g+1);if(last){S.pass=S.pass||{};S.pass[Q.l]=true}}save();
 if(sc===n)S.pf=1;var msg=(sc<n?'أحسنت، صحّحت كل أخطائك! ':'ممتاز! ')+(last?(nx&&!was?'فُتح الدرس التالي.':'أنهيت الدرس!'):'فُتحت المرحلة '+(Q.g+2)+'.');
@@ -290,7 +291,7 @@ function rate(id,ok){planReviewed();var c=srsOf(id),b=c?c.b:0;if(ok){b=Math.min(
 function me(){var k=Object.keys(S.srs).length,m=Object.keys(S.srs).filter(function(i){return S.srs[i].b>=4}).length,live=S.last===ds(Date.now())||S.last===ds(Date.now()-DAY);
 function tile(ic,v,t){return '<div class="tile"><div class="tv">'+ic+' '+v+'</div><div class="mu">'+t+'</div></div>'}
 return '<h2>تقدّمي</h2><div class="stats">'+tile('🔥',live?S.st:0,'أيام متتالية')+tile('📚',k+' من '+ALL.length,'كلمات بدأتها')+tile('🧠',m,'كلمات ثبتت في ذاكرتك')+tile('🏆',S.dgn||0,'أهداف يومية حققتها')+'</div>'
-+lvlBox()+weekSum()+weekBox()+badgeBox()+premBox()
++lvlBox()+inviteBox()+weekSum()+weekBox()+badgeBox()+premBox()
 +'<h2>الإعدادات</h2>'+meCard()+reminderBox()+backupBox()+settingsBox()+installBox()+packBox()
 +'<div style="text-align:center;margin:4px 0 8px"><button class="lnk-no" onclick="resetAll()">إعادة تعيين التقدّم</button></div>'}
 function resetAll(){if(!confirm('سيُحذف كل تقدّمك في هذا الجهاز ولا يمكن التراجع. هل أنت متأكد؟'))return;S={xp:0,st:0,last:'',srs:{},v:2,prem:S.prem,rem:S.rem,remDay:S.remDay,sfx:S.sfx,resetAt:Date.now()};resetVolatile();save();render();top_()}
@@ -890,7 +891,7 @@ var MG=null,LG=null;
 function gamesCard(){return'<button class="row" onclick="go(\'games\')"><div><div style="font-weight:600">🎮 ألعاب وتحديات</div><div class="mu">بطاقات الذاكرة · الحروف · تركيب الكلمات</div></div><span class="mu">‹</span></button>'}
 function gamesView(){if(MG)return memView();if(LG)return lgView();
 return'<button class="back" onclick="go(\'home\')">› رجوع للدروس</button><h2>🎮 ألعاب</h2><p class="mu">استراحة ممتعة تثبّت ما تعلّمته وتمنحك نقاطاً.</p>'
-+(S.dc===ds(Date.now())?'<div class="det" style="text-align:start;padding:10px 14px">⚡ تحدّي اليوم ✅ أنجزته! عد غداً لتحدٍّ جديد.</div>':'<button class="row" style="border-color:var(--ac)" onclick="startDaily()"><div><div style="font-weight:600">⚡ تحدّي اليوم</div><div class="mu">6 أسئلة سريعة من كلماتك · +20 نقطة مكافأة</div></div><span class="mu">‹</span></button>')
++(S.dc===ds(Date.now())?'<div class="det" style="text-align:start;padding:10px 14px">⚡ تحدّي اليوم ✅ أنجزته! عد غداً لتحدٍّ جديد.</div>':'<button class="row" style="border-color:var(--ac)" onclick="startDaily()"><div><div style="font-weight:600">⚡ تحدّي اليوم</div><div class="mu">6 أسئلة سريعة من كلماتك · +20 نقطة مكافأة'+dcStreak()+'</div></div><span class="mu">‹</span></button>')
 +'<button class="row" onclick="startMem()"><div><div style="font-weight:600">🃏 بطاقات الذاكرة</div><div class="mu">طابق الكلمة الفارسية بمعناها بأقل حركات</div></div><span class="mu">‹</span></button>'
 +'<button class="row" onclick="startLG(\'name\')"><div><div style="font-weight:600">🔤 ما هذا الحرف؟</div><div class="mu">تعرّف على الحروف الفارسية ونطقها</div></div><span class="mu">‹</span></button>'
 +'<button class="row" onclick="startLG(\'spell\')"><div><div style="font-weight:600">🧩 ركّب الكلمة</div><div class="mu">رتّب الحروف لتكوّن الكلمة الفارسية</div></div><span class="mu">‹</span></button>'}
@@ -1009,10 +1010,23 @@ function snapTake(){var dn=dayNo(Date.now());S.snap=S.snap||{};if(!S.snap[dn])S.
 function weekSum(){var dn=dayNo(Date.now()),b=null,i;for(i=6;i>=0&&!b;i--)b=S.snap&&S.snap[dn-i];if(!b)return'';
 var w=cnt(S.srs)-b.w,g=cnt(S.gp)-b.g,d=cnt(S.dp)-b.d,c=cnt(S.cov),dc=c-b.c,ls=[];
 if(w>0)ls.push('📚 +'+cw(w,'كلمات جديدة','كلمة جديدة'));if(g>0)ls.push('✍️ +'+cw(g,'قواعد','قاعدة'));if(d>0)ls.push('💬 +'+cw(d,'محادثات','محادثة'));var sv=cnt(S.ss)-(b.s||0);if(sv>0)ls.push('⭐ +'+cw(sv,'جمل محفوظة','جملة محفوظة'));
-var h='<div class="det" style="text-align:start"><b>🗓️ أسبوعك</b>';
+var h='<div class="det" style="text-align:start"><b>🗓️ تقرير أسبوعك</b>'+wkPts(dn);
 h+=ls.length?'<div style="margin-top:6px;line-height:2">'+ls.join('<br>')+'</div>':'<div class="mu" style="margin-top:6px">ابدأ أسبوعك بدرس قصير، وستظهر هنا إنجازاتك.</div>';
-if(c)h+='<div style="margin-top:6px">📖 تعرف أغلب كلمات '+cw(c,'محادثات','محادثة','محادثتين')+' من 20'+(dc>0?' <b style="color:var(--ok)">(+'+dc+' هذا الأسبوع)</b>':'')+'</div>';
+if(c)h+='<div style="margin-top:6px">📖 تعرف أغلب كلمات '+cw(c,'محادثات','محادثة','محادثتين')+' من '+DLG.length+(dc>0?' <b style="color:var(--ok)">(+'+dc+' هذا الأسبوع)</b>':'')+'</div>';
+return h+wkMist()+wkTip(w)+'</div>'}
+// Weekly report extras: points and active days against last week (S.hist), this week's mistakes from the
+// notebook (S.mist), and one piece of advice on what to do next.
+function dayw(n){return n===1?'يوماً واحداً':n===2?'يومين':cw(n,'أيام','يوماً')}
+function wkSum(dn,a,b){var t=0,d=0;for(var i=a;i<=b;i++){var v=(S.hist&&S.hist[dn-i])||0;t+=v;if(v)d++}return[t,d]}
+function wkPts(dn){var a=wkSum(dn,0,6),b=wkSum(dn,7,13),df=a[0]-b[0];
+return'<div style="margin-top:6px">⭐ '+cw(a[0],'نقاط','نقطة')+' هذا الأسبوع'+(b[0]?' <span class="mu">('+(df>=0?'+':'−')+Math.abs(df)+' عن الأسبوع الماضي)</span>':'')+'<br>📅 تعلّمت '+(a[1]?dayw(a[1])+' من 7':'0 أيام من 7')+'</div>'}
+function wkMist(){var wk=Date.now()-7*DAY,ids=Object.keys(S.mist||{}).filter(function(id){return S.mist[id].at>=wk}).sort(function(x,y){return S.mist[y].at-S.mist[x].at});if(!ids.length)return'';
+var h='<div style="margin-top:10px"><b>📕 أخطاء هذا الأسبوع: '+ids.length+'</b>';ids.slice(0,3).forEach(function(id){var m=S.mist[id];h+='<div style="margin-top:6px;line-height:1.7"><span class="fa" style="font-size:17px;text-decoration:line-through;color:var(--no)">'+hesc(m.w)+'</span><br><span class="fa" style="font-size:17px;color:var(--ok)">'+hesc(m.r)+'</span>'+(m.y?'<div class="mu">'+hesc(m.y)+'</div>':'')+'</div>'});
 return h+'</div>'}
+function wkTip(w){var due=queue().due.length,md=mistDue().length,ns=nextStep(),t;
+if(md>=3)t='راجع دفتر أخطائك: عندك '+cw(md,'أخطاء مستحقة','خطأً مستحقاً')+' للمراجعة.';else if(due>=15)t='عندك '+cw(due,'كلمات','كلمة')+' للمراجعة. ابدأ بها قبل أي درس جديد.';
+else if(w<10&&ns)t='تابع درس «'+LES[ns.l].t+'» لتضيف كلمات جديدة.';else if(!Object.keys(S.trip||{}).length)t='جرّب فصلاً من «رحلتك إلى إيران» لتتكلّم بما تعلّمته.';else t='أحسنت! حافظ على تعلّم قليل كل يوم.';
+return'<div style="margin-top:10px;background:var(--bg);border-radius:10px;padding:8px 10px">💡 '+t+'</div>'}
 
 // ---- Saved sentences: from conversations, reading texts and listening mistakes into the daily review ----
 // S.ss[id] = day saved; S.ssr[id] = {b,d} review state, kept apart from S.srs so word counts stay words.
@@ -1062,6 +1076,36 @@ return h}
 // ---- Subscription status (web version): from /api/me, for a banner when access is about to end and
 // the "My subscription" card. Not shown in the Android app.
 var ME=null;
+// ⚡ Daily challenge on the home page, with the number of days in a row it was done (S.dcs).
+function dcStreak(){var n=(S.dc===ds(Date.now())||S.dc===ds(Date.now()-DAY))?(S.dcs||0):0;return n>1?' · 🔥 '+n+' أيام متتالية':''}
+function dcHome(){if(!S.xp||S.dc===ds(Date.now()))return'';return'<button class="row" style="border-color:var(--ac)" onclick="startDaily()"><div><div style="font-weight:600">⚡ تحدّي اليوم</div><div class="mu">6 أسئلة سريعة · +20 نقطة'+dcStreak()+'</div></div><span class="mu">‹</span></button>'}
+
+// 🔎 Dictionary: every word of the lessons, verbs and stories, searched in Persian, Arabic or Latin letters.
+var DIC=null,DQ='';
+function dnorm(s){return String(s||'').toLowerCase().replace(/[ً-ٰٟـ]/g,'').replace(/[يى]/g,'ی').replace(/ك/g,'ک').replace(/ة/g,'ه').replace(/[أإٱ]/g,'ا').replace(/ؤ/g,'و').replace(/‌/g,'').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[ʿʾ’'`-]/g,'').trim()}
+function dictBuild(){if(DIC)return DIC;var seen={};DIC=[];function add(fa,tr,ar,src,l){var k=dnorm(fa);if(!k||seen[k])return;seen[k]=1;DIC.push({fa:fa,tr:tr||'',ar:ar,src:src,l:l,n:k,a:dnorm(ar),t:dnorm(tr)})}
+ALL.forEach(function(w){add(w.fa,w.tr,w.ar,'📘 '+LES[w.l].t,w.l)});V.forEach(function(v){add(v[0],v[1],v[2],'⚡ فعل',null)});Object.keys(GLS).forEach(function(k){add(k,'',GLS[k],'📖 من القصص',null)});return DIC}
+function dictCard(){return'<button class="row" onclick="DQ=\'\';go(\'dict\')"><div><div style="font-weight:600">🔎 القاموس</div><div class="mu">ابحث عن أي كلمة بالفارسية أو العربية</div></div><span class="mu">‹</span></button>'}
+function dictView(){return'<button class="back" onclick="go(\'home\')">› رجوع للدروس</button><h2>🔎 القاموس</h2><p class="mu">'+cw(dictBuild().length,'كلمات','كلمة')+' من الدروس والأفعال والقصص. اكتب بالفارسية أو العربية أو بالحروف اللاتينية.</p><input id="dq" type="search" dir="auto" autocomplete="off" placeholder="مثلاً: سلام، شكراً، khub" value="'+hesc(DQ)+'" oninput="DQ=this.value;dictFind(DQ)" style="width:100%;font-size:18px;padding:12px;border-radius:12px;border:1px solid var(--bd);background:var(--sf);color:var(--tx)"><div id="dres" style="margin-top:12px"></div>'}
+function dictFind(q){var o=document.getElementById('dres');if(!o)return;var n=dnorm(q);if(!n){o.innerHTML='';return}
+var res=[];dictBuild().forEach(function(e){var s=e.n===n||e.a===n||e.t===n?0:e.n.indexOf(n)===0||e.t.indexOf(n)===0||e.a.indexOf(n)===0?1:e.n.indexOf(n)>=0||e.a.indexOf(n)>=0||(n.length>2&&e.t.indexOf(n)>=0)?2:-1;if(s>=0)res.push([s,e])});
+res.sort(function(x,y){return x[0]-y[0]||x[1].n.length-y[1].n.length});
+if(!res.length){o.innerHTML='<div class="det"><p class="mu">لم أجد هذه الكلمة في دروس التطبيق.</p></div>';return}
+o.innerHTML=res.slice(0,30).map(function(x){var e=x[1];return'<div class="row" style="cursor:default"><div style="flex:1"><div class="fa" style="font-size:24px">'+hesc(e.fa)+'</div>'+(e.tr?'<div class="tr" style="font-size:14px">'+hesc(e.tr)+'</div>':'')+'<div>'+hesc(e.ar)+'</div><div class="mu" style="font-size:13px">'+(e.l!=null?'<a href="#" onclick="openL('+e.l+');return false">'+hesc(e.src)+'</a>':hesc(e.src))+'</div></div><button class="spk" aria-label="استمع" onclick="say(\''+esc(e.fa)+'\')">🔊</button></div>'}).join('')+(res.length>30?'<p class="mu">وغيرها '+(res.length-30)+'. اكتب أكثر لتضييق البحث.</p>':'')}
+
+// 🎁 Invite a friend (web app): a personal link; when a new learner signs up with it, both get extra days
+// (functions/api/invite.js gives the link; functions/_middleware.js applies the reward on the first visit).
+var INV=null;
+function invLoad(){if(INV||!webApp()||!navigator.onLine)return;INV={busy:true};fetch('/api/invite',{credentials:'same-origin'}).then(function(r){return r.ok?r.json():null}).then(function(j){INV=j&&j.link?j:{err:1};try{if(tab==='me')render()}catch(e){}}).catch(function(){INV={err:1}})}
+function inviteCard(){if(!webApp()||!S.xp)return'';return'<button class="row" onclick="go(\'me\')"><div><div style="font-weight:600">🎁 ادعُ صديقاً</div><div class="mu">أيام مجانية لك ولصديقك</div></div><span class="mu">‹</span></button>'}
+function inviteBox(){if(!webApp())return'';invLoad();if(!INV||INV.busy||INV.err)return'';
+var msg='أتعلّم الفارسية بتطبيق «الفارسية من الصفر»، وهو ممتاز للعرب. سجّل من رابطي واحصل على '+INV.days+' أيام إضافية مجاناً: '+INV.link;
+return'<div class="det" style="text-align:start"><b>🎁 ادعُ صديقاً</b><p style="margin:6px 0">إذا سجّل صديق جديد من رابطك، يحصل كلٌّ منكما على <b>'+INV.days+' أيام</b> مجانية'+(INV.max?' (حتى '+INV.max+' أصدقاء)':'')+'.</p>'
++'<div dir="ltr" style="font-size:14px;background:var(--bg);border-radius:10px;padding:8px;word-break:break-all;font-family:monospace">'+hesc(INV.link)+'</div>'
++'<div class="btns" style="margin-top:8px"><a class="btn" style="text-decoration:none;text-align:center" target="_blank" rel="noopener" href="https://wa.me/?text='+encodeURIComponent(msg)+'">واتساب</a><button class="btn alt" onclick="invShare()">'+(navigator.share?'مشاركة':'نسخ الرابط')+'</button></div>'
++(INV.n?'<p class="mu" style="margin:8px 0 0">🎉 سجّل من رابطك: '+INV.n+(INV.forever?'':' · ربحت '+(INV.n*INV.days)+' يوماً')+'</p>':'')+(INV.forever?'<p class="mu" style="margin:6px 0 0">اشتراكك دائم، فالأيام الإضافية لصديقك.</p>':'')+'</div>'}
+function invShare(){var t='أتعلّم الفارسية بتطبيق «الفارسية من الصفر». سجّل من رابطي واحصل على '+INV.days+' أيام إضافية مجاناً:';if(navigator.share){navigator.share({title:'الفارسية من الصفر',text:t,url:INV.link}).catch(function(){});return}
+try{navigator.clipboard.writeText(t+' '+INV.link).then(function(){toast('نُسخ الرابط')},function(){toast(INV.link)})}catch(e){toast(INV.link)}}
 // 🔓 Admin preview: /?open=all opens every lesson, rule, conversation, story, chapter and exam in this browser,
 // only after the server confirms the signed-in account is an admin (GET /api/chat → admin). /?open=off ends it.
 var OPEN=false;

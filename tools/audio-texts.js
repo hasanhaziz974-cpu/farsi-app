@@ -38,6 +38,7 @@ function collectTexts(A) {
   A.STORY.forEach(x => x.s.forEach(l => add(l[0])));
   Object.keys(A.GLS).forEach(w => add(w));
   A.TRIP.forEach(t => { t.ln.forEach(l => add(l[0])); t.say.forEach(ps => ps.forEach(p => add(p[0]))); });
+  A.V.forEach(v => add(v[0])); // infinitives, spoken in the dictionary
   A.V.forEach(v => A.TN.forEach((n, t) => A.forms(v, t).forEach(x => add(x[0]))));
   const items = [...set].map(t => ({ t, n: A.hs(t) + '.mp3' })), seen = {};
   for (const i of items) {
