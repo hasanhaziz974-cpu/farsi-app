@@ -179,7 +179,7 @@ else if(tab==="review")m.innerHTML=review();
 else m.innerHTML=me();
 window.scrollTo(0,0)}
 function known(l){return ALL.filter(function(w){return w.l===l&&S.srs[w.id]}).length}
-function home(){var fw=firstWin(),h=fw+freeBanner()+meBanner()+(fw?'':(INST?installBox():'')+heroPanel()+planCard()+dcHome()+remAskCard()+proverbCard())+placeCard()+'<h2>اختر درساً</h2><p class="mu">أنهِ المراحل الخمس لكل درس بإجابات صحيحة لتفتح الدرس التالي.</p>'+packHint()+lettersCard()+gamesCard()+dictCard()+colCard()+inviteCard();
+function home(){var fw=firstWin(),h=fw+freeBanner()+meBanner()+(fw?'':(INST?installBox():'')+heroPanel()+planCard()+dcHome()+remAskCard()+proverbCard())+placeCard()+'<h2>🧰 أقسام مساعدة</h2>'+packHint()+lettersCard()+colCard()+dictCard()+gamesCard()+inviteCard()+'<h2 style="margin-top:26px;padding-top:16px;border-top:2px solid var(--bd)">📘 الدروس</h2><p class="mu">أنهِ المراحل الخمس لكل درس بإجابات صحيحة لتفتح الدرس التالي.</p>';
 LES.forEach(function(l,i){var k=known(i),p=sp(i)*20;
 var lk=!unlocked(i),pm=!lk&&!allowed('L',i);if(lk){h+='<button class="row lkd" onclick="locked()">🔒 '+l.t+'</button>';return}h+='<button class="row" style="'+(pm?'opacity:.6':'')+'" onclick="'+(pm?'gate(\'L\','+i+')':'sub='+i+';render()')+'"><div style="flex:1"><div style="font-weight:600">'+(lk?'🔒 ':pm?'⭐ ':(S.pass&&S.pass[i]?'✅ ':''))+l.t+'</div><div class="mu">'+(lk?'أنهِ مراحل الدرس السابق لفتحه':pm?premTxt():cw(l.w.length,'كلمات','كلمة')+' · '+sp(i)+' من 5 مراحل')+'</div><div class="bar"><i style="width:'+p+'%"></i></div></div><span class="mu">‹</span></button>'});
 return h+bannerSlot()}
