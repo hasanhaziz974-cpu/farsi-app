@@ -29,6 +29,7 @@ button.alt{background:transparent;color:var(--pr);border:1.5px solid var(--pr)}
 .e{direction:ltr;unicode-bidi:isolate;font-weight:700}
 a{color:var(--pr)}
 [hidden]{display:none!important}
+.mailb{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;font-weight:800;font-size:17px;padding:12px;border-radius:12px;background:var(--bg);color:var(--pr);border:1.5px solid var(--pr);text-decoration:none;margin:4px 0 10px}
 .fbb{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;font-weight:800;font-size:17px;padding:12px;border-radius:12px;background:#1877F2;color:#fff;text-decoration:none}
 .fbb b{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:#fff;color:#1877F2;font:900 18px/1 Arial,sans-serif}
 .or{display:flex;align-items:center;gap:10px;color:var(--mu);font-size:14px;margin:16px 0 0}.or:before,.or:after{content:'';flex:1;border-top:1px solid var(--bd)}
@@ -38,7 +39,7 @@ a{color:var(--pr)}
 <main>
   <img src="/pwa/icon-192.png" alt="">
   <h1>الفارسية من الصفر</h1>
-  <p class="mu">ادخل بحساب فيسبوك أو ببريدك الإلكتروني، دون كلمة مرور.</p>
+  <p class="mu" id="sub">ادخل ببريدك الإلكتروني، دون كلمة مرور.</p>
 
   <div class="card" id="fbbox" hidden>
     <a class="fbb" id="fb" href="/api/auth/facebook"><b>f</b> المتابعة باستخدام فيسبوك</a>
@@ -56,8 +57,10 @@ a{color:var(--pr)}
 
   <form class="card" id="f2" novalidate hidden>
     <label for="code">أدخل الرمز</label>
-    <p class="mu" style="margin:0 0 8px">أرسلنا رمزاً إلى <span class="e" id="to"></span>. إن لم تجده فانظر في مجلد الرسائل غير المرغوب فيها (Spam).</p>
+    <p class="mu" style="margin:0 0 8px">أرسلنا رمزاً إلى <span class="e" id="to"></span>. الرمز مكتوب في عنوان الرسالة. إن لم تجدها فانظر في مجلد الرسائل غير المرغوب فيها (Spam).</p>
+    <a class="mailb" id="openmail" href="#" target="_blank" rel="noopener" hidden>📬 <span id="mailname">افتح بريدي</span></a>
     <input id="code" class="code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="••••••" required>
+    <button id="paste" type="button" class="alt" hidden>📋 الصق الرمز</button>
     <button id="b2" type="submit">دخول</button>
     <div class="err" id="e2" role="alert"></div>
     <button id="again" type="button" class="alt" disabled>إعادة إرسال الرمز</button>
@@ -76,6 +79,7 @@ a{color:var(--pr)}
   fetch('/api/auth/facebook?check=1').then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
     if (!j || !j.on) return;
     document.getElementById('fbbox').hidden = false;
+    document.getElementById('sub').textContent = 'ادخل بحساب فيسبوك أو ببريدك الإلكتروني، دون كلمة مرور.';
     document.getElementById('fb').href = '/api/auth/facebook?next=' + encodeURIComponent(next);
   }).catch(function () {});
   var fbm = { cancel: 'لم يكتمل الدخول بفيسبوك. حاول مرة أخرى، أو ادخل ببريدك.', state: 'انتهت مهلة الدخول بفيسبوك. حاول مرة أخرى.', token: 'تعذّر الدخول بفيسبوك الآن. حاول مرة أخرى، أو ادخل ببريدك.', noemail: 'حساب فيسبوك هذا بلا بريد إلكتروني. ادخل ببريدك هنا.', off: 'الدخول بفيسبوك غير متاح الآن. ادخل ببريدك.' }[new URLSearchParams(location.search).get('fb')];
@@ -104,7 +108,7 @@ a{color:var(--pr)}
       if (j.ok) {
         try { localStorage.setItem('login-email', email); } catch (e) {}
         $('to').textContent = email; $('f1').hidden = true; $('f2').hidden = false;
-        $('code').value = ''; $('code').focus(); countdown(60);
+        $('code').value = ''; mailButton(email); countdown(60);
       } else {
         err.textContent = j.msg || 'حدث خطأ، حاول مرة أخرى.';
         if (j.wait) countdown(j.wait);
@@ -118,6 +122,29 @@ a{color:var(--pr)}
     send($('b1'), $('e1'));
   });
   $('again').addEventListener('click', function () { send($('again'), $('e2')); });
+  // A button that opens the learner's mailbox (the Gmail app on phones), on the code message, then back here
+  // to type or paste the code.
+  function mailButton(addr) {
+    var d = addr.split('@')[1] || '', ua = navigator.userAgent, a = $('openmail'), name = '', web = '';
+    var q = encodeURIComponent('in:anywhere newer_than:1d "الفارسية من الصفر"');
+    if (/^(gmail|googlemail)\.com$/.test(d)) {
+      name = 'افتح Gmail لترى الرمز'; web = 'https://mail.google.com/mail/u/0/#search/' + q;
+      if (/Android/i.test(ua)) web = 'intent:#Intent;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;package=com.google.android.gm;S.browser_fallback_url=' + encodeURIComponent(web) + ';end';
+      else if (/iPhone|iPad|iPod/i.test(ua)) web = 'googlegmail://';
+    } else if (/^(outlook|hotmail|live|msn)\./.test(d)) { name = 'افتح Outlook لترى الرمز'; web = 'https://outlook.live.com/mail/'; }
+    else if (/^yahoo\./.test(d)) { name = 'افتح Yahoo لترى الرمز'; web = 'https://mail.yahoo.com/'; }
+    else if (/^(icloud|me|mac)\.com$/.test(d)) { name = 'افتح بريد iCloud لترى الرمز'; web = 'https://www.icloud.com/mail'; }
+    a.hidden = !web; if (web) { a.href = web; $('mailname').textContent = name; }
+    $('paste').hidden = !(navigator.clipboard && navigator.clipboard.readText);
+    if (!web) $('code').focus();
+  }
+  $('paste').addEventListener('click', function () {
+    navigator.clipboard.readText().then(function (t) {
+      var c = (String(t).match(/[0-9٠-٩۰-۹]{6}/) || [])[0];
+      if (!c) { $('e2').textContent = 'لم أجد رمزاً من 6 أرقام. انسخ الرمز من الرسالة ثم اضغط مرة أخرى.'; return; }
+      $('code').value = c; $('code').dispatchEvent(new Event('input'));
+    }).catch(function () { $('code').focus(); });
+  });
   $('change').addEventListener('click', function (e) { e.preventDefault(); $('f2').hidden = true; $('f1').hidden = false; $('e1').textContent = ''; $('email').focus(); });
   $('code').addEventListener('input', function () {
     this.value = this.value.replace(/[^0-9٠-٩۰-۹]/g, '').replace(/[٠-٩]/g, function (d) { return d.charCodeAt(0) - 0x660; }).replace(/[۰-۹]/g, function (d) { return d.charCodeAt(0) - 0x6f0; }).slice(0, 6);
