@@ -22,6 +22,7 @@ export const MODELS = [
   '@cf/qwen/qwen3-30b-a3b-fp8',
   '@cf/google/gemma-3-12b-it',
 ];
+const TASTE = 12; // messages in the free version's one taste of Parsa (trip chapter 1)
 const LIMIT = { list: 100, member: 40, trial: 15, free: 3 }; // free: after the trial or subscription ended
 const VOICE_BYTES = 1024 * 1024; // about a minute of compressed speech; recordings stop at 15 seconds
 const CHECK_MODELS = ['@cf/openai/gpt-oss-120b', '@cf/meta/llama-3.3-70b-instruct-fp8-fast']; // checking trip replies
@@ -332,13 +333,24 @@ export async function onRequest({ request, env }) {
     return json({ ...obj, left: Math.max(0, limit - n) }, 200, { 'Set-Cookie': cookie });
   };
 
+  // Talking with Parsa is for subscribers. The free version gets one taste: trip chapter 1 (c=0, text or voice),
+  // TASTE messages in all, once per person (counted in KV as "taste:<email>").
+  if (request.method === 'POST' && (st.kind === 'trial' || !st.ok) && !admin) {
+    const voiceC = new URL(request.url).searchParams.get('c');
+    let c0 = voiceC === '0';
+    if (!/^audio\//.test(request.headers.get('Content-Type') || '')) {
+      try { c0 = Number((await request.clone().json()).c) === 0; } catch (e) { c0 = false; }
+    }
+    if (!c0) return json({ error: 'free', msg: 'المحادثة مع پارسا للمشتركين. جرّب الفصل الأول مجاناً.' }, 403);
+    const tasted = Number(await kv.get('taste:' + email)) || 0;
+    if (tasted >= TASTE) return json({ error: 'free', msg: 'انتهت لمحتك المجانية مع پارسا. اشترك لتكمل الرحلة وتتكلّم معه كل يوم.' }, 403);
+    await kv.put('taste:' + email, String(tasted + 1));
+    limit = Math.max(limit, used + 1); // the taste is not held back by the daily free allowance
+  }
+
   // Voice: the learner's recording (audio/webm or audio/mp4, at most VOICE_BYTES) is turned into Persian
   // text with Whisper; the app then scores the pronunciation and sends the text as the reply.
-  // Without a subscription it works in the free first chapter only (?c=0). It counts as one message.
-  // Talking with Parsa (the trip, free conversations and voice) is for subscribers only: not in the trial,
-  // nor in the free version after it.
-  if (request.method === 'POST' && (st.kind === 'trial' || !st.ok) && !admin) return json({ error: 'free', msg: 'المحادثة مع پارسا للمشتركين. اشترك لتتكلّم معه.' }, 403);
-
+  // Without a subscription it works only in the free taste of chapter 1 (?c=0, checked above). It counts as one message.
   if (/^audio\//.test(request.headers.get('Content-Type') || '')) {
     if (used >= limit) return json({ error: 'limit', left: 0, free: !st.ok, msg: 'وصلت إلى حدّ اليوم. عُد غداً!' }, 429);
     const audio = new Uint8Array(await request.arrayBuffer());
