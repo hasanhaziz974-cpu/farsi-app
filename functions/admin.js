@@ -2,7 +2,7 @@
 // Only emails in the KV "admins" list (the first line of ACCESS_LIST, written by
 // tools/sync_access.py) can open it. People are stored as "allow:<email>" entries,
 // the same ones the trial check in _middleware.js reads.
-import { TRIAL_DAYS, DAY, accessEmail, lastDay, today, PLAN_IDS, PAY_METHODS } from '../lib/trial.js';
+import { DAY, accessEmail, lastDay, today, PLAN_IDS, PAY_METHODS } from '../lib/trial.js';
 import { invitedCount } from '../lib/invite.js';
 
 const PERIODS = { week: ['أسبوع', 7], month: ['شهر', 30], quarter: ['3 أشهر', 90], half: ['6 أشهر', 180], year: ['سنة', 365], forever: ['دائم', 0] };
@@ -143,8 +143,7 @@ async function view(kv, msg) {
   const allowedSet = new Set(allowed.map((a) => a.email));
   const trials = (await entries(kv, 'trial:'))
     .filter((t) => !allowedSet.has(t.email))
-    .map((t) => ({ email: t.email, left: Math.max(0, Math.ceil((Number(t.value) + TRIAL_DAYS * DAY - Date.now()) / DAY)) }))
-    .sort((a, b) => b.left - a.left);
+    .map((t) => ({ email: t.email, since: new Date(Number(t.value) || 0).toISOString().slice(0, 10) }));
   const learn = {};
   const invited = {};
   await Promise.all([...allowed, ...trials].map(async (x) => { learn[x.email] = await learning(kv, x.email); invited[x.email] = await invitedCount(kv, x.email); }));
@@ -163,27 +162,28 @@ async function view(kv, msg) {
 <button name="action" value="add">تمديد</button><button name="action" value="remove" class="no">إيقاف</button></form></div>`;
   }).join('') || '<p class="mu">لا أحد بعد.</p>';
 
-  const days = (n) => (n === 1 ? 'يوم واحد' : n === 2 ? 'يومان' : n <= 10 ? n + ' أيام' : n + ' يوماً');
-  const trialCard = ({ email, left }) => `<div class="card"><div class="p"><span class="e">${esc(email)}</span>${
-    left > 0 ? `<span class="${left <= 2 ? 'soon' : 'ok'}">باقٍ ${days(left)}</span>` : '<span class="end">انتهت التجربة</span>'}</div>${learnLine(learn[email])}${inv(email)}
+  const trialCard = ({ email, since }) => `<div class="card"><div class="p"><span class="e">${esc(email)}</span><span class="mu">سجّل ${ltr(since)}</span></div>${learnLine(learn[email])}${inv(email)}
 <form method="post" class="row"><input type="hidden" name="email" value="${esc(email)}">${periodSelect()}
 <button name="action" value="add" class="alt">أضفه</button></form></div>`;
+  // Free users (no subscription), the most recently active first; those not seen for 30 days are folded.
   const score = (t) => { const l = learn[t.email]; return l ? l.last : 0; };
-  const active = trials.filter((t) => t.left > 0), ended = trials.filter((t) => t.left <= 0).sort((a, b) => score(b) - score(a));
-  const trialRows = (active.map(trialCard).join('') || '<p class="mu">لا أحد في فترة تجريبية الآن.</p>')
-    + (ended.length ? `<details><summary>انتهت تجربتهم (${ended.length}) · يمكنك مراسلتهم أو إضافتهم</summary>${ended.map(trialCard).join('')}</details>` : '');
+  const byLast = trials.sort((a, b) => score(b) - score(a) || b.since.localeCompare(a.since));
+  const recent = byLast.filter((t) => Date.now() - score(t) < 30 * DAY || t.since >= new Date(Date.now() - 30 * DAY).toISOString().slice(0, 10));
+  const quiet = byLast.filter((t) => !recent.includes(t));
+  const trialRows = (recent.map(trialCard).join('') || '<p class="mu">لا أحد بعد.</p>')
+    + (quiet.length ? `<details><summary>لم يتعلّموا منذ شهر (${quiet.length}) · يمكنك مراسلتهم</summary>${quiet.map(trialCard).join('')}</details>` : '');
 
   const pay = (await kv.get('paycfg', 'json')) || {};
   return page(`<h1>إدارة المشتركين</h1><p class="mu">التغييرات تعمل خلال دقيقة تقريباً. · <a href="/logout">خروج</a></p>
 ${msg ? `<div class="msg">${esc(msg)}</div>` : ''}
-<div class="stats"><div><b>${activeMembers}</b><span>مشترك</span></div><div><b>${trials.filter((t) => t.left > 0).length}</b><span>في التجربة</span></div><div><b>${week}</b><span>تعلّموا هذا الأسبوع</span></div><div><b>${reminders}</b><span>فعّلوا التذكير</span></div></div>
+<div class="stats"><div><b>${activeMembers}</b><span>مشترك</span></div><div><b>${trials.length}</b><span>مجانيون</span></div><div><b>${week}</b><span>تعلّموا هذا الأسبوع</span></div><div><b>${reminders}</b><span>فعّلوا التذكير</span></div></div>
 ${usage(mailsToday, Object.values(learn).filter((l) => l && l.saved >= Date.parse(new Date().toISOString().slice(0, 10))).length)}
 <h2>إضافة شخص</h2><form method="post" class="card"><input type="email" name="email" placeholder="name@gmail.com" required>
 <div class="row">${periodSelect()}<button name="action" value="add">إضافة</button></div>
 <p class="mu">إن كان الشخص مضافاً، تُحسب المدة من آخر يوم له.</p></form>
 ${allowed.length + trials.length > 8 ? '<input type="search" id="q" placeholder="ابحث ببريد…" oninput="flt(this.value)">' : ''}
 <h2>المشتركون (${allowed.length})</h2>${people}
-<h2>في الفترة التجريبية (${active.length})</h2>${trialRows}
+<h2>المستخدمون المجانيون (${trials.length})</h2>${trialRows}
 ${payForm(pay)}
 <script>function flt(q){q=q.trim().toLowerCase();document.querySelectorAll('.card').forEach(function(c){var e=c.querySelector('.e');if(e)c.style.display=!q||e.textContent.toLowerCase().indexOf(q)>=0?'':'none'});document.querySelectorAll('details').forEach(function(d){if(q)d.open=true})}</script>`);
 }
