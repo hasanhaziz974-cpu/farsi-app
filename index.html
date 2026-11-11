@@ -173,7 +173,7 @@ function esc(s){return s.replace(/'/g,"&#39;")}
 var tab="home",sub=null,Q=null,R={show:false},selL=null;
 var TABS=[["home","الدروس"],["verbs","الأفعال"],["gram","قواعد"],["talk","محادثات"],["review","المراجعة"],["me","تقدّمي"]];
 function nav(){document.getElementById("nav").innerHTML=TABS.map(function(t){return '<button class="'+(t[0]===tab||(t[0]==="home"&&(tab==="letters"||tab==="games"||tab==="dict"))||(t[0]==="gram"&&tab==="col")?"on":"")+'" onclick="go(\''+t[0]+'\')">'+t[1]+'</button>'}).join("")}
-function go(t){tab=t;CL=null;CQZ=null;DLV=false;SETV=false;BK=null;PC=null;EX=null;SSV=false;if(typeof AIC==='object'&&AIC)AIC.open=false;sub=null;Q=null;M=null;RP=null;MG=null;LG=null;D=null;LQ=null;G=null;GQ=null;CV=null;CQ=null;RV=false;R.show=false;render()}
+function go(t){tab=t;CL=null;CQZ=null;DLV=false;SETV=false;WB=null;BK=null;PC=null;EX=null;SSV=false;if(typeof AIC==='object'&&AIC)AIC.open=false;sub=null;Q=null;M=null;RP=null;MG=null;LG=null;D=null;LQ=null;G=null;GQ=null;CV=null;CQ=null;RV=false;R.show=false;render()}
 function render0(){nav();top_();var m=document.getElementById("main");if(PC){m.innerHTML=pcView();return}if(EX){m.innerHTML=exView();return}
 if(tab==="home")m.innerHTML=sub===null?home():(M?matchView():Q?quiz():lesson());
 else if(tab==="games")m.innerHTML=gamesView();
@@ -425,15 +425,38 @@ var GR=[
 var G=null;
 function gram(){var h;
 if(GQ)return gq();
+if(WB)return wbView();
 if(G===null){h='<h2>📚 أقسام خاصة</h2>'+colCards()+'<h2 style="margin-top:26px;padding-top:16px;border-top:2px solid var(--bd)">✍️ قواعد مبسطة</h2><p class="mu">قاعدة قصيرة في كل درس مع أمثلة تسمعها. تُفتح كل قاعدة بعد اجتياز تمرين التي قبلها.</p>'+(OPEN||S.gp&&S.gp[6]?'':'<p class="mu">💡 بعد إنهاء تمارين القواعد السبع الأولى يُفتح تبويب «الأفعال».</p>');
 GR.forEach(function(g,i){h+=lvHead(i,'G');var ge=lvEnd(i,'G')?'</div>':'';var lk=!OPEN&&i>0&&!(S.gp&&S.gp[i-1]),pm=!lk&&!allowed('G',i);if(lk){h+='<button class="row lkd" onclick="lockG()">🔒 '+g.t+'</button>'+ge;return}h+='<button class="row" style="'+(pm?'opacity:.6':'')+'" onclick="'+(pm?'gate(\'G\','+i+')':'G='+i+';render()')+'"><div><div style="font-weight:600">'+(lk?'🔒 ':pm?'⭐ ':(S.gp&&S.gp[i]?'✅ ':'▶️ '))+g.t+'</div><div class="mu">'+(lk?'اجتز تمرين القاعدة السابقة لفتحها':pm?premTxt():g.s)+'</div></div><span class="mu">‹</span></button>'+ge});if(GR.every(function(g,i){return S.gp&&S.gp[i]}))h+='<div class="btns"><button class="btn alt" onclick="startGQ()">تمرين شامل على كل القواعد</button></div>';else h+='<p class="mu">🔒 التمرين الشامل يُفتح بعد اجتياز تمارين كل القواعد.</p>';return h+bannerSlot()}
 var g=GR[G];
 var gl=lesFor('g',G);h='<button class="back" onclick="G=null;render()">› رجوع</button><h2>'+g.t+'</h2><div class="det" style="text-align:start;line-height:1.9">'+g.n+'</div>'+linksHtml('تراها في:',gl,[],uniq([].concat.apply([],gl.map(function(l){return LINK[l][1]}))).slice(0,3),uniq([].concat.apply([],gl.map(lesStories))).slice(0,2))+'<h2>أمثلة</h2>';
 g.e.forEach(function(w){h+='<div class="row" style="cursor:default"><div><div class="fa" style="font-size:24px">'+w[0]+'</div><div class="tr" style="font-size:15px">'+w[1]+'</div><div class="mu">'+w[2]+'</div></div><button class="spk" aria-label="استمع" onclick="say(\''+esc(w[0])+'\')">🔊</button></div>'});
-h+='<div class="btns"><button class="btn" onclick="startGQ()">'+(S.sv&&S.sv['G'+G]?'↻ متابعة التمرين ('+Math.min(S.sv['G'+G].i+1,S.sv['G'+G].n)+' من '+S.sv['G'+G].n+')':'تمرين على هذه القاعدة')+'</button></div><div class="btns">'+(G>0?'<button class="btn alt" onclick="G--;render()">السابقة</button>':'')+(G<GR.length-1?'<button class="btn" onclick="nextRule()">القاعدة التالية</button>':'<button class="btn" onclick="G=null;render()">كل القواعد</button>')+'</div>';
+h+='<div class="btns"><button class="btn" onclick="startGQ()">'+(S.sv&&S.sv['G'+G]?'↻ متابعة التمرين ('+Math.min(S.sv['G'+G].i+1,S.sv['G'+G].n)+' من '+S.sv['G'+G].n+')':'تمرين على هذه القاعدة')+'</button></div>'+(wbPool(G).length?'<div class="btns"><button class="btn alt" onclick="wbStart('+G+')">🧩 رتّب الكلمات</button></div>':'')+'<div class="btns">'+(G>0?'<button class="btn alt" onclick="G--;render()">السابقة</button>':'')+(G<GR.length-1?'<button class="btn" onclick="nextRule()">القاعدة التالية</button>':'<button class="btn" onclick="G=null;render()">كل القواعد</button>')+'</div>';
 return h}
 
 var GQ=null;
+
+// 🧩 Word order: the learner sees the Arabic meaning of a rule's example and taps its Persian words, shuffled,
+// in the right order (the verb at the end, the adjective after the noun...). Wrong sentences go to the notebook.
+var WB=null;
+function wbWords(s){return String(s).replace(/[.!؟?،,]+$/,'').split(/\s+/).filter(Boolean)}
+function wbPool(g){return GR[g].e.filter(function(e){var n=wbWords(e[0]).length;return n>=3&&n<=9})}
+function wbStart(g){var qs=sh(wbPool(g)).slice(0,5).map(function(e){var w=wbWords(e[0]),t=w.map(function(x,i){return{w:x,i:i}}),k=0;do{t=sh(t);k++}while(k<8&&t.every(function(x,i){return x.i===i}));return{e:e,w:w,t:t,p:[],a:null}});
+WB={g:g,i:0,sc:0,qs:qs};render();scrollTo(0,0)}
+function wbTap(k){var q=WB.qs[WB.i];if(q.a!==null)return;q.p.push(q.t[k].i);stay()}
+function wbBack(k){var q=WB.qs[WB.i];if(q.a!==null)return;q.p.splice(k,1);stay()}
+function wbCheck(){var q=WB.qs[WB.i];if(q.a!==null||q.p.length!==q.w.length)return;var said=q.p.map(function(i){return q.w[i]}).join(' ');q.a=said===q.w.join(' ');snd(q.a);
+if(q.a)WB.sc++;else mistX('g',exId(q.e));stay();say(q.e[0])}
+function wbNext(){WB.i++;if(WB.i>=WB.qs.length){gain(WB.sc*5);save()}render();scrollTo(0,0)}
+function wbView(){var h='<button class="back" onclick="WB=null;render()">› رجوع للقاعدة</button><h2>🧩 رتّب الكلمات · '+GR[WB.g].t+'</h2>',n=WB.qs.length;
+if(WB.i>=n)return h+'<div class="det" style="margin-top:20px"><div class="big">'+WB.sc+' من '+n+'</div><p>'+(WB.sc===n?'ممتاز! رتّبت كل الجمل بشكل صحيح.':'أحسنت! الجمل التي أخطأت فيها حُفظت في «دفتر أخطائي».')+'</p><div class="btns"><button class="btn" onclick="wbStart('+WB.g+')">جمل أخرى</button><button class="btn alt" onclick="WB=null;render()">رجوع للقاعدة</button></div></div>';
+var q=WB.qs[WB.i],used={};q.p.forEach(function(i){used[i]=1});
+h+='<p class="mu">الجملة '+(WB.i+1)+' من '+n+' · اضغط الكلمات بالترتيب الصحيح لتكتب هذه الجملة بالفارسية:</p><div class="det" style="font-size:19px">'+q.e[2]+'</div>';
+h+='<div style="min-height:64px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:flex-start;direction:rtl;background:var(--sf);border:2px dashed '+(q.a===true?'var(--ok)':q.a===false?'var(--no)':'var(--bd)')+';border-radius:14px;padding:10px">'+(q.p.length?q.p.map(function(i,k){return'<button class="fa" onclick="wbBack('+k+')" style="font-size:20px;padding:6px 12px;border-radius:10px;border:1px solid var(--pr);background:var(--sf);color:var(--tx);cursor:pointer">'+hesc(q.w[i])+'</button>'}).join(''):'<span class="mu">اضغط الكلمات من الأسفل…</span>')+'</div>';
+if(q.a===null){h+='<div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:14px 0">'+q.t.map(function(x,k){return used[x.i]?'':'<button class="fa" onclick="wbTap('+k+')" style="font-size:20px;padding:8px 14px;border-radius:12px;border:1px solid var(--bd);background:var(--sf);color:var(--tx);cursor:pointer">'+hesc(x.w)+'</button>'}).join('')+'</div>';
+h+='<div class="btns"><button class="btn" '+(q.p.length===q.w.length?'':'disabled style="opacity:.5"')+' onclick="wbCheck()">تحقّق</button>'+(q.p.length?'<button class="btn alt" onclick="WB.qs[WB.i].p=[];stay()">امسح</button>':'')+'</div>';return h}
+h+='<div class="det" style="text-align:start;margin-top:10px"><b>'+(q.a?'✅ صحيح!':'❌ الترتيب الصحيح:')+'</b><div class="fa" style="font-size:22px;margin-top:6px">'+q.e[0]+'</div><div class="tr" style="font-size:14px">'+q.e[1]+'</div><button class="spk" style="margin-top:6px" aria-label="استمع" onclick="say(\''+esc(q.e[0])+'\')">🔊</button></div><div class="btns"><button class="btn" onclick="wbNext()">'+(WB.i+1<n?'التالي':'النتيجة')+'</button></div>';
+return h}
 function startGQ(fresh){if(fresh)gClear();if(!fresh&&gLoad()){render();return}var all=[];GR.forEach(function(x){x.e.forEach(function(e){all.push(e)})});
 var pool=G===null?all:GR[G].e;
 var qs=sh(pool).slice(0,G===null?8:5).map(function(e,i){var o=sh(all.filter(function(x){return x[2]!==e[2]&&x[0]!==e[0]})).slice(0,3);return{e:e,rev:i%2===1,o:sh([e].concat(o)),a:null}});
