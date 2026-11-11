@@ -999,16 +999,25 @@ h+=c.miss.length?linksHtml('تعلّم الباقي في:',c.miss.slice(0,3),[],
 
 // Daily plan: three steps picked once a day from different sections, so each day reviews, moves the
 // current lesson on and applies it in a linked conversation or rule. Finishing all three gives +15.
-function planDone(x){var p=S.plan||{};switch(x.t){case'rv':return(p.rv||0)>=x.n;case'dc':return S.dc===ds(Date.now());case'st':return sp(x.l)>x.g;case'd':return!!(S.dp&&S.dp[x.i]);case'g':return!!(S.gp&&S.gp[x.i]);case'rd':return!!(S.rd&&S.rd[x.i]);case'rp':return!!(S.rpd&&S.rpd[x.i]);case'tr':return tripDone(x.i)}return false}
+function planDone(x){var p=S.plan||{};switch(x.t){case'mi':return(p.mi||0)>=x.n;case'sy':return!!(S.story&&S.story[x.i]);case'cs':return!!(S.colp&&S.colp[x.s==='col'?x.i:x.s+x.i]);case'rv':return(p.rv||0)>=x.n;case'dc':return S.dc===ds(Date.now());case'st':return sp(x.l)>x.g;case'd':return!!(S.dp&&S.dp[x.i]);case'g':return!!(S.gp&&S.gp[x.i]);case'rd':return!!(S.rd&&S.rd[x.i]);case'rp':return!!(S.rpd&&S.rpd[x.i]);case'tr':return tripDone(x.i)}return false}
 function planApply(cur,it){var c=[],i,ls=cur===null?[]:[cur];if(cur>0)ls.push(cur-1);
 ls.forEach(function(l){LINK[l][1].forEach(function(d){c.push({t:'d',i:d,l:l})});c.push({t:'g',i:LINK[l][0],l:l})});
 for(i=0;i<DLG.length;i++)c.push({t:'d',i:i});for(i=0;i<GR.length;i++)c.push({t:'g',i:i});
 for(i=0;i<DLG.length;i++)if(S.dp&&S.dp[i]){c.push({t:'rd',i:i});c.push({t:'rp',i:i})}
 for(i=0;i<c.length;i++){var x=c[i];if(it.some(function(y){return y.t===x.t&&y.i===x.i}))continue;if(planDone(x))continue;if(x.t==='d'&&!dOpen(x.i))continue;if(x.t==='g'&&!gOpen(x.i))continue;if((x.t==='rd'||x.t==='rp')&&!allowed('D',x.i))continue;return x}return null}
-function planMake(){var t=ds(Date.now());if(S.plan&&S.plan.d===t)return S.plan;var it=[],due=queue().due.length,ns=nextStep(),cur=ns?ns.l:LES.length-1;
+function planMake(){var t=ds(Date.now());if(S.plan&&S.plan.d===t&&S.plan.v===2)return S.plan;var keep=S.plan&&S.plan.d===t?S.plan:null;var it=[],due=queue().due.length,ns=nextStep(),cur=ns?ns.l:LES.length-1;
 it.push(due?{t:'rv',n:Math.min(due,8),s:queue().due.some(function(x){return x.sent})}:{t:'dc'});if(ns)it.push({t:'st',l:ns.l,g:ns.g});
 var ap=planApply(cur,it),tc=webApp()?tripNext():null;if(ap&&ap.t==='d'&&tc!==null)ap={t:'tr',i:tc};if(ap)it.push(ap);if(!ns){ap=planApply(cur,it);if(ap)it.push(ap)}
-S.plan={d:t,it:it,rv:0,ok:0};snapTake();save();return S.plan}
+var ex=planExtra();if(ex)it.push(ex);
+S.plan={d:t,it:it,rv:keep?keep.rv||0:0,mi:keep?keep.mi||0:0,ok:keep?keep.ok||0:0,v:2};snapTake();save();return S.plan}
+// A fourth step that brings in the other parts of the app: due mistakes from the notebook first, otherwise
+// (alternating by day) the next unread story or the next lesson of a special section.
+function planExtra(){if(!webFree()&&mistDue().length>=3)return{t:'mi',n:Math.min(mistDue().length,6)};
+var sy=null,cs=null,i,k;var ord=STORY.map(function(s,i){return i}).sort(function(a,b){return STORY[a].lv-STORY[b].lv||a-b});
+for(k=0;k<ord.length&&sy===null;k++){i=ord[k];if(!(S.story&&S.story[i])&&!stLock(i))sy={t:'sy',i:i}}
+var sl=['col','ar','soc'],d0=dayNo(Date.now());for(k=0;k<3&&cs===null;k++){var s=sl[(d0+k)%3];for(i=0;i<SEC[s].d.length;i++){var key=s==='col'?i:s+i;if(S.colp&&S.colp[key])continue;if(!colLock(i))cs={t:'cs',s:s,i:i};break}}
+return d0%2?(sy||cs):(cs||sy)}
+var PMIN={rv:3,dc:2,st:4,d:4,g:4,rd:2,rp:3,tr:6,mi:3,sy:4,cs:4};
 function planLabel(x){switch(x.t){
 case'rv':return['🔁 راجع '+(x.s?cw(x.n,'بطاقات','بطاقة'):cw(x.n,'كلمات','كلمة')),(x.s?'كلمات وجمل ':'')+'حان موعد مراجعتها، قبل أن تنساها'];
 case'dc':return['⚡ تحدّي اليوم','6 أسئلة سريعة من كلماتك · +20 نقطة'];
@@ -1017,12 +1026,16 @@ case'd':var c=dCov(x.i);return['💬 محادثة «'+DLG[x.i].t+'»',(x.l!=null
 case'g':return['✍️ قاعدة «'+GR[x.i].t+'»',x.l!=null?'تفيدك في درس «'+LES[x.l].t+'»':'القاعدة التالية'];
 case'rd':return['📖 اقرأ نص «'+DLG[x.i].t+'»','نص قصير بكلمات محادثة أنهيتها'];
 case'rp':return['🎭 مثّل حوار «'+DLG[x.i].t+'»','تكلّم بدورك في محادثة أنهيتها'];
+case'mi':return['📕 تمرّن على أخطائك ('+x.n+')','أخطاء سابقة من دفترك حان موعد التمرين عليها'];
+case'sy':return['📖 قصة «'+STORY[x.i].ta+'»','اقرأ واستمع، ثم أجب عن 3 أسئلة'];
+case'cs':return[SEC[x.s].ic+' '+SEC[x.s].d[x.i].t,SEC[x.s].t+' · درس قصير وتمرين'];
 case'tr':return['🧳 الفصل '+(x.i+1)+' من رحلتك: '+TRIP[x.i].t,'تكلّم بالفارسية مع '+TRIP[x.i].who+' وأنجز مهامك']}return['','']}
 function planGo(k){var x=S.plan.it[k];switch(x.t){case'rv':go('review');break;case'dc':startDaily();break;case'st':goStep(x.l,x.g);break;case'd':openD(x.i);break;case'g':openG(x.i);break;
-case'rd':go('talk');D=x.i;RV=true;RQ=null;render();break;case'rp':go('talk');D=x.i;render();rpChoose();break;case'tr':go('talk');aiOpen();aiChapter(x.i)}}
+case'rd':go('talk');D=x.i;RV=true;RQ=null;render();break;case'rp':go('talk');D=x.i;render();rpChoose();break;case'tr':go('talk');aiOpen();aiChapter(x.i);break;case'mi':go('review');MV={};mistStart();break;case'sy':go('talk');stOpen(x.i);break;case'cs':CS=x.s;CFROM='home';go('col');CL=x.i;render()}}
 function planCard(){if(!S.xp)return'';var p=planMake(),n=0,h='';p.it.forEach(function(x,k){var dn=planDone(x),lb=planLabel(x);if(dn)n++;
 h+='<button class="prow'+(dn?' dn':'')+'" onclick="planGo('+k+')"><span class="pi">'+(dn?'✓':k+1)+'</span><div style="flex:1"><div style="font-weight:600">'+lb[0]+'</div><div class="mu">'+lb[1]+'</div></div><span class="mu">‹</span></button>'});
-return'<div class="det" style="text-align:start"><div class="rowf"><b>🗓️ خطتي اليوم</b><span class="mu">'+n+' من '+p.it.length+'</span></div>'+h+(p.ok?'<div class="mu" style="margin-top:8px">🎉 أنجزت خطة اليوم! عد غداً لخطة جديدة، أو تابع بحرية من الأقسام.</div>':'')+'</div>'}
+var mn=0;p.it.forEach(function(x){if(!planDone(x))mn+=PMIN[x.t]||3});
+return'<div class="det" style="text-align:start"><div class="rowf"><b>🗓️ خطتي اليوم</b><span class="mu">'+n+' من '+p.it.length+(mn?' · ⏱️ نحو '+cw(mn,'دقائق','دقيقة'):'')+'</span></div>'+h+(p.ok?'<div class="mu" style="margin-top:8px">🎉 أنجزت خطة اليوم! عد غداً لخطة جديدة، أو تابع بحرية من الأقسام.</div>':'')+'</div>'}
 function planCheck(){var p=S.plan;if(!p||p.ok||p.d!==ds(Date.now())||!p.it.length)return;if(!p.it.every(planDone))return;p.ok=1;gain(15);celebrate(['🗓️ أنجزت خطة اليوم! +15 نقطة'])}
 function planReviewed(){if(S.plan&&S.plan.d===ds(Date.now()))S.plan.rv=(S.plan.rv||0)+1}
 
@@ -1073,7 +1086,7 @@ if(m.k==='w')pool=ALL.map(function(w){return{fa:w.fa,ar:w.ar}});else{pool=[];GR.
 var key=mode==='ar'?'fa':'ar',seen={},o=[];seen[it[key]]=1;sh(pool).forEach(function(p){if(o.length<3&&!seen[p[key]]){seen[p[key]]=1;o.push(p[key])}});return sh([it[key]].concat(o))}
 function mistNext(){if(!MV||!MV.q||MV.i>=MV.q.length)return;var id=MV.q[MV.i],m=S.mist[id];MV.mode=m.k==='w'?(Math.random()<.5?'fa':'ar'):(Math.random()<.5?'aud':'fa');MV.o=mistOpts(id,MV.mode);MV.a=null;if(MV.mode==='aud')setTimeout(function(){say(mistItem(m).fa)},250)}
 function mistStart(){var q=sh(mistDue());if(!q.length){toast('لا أخطاء مستحقة الآن. عُد لاحقاً.');return}MV={q:q,i:0,ok:0};mistNext();render();scrollTo(0,0)}
-function mistPick(k){if(MV.a!==null)return;MV.a=k;var id=MV.q[MV.i],m=S.mist[id],it=mistItem(m),good=MV.o[k]===(MV.mode==='ar'?it.fa:it.ar);snd(good);
+function mistPick(k){if(MV.a!==null)return;MV.a=k;if(S.plan&&S.plan.d===ds(Date.now()))S.plan.mi=(S.plan.mi||0)+1;var id=MV.q[MV.i],m=S.mist[id],it=mistItem(m),good=MV.o[k]===(MV.mode==='ar'?it.fa:it.ar);snd(good);
 if(good){m.b=Math.min(6,m.b+1);m.d=Date.now()+MI[Math.min(m.b,5)]*DAY;MV.ok++;if(m.b>=6)toast('🎉 أتقنت هذا!')}else{m.b=0;m.d=Date.now();MV.q.push(id)}save();render();if(MV.mode!=='aud')say(it.fa)}
 function mistGo(){MV.i++;if(MV.i>=MV.q.length){try{gain(5)}catch(e){}}else mistNext();render();scrollTo(0,0)}
 function mistDel(id){if(!confirm('حذف هذا من دفترك؟'))return;S.mist[id].b=99;save();render()}
