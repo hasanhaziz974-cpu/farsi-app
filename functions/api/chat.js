@@ -125,7 +125,8 @@ const RULES =
   'Write explanations only in Arabic. Never correct the learner for typing Arabic letters (أ for ا, ي for ی, ك for ک, ة for ه): that is not a mistake. ';
 const FORMAT =
   'FA: your own reply, in your role, in Persian script. It answers the learner and moves the scene on; never repeat or correct the learner\'s sentence here\n' +
-  'TR: its Latin transliteration (like: salām, khoshhālam, che mikhāhid?)\n' +
+  'TR: its exact Latin transliteration, all lowercase, ā for long a, sh, kh, gh, ch, zh, and every letter written ' +
+  '(like: salām, befarmāyid, sefāresh, khoshhālam, che mikhāhid?)\n' +
   'AR: its translation into Arabic\n' +
   "FIX: the learner's whole last message rewritten in correct Persian (the full sentence, not a list of changes), or only - if it had no mistake. Check every word's spelling " +
   "and wrong words (examples: «خوبم ممنون شما چمور» → FIX: خوبم، ممنون. شما چطورید؟; «من از عربی هستم» → FIX: من عرب هستم.). Never put your own reply here.\n" +
@@ -177,12 +178,15 @@ const system = (s) =>
   'Stay in your role and speak only as yourself: never say the learner\'s lines or answer for them. ' +
   'Reply in simple, natural, correct modern Persian (Iran), 1 or 2 short sentences, ' +
   'beginner level, everyday words, and usually end with a short question that keeps the conversation going. ' +
+  'Sound like a real person in Iran, not a translation: do not start questions with «آیا» (just ask: «قند می‌خواهید؟»), ' +
+  'and follow Iranian habits (tea in an استکان with قند, not milk; تعارف; polite plural شما with strangers). ' +
   'Write standard Persian as in a textbook, not colloquial spelling (ممنونم or متشکرم, می‌کنم, می‌خواهم; never میکونم or میخوام). ' +
   'Never put words from Turkish, English, Arabic or any other language into the Persian line. Use Persian letters ی and ک. ' +
   'Write explanations only in Arabic. Never correct the learner for typing Arabic letters (أ for ا, ي for ی, ك for ک, ة for ه): that is not a mistake. ' +
   'Answer in exactly these five lines and nothing else:\n' +
   'FA: your own reply, in your role, in Persian script. It answers the learner and moves the conversation on; never repeat or correct the learner\'s sentence here\n' +
-  'TR: its Latin transliteration (like: salām, khoshhālam, che mikhāhid?)\n' +
+  'TR: its exact Latin transliteration, all lowercase, ā for long a, sh, kh, gh, ch, zh, and every letter written ' +
+  '(like: salām, befarmāyid, sefāresh, khoshhālam, che mikhāhid?)\n' +
   'AR: its translation into Arabic\n' +
   "FIX: the learner's whole last message rewritten in correct Persian (the full sentence, not a list of changes), or only - if it had no mistake. Check every word's spelling " +
   "and wrong words (examples: «خوبم ممنون شما چمور» → FIX: خوبم، ممنون. شما چطورید؟; «من از عربی هستم» → FIX: من عرب هستم.). Never put your own reply here.\n" +
@@ -196,6 +200,22 @@ const norm = (t) => String(t).replace(/[\u200c\u064B-\u0652\s.,،؟?!:«»"'\-�
   .replace(/[أإٱ]/g, 'ا').replace(/[يى]/g, 'ی').replace(/ك/g, 'ک').replace(/ة/g, 'ه');
 // Letters of scripts the app never uses (Korean, Chinese, Japanese, Cyrillic, Greek, Hebrew, Indic, Thai)
 // sometimes leak into a model's answer; they are removed with any label they carry ("설명:").
+// Speech recognition sometimes "hears" the same words again and again when the recording is unclear.
+// True when a run of 2 to 4 words comes three times in a row, or one word four times («بله بله بله» is real speech).
+export function repeats(text) {
+  const w = String(text).replace(/[.,،؛؟?!:«»"]/g, ' ').split(/\s+/).filter(Boolean);
+  for (let n = 1; n <= 4; n++) {
+    const times = n === 1 ? 4 : 3;
+    for (let i = 0; i + times * n <= w.length; i++) {
+      const a = w.slice(i, i + n).join(' ');
+      let same = true;
+      for (let t = 1; t < times && same; t++) same = a === w.slice(i + t * n, i + (t + 1) * n).join(' ');
+      if (same) return true;
+    }
+  }
+  return false;
+}
+
 const FOREIGN = /[\u0370-\u03FF\u0400-\u052F\u0590-\u05FF\u0900-\u0DFF\u0E00-\u0FFF\u1100-\u11FF\u3040-\u30FF\u3130-\u318F\u3400-\u9FFF\uAC00-\uD7AF]+\s*[:：]?\s*/g;
 
 // Edit distance, to check that a correction is the learner's sentence with a few changes and not something else.
@@ -384,8 +404,9 @@ export async function onRequest({ request, env }) {
         text = String((r && r.text) || '').trim();
       } catch (e2) { fail += ' | ' + String(e2 && e2.message).slice(0, 120); }
     }
-    text = text.replace(FOREIGN, ' ').replace(/\s{2,}/g, ' ').trim().slice(0, MAX_CHARS);
+    text = text.replace(FOREIGN, ' ').replace(/[A-Za-z]+[?!.]?/g, ' ').replace(/\s{2,}/g, ' ').trim().slice(0, MAX_CHARS);
     if (!text) return json({ error: 'voice', msg: 'لم أفهم التسجيل. تكلّم بوضوح وقرّب الهاتف ثم أعد المحاولة.', model: admin ? fail : undefined }, 422);
+    if (repeats(text)) return json({ error: 'voice', msg: 'لم أفهم التسجيل جيداً. قل جملة واحدة بوضوح، ثم أعد المحاولة.', model: admin ? 'repeated: ' + text : undefined }, 422);
     return counted({ text });
   }
 
