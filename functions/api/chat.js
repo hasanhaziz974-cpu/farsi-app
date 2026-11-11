@@ -116,6 +116,18 @@ export const CHAPTERS = [
     tasks: ["wish her a happy birthday", "give the gift", "ask who made the cake", "wish her a happy year"] },
   { role: "Parsa, your Iranian friend, saying goodbye at the airport as you return to Iraq at the end of your work contract",
     tasks: ["say they are going back to Iraq", "invite you to visit them in Iraq", "give their phone number or ask for yours", "say goodbye and thank you"] },
+  { role: "a lost-luggage clerk at Imam Khomeini airport in Tehran",
+    tasks: ["say their suitcase has not arrived", "describe the suitcase (colour, size)", "give the hotel address", "ask when the suitcase will arrive"] },
+  { role: "a carpet seller in the old bazaar of Tabriz",
+    tasks: ["greet you and ask for a small carpet", "ask if it is handmade and what it is made of", "bargain about the price", "ask if you can send it to Iraq"] },
+  { role: "a police officer at a police station in Tehran; the learner's wife's wallet was lost or stolen in the metro",
+    tasks: ["say the wallet is lost", "say where and when", "describe what was inside", "ask what to do now"] },
+  { role: "a nurse in a children's emergency room in Tehran; the learner's young son has a fever",
+    tasks: ["say their son is ill", "describe the symptoms (fever, cough)", "ask if he needs medicine", "ask when they can go home"] },
+  { role: "an excited football fan sitting next to the learner at Azadi stadium in Tehran",
+    tasks: ["ask which team you support", "say which team they like", "ask about the score or the best player", "celebrate the goal with you"] },
+  { role: "Parsa and his wife hosting a farewell dinner for the learner's family at their home",
+    tasks: ["thank you for the invitation", "praise the food", "say what they liked about the trip", "invite you to Iraq and say goodbye"] },
 ];
 
 
