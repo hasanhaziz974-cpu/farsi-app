@@ -3,7 +3,7 @@
 // tools/sync_access.py) can open it. People are stored as "allow:<email>" entries,
 // the same ones the trial check in _middleware.js reads.
 import { DAY, accessEmail, lastDay, today, PLAN_IDS, PAY_METHODS } from '../lib/trial.js';
-import { invitedCount } from '../lib/invite.js';
+import { invitedCount, isGift } from '../lib/invite.js';
 
 const PERIODS = { week: ['أسبوع', 7], month: ['شهر', 30], quarter: ['3 أشهر', 90], half: ['6 أشهر', 180], year: ['سنة', 365], forever: ['دائم', 0] };
 const FOREVER = 'دائم';
@@ -145,7 +145,8 @@ async function view(kv, msg) {
     .filter((t) => !allowedSet.has(t.email))
     .map((t) => ({ email: t.email, since: new Date(Number(t.value) || 0).toISOString().slice(0, 10) }));
   const learn = {};
-  const invited = {};
+  const invited = {}, gifts = {};
+  await Promise.all(allowed.map(async (a) => { gifts[a.email] = await isGift(kv, a.email, a.value); }));
   await Promise.all([...allowed, ...trials].map(async (x) => { learn[x.email] = await learning(kv, x.email); invited[x.email] = await invitedCount(kv, x.email); }));
   const inv = (e) => (invited[e] ? `<div class="mu">🎁 دعا ${invited[e]} ${invited[e] >= 3 && invited[e] <= 10 ? 'أصدقاء' : 'صديقاً'}</div>` : '');
   const week = Object.values(learn).filter((l) => l && Date.now() - l.last < 7 * DAY).length;
@@ -155,8 +156,8 @@ async function view(kv, msg) {
 
   const people = allowed.map(({ email, value }) => {
     const until = lastDay(value);
-    const state = !until ? '<span class="ok">دائم</span>'
-      : until >= now ? soon(until, now) : `<span class="end">انتهى في ${ltr(until)}</span>`;
+    const state = (gifts[email] && until >= now ? '<span class="mu">🎁 هدية دعوة · </span>' : '') + (!until ? '<span class="ok">دائم</span>'
+      : until >= now ? soon(until, now) : `<span class="end">انتهى في ${ltr(until)}</span>`);
     return `<div class="card"><div class="p"><span class="e">${esc(email)}</span>${state}</div>${learnLine(learn[email])}${inv(email)}
 <form method="post" class="row"><input type="hidden" name="email" value="${esc(email)}">${periodSelect()}
 <button name="action" value="add">تمديد</button><button name="action" value="remove" class="no">إيقاف</button></form></div>`;
