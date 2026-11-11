@@ -39,7 +39,7 @@ function collectTexts(A) {
   Object.keys(A.GLS).forEach(w => add(w));
   A.TRIP.forEach(t => { t.ln.forEach(l => add(l[0])); t.say.forEach(ps => ps.forEach(p => add(p[0]))); });
   A.V.forEach(v => add(v[0])); // infinitives, spoken in the dictionary
-  A.COL.forEach(c => c.e.forEach(e => add(e[1]))); // spoken Persian
+  [A.COL, A.ARW, A.SOC].forEach(D => D.forEach(c => c.e.forEach(e => add(e[1])))); // spoken Persian, Arabic words, phrases
   A.V.forEach(v => A.TN.forEach((n, t) => A.forms(v, t).forEach(x => add(x[0]))));
   const items = [...set].map(t => ({ t, n: A.hs(t) + '.mp3' })), seen = {};
   for (const i of items) {
