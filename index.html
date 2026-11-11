@@ -367,7 +367,7 @@ var DLV=false;
 // wrong or missing. «إملاء اليوم» in the review tab takes 5 sentences from what the learner has opened
 // (conversations, rules passed, stories of their levels); each conversation has its own. S.dct = day done.
 var DT=null;
-function dtN(s){return String(s||'').replace(/[ً-ٰٟـ]/g,'').replace(/[يى]/g,'ی').replace(/ك/g,'ک').replace(/ة/g,'ه').replace(/[أإٱ]/g,'ا').replace(/ؤ/g,'و').replace(/[٠-٩]/g,function(d){return String(d.charCodeAt(0)-0x660)}).replace(/[۰-۹]/g,function(d){return String(d.charCodeAt(0)-0x6f0)}).replace(/‌/g,'').replace(/[.,،؛؟?!:«»"()\-]/g,' ').trim().split(/\s+/).filter(Boolean)}
+function dtN(s){return String(s||'').replace(/ائ/g,'ای').replace(/[ً-ٰٟـ]/g,'').replace(/[يى]/g,'ی').replace(/ك/g,'ک').replace(/ة/g,'ه').replace(/[أإٱ]/g,'ا').replace(/ؤ/g,'و').replace(/[٠-٩]/g,function(d){return String(d.charCodeAt(0)-0x660)}).replace(/[۰-۹]/g,function(d){return String(d.charCodeAt(0)-0x6f0)}).replace(/‌/g,'').replace(/[.,،؛؟?!:«»"()\-]/g,' ').trim().split(/\s+/).filter(Boolean)}
 function dtPool(){var r=[],ok=function(s){var n=dtN(s).length;return n>=3&&n<=8};
 DLG.forEach(function(d,i){if(i===0||(S.dp&&S.dp[i-1]))d.l.forEach(function(l){if(ok(l[0]))r.push({fa:l[0],tr:l[1],ar:l[2],m:['l',lnId(l)]})})});
 GR.forEach(function(g,i){if(S.gp&&S.gp[i])g.e.forEach(function(e){if(ok(e[0]))r.push({fa:e[0],tr:e[1],ar:e[2],m:['g',exId(e)]})})});
@@ -376,11 +376,23 @@ if(r.length<5)DLG[0].l.concat(DLG[1].l).forEach(function(l){if(ok(l[0]))r.push({
 function dtCard(){var done=S.dct===ds(Date.now());return'<button class="row" style="border-color:var(--ac)" onclick="dtStart(\'day\')"><div><div style="font-weight:600">✍️ إملاء اليوم'+(done?' ✅':'')+'</div><div class="mu">'+(done?'أنجزته اليوم. يمكنك التمرّن مرة أخرى.':'استمع إلى 5 جمل واكتبها بالفارسية')+'</div></div><span class="mu">‹</span></button>'}
 function dtStart(src,i){var qs=src==='d'?DLG[i].l.map(function(l){return{fa:l[0],tr:l[1],ar:l[2],m:['l',lnId(l)]}}).slice(0,6):sh(dtPool()).slice(0,5);
 DT={src:src,d:i,i:0,sc:0,qs:qs,a:null,v:'',back:tab};render();scrollTo(0,0);setTimeout(function(){say(qs[0].fa)},300)}
-// Which expected words the learner wrote (longest common subsequence of the words).
+// Which expected words the learner wrote (longest common subsequence of the words). Letters missing from an
+// Arabic keyboard (پ چ ژ گ written ب ج ز ک) still count, as status 1 with a note; status 2 is exact, 0 wrong.
+// For a wrong word the learner's word in the same place is compared letter by letter for a note.
+var DTK={'پ':'ب','چ':'ج','ژ':'ز','گ':'ک'};
+// The learner's word matches the expected one if each letter is the same, or a پ چ ژ گ written as ب ج ز ک.
+function dtEq(e,t){if(e===t)return true;if(e.length!==t.length)return false;for(var k=0;k<e.length;k++)if(e[k]!==t[k]&&DTK[e[k]]!==t[k])return false;return true}
+function dtDiff(exp,got){var t=[];if(exp.length!==got.length)return'';for(var k=0;k<exp.length;k++)if(exp[k]!==got[k]&&DTK[exp[k]]!==got[k]&&t.indexOf(exp[k]+got[k])<0)t.push(exp[k]+got[k]);
+return t.length&&t.length<=2?t.map(function(x){return'«'+x[0]+'» لا «'+x[1]+'»'}).join('، '):''}
 function dtMark(exp,got){var a=dtN(exp),b=dtN(got),n=a.length,m=b.length,L=[],i,j;for(i=0;i<=n;i++){L[i]=[];for(j=0;j<=m;j++)L[i][j]=0}
-for(i=n-1;i>=0;i--)for(j=m-1;j>=0;j--)L[i][j]=a[i]===b[j]?L[i+1][j+1]+1:Math.max(L[i+1][j],L[i][j+1]);var ok=[],k;for(k=0;k<n;k++)ok.push(false);i=0;j=0;
-while(i<n&&j<m){if(a[i]===b[j]){ok[i]=true;i++;j++}else if(L[i+1][j]>=L[i][j+1])i++;else j++}return ok}
-function dtCheck(){var el=document.getElementById('dtin'),v=el?el.value.trim():'';if(!v||DT.a!==null)return;var q=DT.qs[DT.i];DT.v=v;DT.ok=dtMark(q.fa,v);DT.a=DT.ok.every(Boolean);snd(DT.a);
+for(i=n-1;i>=0;i--)for(j=m-1;j>=0;j--)L[i][j]=dtEq(a[i],b[j])?L[i+1][j+1]+1:Math.max(L[i+1][j],L[i][j+1]);
+var st=[],tip=[],at=[],k;for(k=0;k<n;k++){st.push(0);tip.push('');at.push(-1)}i=0;j=0;
+while(i<n&&j<m){if(dtEq(a[i],b[j])){st[i]=a[i]===b[j]?2:1;at[i]=j;i++;j++}else if(L[i+1][j]>=L[i][j+1])i++;else j++}
+for(k=0;k<n;k++){if(st[k]===1){var d=[];for(var c=0;c<a[k].length;c++)if(a[k][c]!==b[at[k]][c]&&d.indexOf(a[k][c])<0)d.push(a[k][c]);tip[k]='تُكتب بـ'+d.map(function(x){return'«'+x+'»'}).join(' و')}
+if(st[k]===0){var lo=-1,hi=m,p;for(p=k-1;p>=0;p--)if(at[p]>=0){lo=at[p];break}for(p=k+1;p<n;p++)if(at[p]>=0){hi=at[p];break}
+var cand=b.slice(lo+1,hi);if(cand.length===1){var df=dtDiff(a[k],cand[0]);tip[k]=df?'هنا '+df:''}}}
+return{st:st,tip:tip}}
+function dtCheck(){var el=document.getElementById('dtin'),v=el?el.value.trim():'';if(!v||DT.a!==null)return;var q=DT.qs[DT.i];DT.v=v;DT.ok=dtMark(q.fa,v);DT.a=DT.ok.st.every(Boolean);snd(DT.a);
 if(DT.a)DT.sc++;else if(q.m)mistX(q.m[0],q.m[1]);stay()}
 function dtNext(){DT.i++;DT.a=null;DT.v='';if(DT.i>=DT.qs.length){gain(DT.sc*5);if(DT.src==='day')S.dct=ds(Date.now());save()}render();scrollTo(0,0);var q=DT.qs[DT.i];if(q)setTimeout(function(){say(q.fa)},300)}
 function dtView(){var bk=DT.src==='d'?'DT=null;D='+DT.d+';render()':'DT=null;render()',h='<button class="back" onclick="'+bk+'">› '+(DT.src==='d'?'رجوع للمحادثة':'رجوع للمراجعة')+'</button><h2>✍️ '+(DT.src==='d'?'إملاء: '+DLG[DT.d].t:'إملاء اليوم')+'</h2>',n=DT.qs.length;
@@ -389,7 +401,7 @@ var q=DT.qs[DT.i];h+='<p class="mu">الجملة '+(DT.i+1)+' من '+n+' · اس
 h+='<div class="det" style="text-align:center"><button class="spk" style="width:72px;height:72px;font-size:32px" aria-label="استمع" onclick="say(\''+esc(q.fa)+'\')">🔊</button><div class="mu" style="margin-top:6px">اضغط لتسمع مرة أخرى</div>'+(DT.hint===DT.i||DT.a!==null?'<div style="margin-top:8px">'+q.ar+'</div>':'<button class="lnk-no" style="color:var(--pr);margin-top:6px" onclick="DT.hint='+DT.i+';stay()">أظهر المعنى بالعربية</button>')+'</div>';
 if(DT.a===null)return h+'<textarea id="dtin" dir="rtl" rows="2" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="اكتب الجملة هنا…" style="width:100%;font:inherit;font-size:22px;padding:12px;border-radius:12px;border:1.5px solid var(--bd);background:var(--sf);color:var(--tx);margin-top:12px">'+hesc(DT.v)+'</textarea><div class="btns"><button class="btn" onclick="dtCheck()">تحقّق</button></div>';
 var w=q.fa.replace(/[.,،؛؟?!:«»]+/g,' ').trim().split(/\s+/);
-h+='<div class="det" style="text-align:start;margin-top:12px"><b>'+(DT.a?'✅ صحيح!':'الجملة الصحيحة:')+'</b><div class="fa" style="font-size:22px;line-height:2;margin-top:6px">'+w.map(function(x,k){return'<span style="color:'+(DT.ok[k]?'var(--ok)':'var(--no)')+';'+(DT.ok[k]?'':'text-decoration:underline')+'">'+hesc(x)+'</span>'}).join(' ')+'</div><div class="tr" style="font-size:14px">'+q.tr+'</div>'+(DT.a?'':'<div class="mu" style="margin-top:6px">ما كتبته: <span style="font-size:17px">'+hesc(DT.v)+'</span><br>الكلمات الحمراء خاطئة أو ناقصة.</div>')+'</div>';
+h+='<div class="det" style="text-align:start;margin-top:12px"><b>'+(DT.a?'✅ صحيح!':'الجملة الصحيحة:')+'</b><div class="fa" style="font-size:22px;line-height:2;margin-top:6px">'+w.map(function(x,k){var s=DT.ok.st[k];return'<span style="color:'+(s===2?'var(--ok)':s===1?'#C77C0E':'var(--no)')+';'+(s===2?'':'text-decoration:underline')+'">'+hesc(x)+'</span>'}).join(' ')+'</div><div class="tr" style="font-size:14px">'+q.tr+'</div>'+(function(){var t=[];DT.ok.tip.forEach(function(x,k){if(x)t.push('<b class="fa" style="font-size:18px">'+hesc(w[k])+'</b>: '+x)});return t.length?'<div style="margin-top:6px;font-size:15px;line-height:1.9">💡 '+t.join('<br>💡 ')+'</div>':''})()+(DT.a?'':'<div class="mu" style="margin-top:6px">ما كتبته: <span style="font-size:17px">'+hesc(DT.v)+'</span><br>الكلمات الحمراء خاطئة أو ناقصة.</div>')+(DT.a&&DT.ok.st.indexOf(1)>=0?'<div class="mu" style="margin-top:6px">قُبلت الكلمات البرتقالية: حروفها ليست في لوحة المفاتيح العربية.</div>':'')+'</div>';
 return h+'<div class="btns"><button class="btn" onclick="dtNext()">'+(DT.i+1<n?'التالي':'النتيجة')+'</button></div>'}
  // the list of conversations is open (from the 💬 card in the conversations tab)
 function talk(){var h;
