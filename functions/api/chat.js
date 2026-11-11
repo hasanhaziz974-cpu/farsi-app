@@ -25,6 +25,7 @@ export const MODELS = [
 const LIMIT = { list: 100, member: 40, trial: 15, free: 3 }; // free: after the trial or subscription ended
 const VOICE_BYTES = 1024 * 1024; // about a minute of compressed speech; recordings stop at 15 seconds
 const CHECK_MODELS = ['@cf/openai/gpt-oss-120b', '@cf/meta/llama-3.3-70b-instruct-fp8-fast']; // checking trip replies
+const TRIAL_CHAPTERS = 6; // trip chapters open during the trial (level 1)
 const FREE_CHAPTER = 10; // messages a day in the free first chapter of the trip
 const MAX_TURNS = 12, MAX_CHARS = 300;
 
@@ -377,6 +378,8 @@ export async function onRequest({ request, env }) {
     return json({ error: 'scenario' }, 400);
   }
   if (chapter && c > 0 && !st.ok) return json({ error: 'free', msg: 'هذا الفصل للمشتركين. الفصل الأول مجاني.' }, 403);
+  // The trial opens the chapters of level 1 (the app's LVL[0].T); the rest is for subscribers.
+  if (chapter && st.kind === 'trial' && c >= TRIAL_CHAPTERS) return json({ error: 'free', msg: 'هذا الفصل للمشتركين. الفترة التجريبية تشمل أول ' + TRIAL_CHAPTERS + ' فصول.' }, 403);
 
   if (chapter) {
     const k = Number(body.k), said = String(body.said || '').trim().slice(0, MAX_CHARS), line = String(body.line || '').trim().slice(0, MAX_CHARS);
