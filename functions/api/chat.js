@@ -104,6 +104,18 @@ export const CHAPTERS = [
     tasks: ["ask you to fill the tank", "ask how far it is to the sea", "ask about a place to eat or rest nearby", "pay and thank you"] },
   { role: "Parsa's mother teaching the learner to cook ghormeh sabzi in her kitchen",
     tasks: ["say they want to learn to cook ghormeh sabzi", "ask what ingredients are needed", "ask how long it must cook", "thank her and say the food is delicious"] },
+  { role: "a cashier in a supermarket in Tehran",
+    tasks: ["ask where the milk or the bread is", "ask whether there is a discount", "ask whether they accept a bank card", "ask for a bag and thank you"] },
+  { role: "the manager of a travel company in Tehran interviewing the learner for a job that needs Arabic and Persian",
+    tasks: ["greet you and introduce themselves", "talk about their experience or studies", "ask about the working hours", "thank you and say they are waiting for your answer"] },
+  { role: "a dentist in Tehran",
+    tasks: ["say their tooth hurts", "say since when", "ask whether the treatment hurts", "ask about the next appointment and thank you"] },
+  { role: "the owner of a traditional guesthouse in Yazd",
+    tasks: ["greet you and say they have a reservation", "ask about the tower on the roof (the windcatcher)", "ask where they can see the desert", "thank you and say the place is beautiful"] },
+  { role: "Sara, a colleague celebrating her birthday at the office",
+    tasks: ["wish her a happy birthday", "give the gift", "ask who made the cake", "wish her a happy year"] },
+  { role: "Parsa, your Iranian friend, saying goodbye at the airport as you return to Iraq at the end of your work contract",
+    tasks: ["say they are going back to Iraq", "invite you to visit them in Iraq", "give their phone number or ask for yours", "say goodbye and thank you"] },
 ];
 
 
