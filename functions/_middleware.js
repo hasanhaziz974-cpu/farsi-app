@@ -6,6 +6,7 @@
 // text for no end date. Signed-in requests are checked only on page loads; audio, font and script
 // requests pass straight through. Requests without a verified sign-in get only the public pages.
 import { accessEmail, accessStatus } from '../lib/trial.js';
+import { applyInvite } from '../lib/invite.js';
 
 // Shown instead of the app when access has ended: the trial, or a subscription period.
 const PAGES = new Set(['/', '/index', '/index.html']);
@@ -71,7 +72,14 @@ async function handle({ request, env, next }) {
 
   // Starts the trial on the first visit. When the trial or subscription has ended the app still
   // opens, in its free version (first lessons and review); it learns which from /api/me.
-  await accessStatus(env.TRIALS, email, true);
-  return next();
+  // A friend's invite link (/welcome/?r=<code>) left its code in the "pr" cookie: it counts when the trial starts.
+  const st = await accessStatus(env.TRIALS, email, true);
+  const pr = (request.headers.get('Cookie') || '').match(/(?:^|;\s*)pr=([a-z0-9]{8})(?:;|$)/);
+  if (!pr) return next();
+  if (st.fresh) await applyInvite(env.TRIALS, email, pr[1]);
+  const res = await next();
+  const out = new Response(res.body, res);
+  out.headers.append('Set-Cookie', 'pr=; Max-Age=0; Path=/; Secure; SameSite=Lax');
+  return out;
 }
 
