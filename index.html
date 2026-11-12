@@ -775,7 +775,7 @@ t.s.forEach(function(l){h+='<div style="display:flex;gap:8px;align-items:center;
 h+='</div><h2>اختبر فهمك</h2><div class="det" style="text-align:start"><b>'+t.q+'</b></div>';
 if(!RQ)RQ={a:null};
 t.o.forEach(function(o,k){var c='opt';if(RQ.a!==null){if(k===t.a)c+=' good';else if(k===RQ.a)c+=' bad'}h+='<button class="'+c+'" '+(RQ.a!==null?'disabled':'')+' onclick="pickR('+k+')">'+o+'</button>'});
-if(RQ.a!==null)h+=fb(RQ.a===t.a,RQ,0)+(RQ.a===t.a?'<div class="btns"><button class="btn" onclick="rdBack()">✓ رجوع للمحادثة</button></div>':'<div class="btns"><button class="btn alt" onclick="RQ=null;render()">أعد السؤال</button></div>');
+if(RQ.a!==null)h+=fb(RQ.a===t.a,RQ,0)+(RQ.a===t.a?'':'<div class="btns"><button class="btn alt" onclick="RQ=null;render()">أعد السؤال</button></div>');
 return h}
 function pickR(k){if(!RQ)RQ={a:null};if(RQ.a!==null)return;RQ.a=k;RQ.m=Math.random();snd(k===RD[D].a);STK=k===RD[D].a?STK+1:0;RQ.s=STK;if(k===RD[D].a&&!(S.rd&&S.rd[D])){S.rd=S.rd||{};S.rd[D]=true;gain(5)}render();
 // A right answer finishes the text: after a moment the learner is back on the conversation page with a congratulation.
