@@ -987,17 +987,19 @@ function startRP(role){closeSheet();RP={d:D,role:role,i:0,sc:0,n:0,fin:false,o:n
 function rpEnter(){var L=DLG[RP.d].l;RP.hint=false;RP.mis=0;RP.bad={};if(RP.i<L.length&&rpMine(RP.i)){var ln=L[RP.i],all=[];DLG.forEach(function(x,di){if(di!==RP.d)x.l.forEach(function(l){all.push(l)})});
 RP.o=sh([ln].concat(sh(all.filter(function(l){return l[2]!==ln[2]&&l[0]!==ln[0]})).slice(0,2)))}}
 function rpEnd(){var L=DLG[RP.d].l;if(RP.i>=L.length&&!RP.fin){RP.fin=true;S.rpn=(S.rpn||0)+1;S.rpd=S.rpd||{};S.rpd[RP.d]=true;gain(RP.sc*10+10)}}
-function rpNext(){RP.i++;rpEnter();rpEnd();render()}
+// Role-play keeps the page where it is and brings the newest line into view instead of jumping to the top.
+function rpShow(){stay();var b=document.querySelectorAll('#main .bub'),l=b[b.length-1];if(l){var y=l.getBoundingClientRect().top+window.scrollY-90;if(y>window.scrollY)window.scrollTo({top:y,behavior:'smooth'})}}
+function rpNext(){RP.i++;rpEnter();rpEnd();rpShow()}
 function pickRP(k){var L=DLG[RP.d].l,ln=L[RP.i];
-if(RP.o[k]===ln){snd(true);if(!RP.mis&&!RP.hint)RP.sc++;RP.n++;var c=CHEER[Math.floor(Math.random()*CHEER.length)];toast(c[0]+' — '+c[2]);RP.i++;rpEnter();rpEnd();render();
+if(RP.o[k]===ln){snd(true);if(!RP.mis&&!RP.hint)RP.sc++;RP.n++;var c=CHEER[Math.floor(Math.random()*CHEER.length)];toast(c[0]+' — '+c[2]);RP.i++;rpEnter();rpEnd();rpShow();
 say(ln[0],function(){if(RP&&!RP.fin&&RP.i<L.length&&!rpMine(RP.i))say(L[RP.i][0])})}
-else{RP.mis++;snd(false);RP.bad[k]=true;STK=0;toast('ليس هذا هو الردّ المناسب، جرّب غيره 💪');render()}}
+else{RP.mis++;snd(false);RP.bad[k]=true;STK=0;toast('ليس هذا هو الردّ المناسب، جرّب غيره 💪');stay()}}
 function rpView(){var L=DLG[RP.d].l,h='<button class="back" onclick="RP=null;render()">› إنهاء التمثيل</button><h2>🎭 '+DLG[RP.d].t+'</h2><p class="mu">دورك: '+(RP.role==='A'?'الطرف الأول':'الطرف الثاني')+' · اختر الردّ المناسب في كل دور.</p>',j;
 for(j=0;j<RP.i&&j<L.length;j++)h+=bub(L[j],rpMine(j));
 if(RP.i>=L.length)return h+'<div class="det" style="margin-top:12px"><div class="big">'+RP.sc+' من '+RP.n+'</div><p>أحسنت! أتممت الحوار بدورك.</p><p class="mu">حصلت على '+cw((RP.sc*10+10),'نقاط','نقطة')+'</p></div><div class="btns"><button class="btn alt" onclick="RP=null;render()">للمحادثة</button><button class="btn" onclick="startRP(\''+(RP.role==='A'?'B':'A')+'\')">بدّل الدور</button></div>';
 if(!rpMine(RP.i))return h+bub(L[RP.i],false)+'<div class="btns"><button class="btn" onclick="rpNext()">متابعة ▶</button></div>';
 var ln=L[RP.i];
-h+='<div class="det" style="margin-top:12px"><p class="mu">دورك الآن</p><div style="font-weight:700;font-size:18px">ماذا ستردّ؟ 💬</div>'+(RP.hint?'<div class="mu" style="margin-top:6px">💡 المعنى المطلوب: «'+ln[2]+'»</div>':'<button class="back" style="color:#fff;font-size:14px" onclick="RP.hint=true;render()">💡 تلميح</button>')+'</div>';
+h+='<div class="det" style="margin-top:12px"><p class="mu">دورك الآن</p><div style="font-weight:700;font-size:18px">ماذا ستردّ؟ 💬</div>'+(RP.hint?'<div class="mu" style="margin-top:6px">💡 المعنى المطلوب: «'+ln[2]+'»</div>':'<button class="back" style="color:#fff;font-size:14px" onclick="RP.hint=true;stay()">💡 تلميح</button>')+'</div>';
 RP.o.forEach(function(o,k){var b=RP.bad[k];h+='<button class="opt'+(b?' bad':'')+'" '+(b?'disabled':'')+' onclick="pickRP('+k+')"><span class="fa" style="font-size:20px">'+o[0]+'</span><br><span style="font-size:13px;opacity:.85;direction:ltr;display:inline-block">'+o[1]+'</span></button>'});
 return h}
 /* ===== games menu ===== */
