@@ -128,6 +128,18 @@ export const CHAPTERS = [
     tasks: ["ask which team you support", "say which team they like", "ask about the score or the best player", "celebrate the goal with you"] },
   { role: "Parsa and his wife hosting a farewell dinner for the learner's family at their home",
     tasks: ["thank you for the invitation", "praise the food", "say what they liked about the trip", "invite you to Iraq and say goodbye"] },
+  { role: "a medical specialist in a Tehran clinic; the learner, an Iraqi student living in Tehran, has had pain for weeks",
+    tasks: ["say what hurts and since when", "ask whether a blood test or an X-ray is needed", "ask whether insurance covers the cost", "ask when to come back"] },
+  { role: "a university professor in Tehran supervising the learner's master's thesis, in his office",
+    tasks: ["greet you and ask whether you have time", "say what their thesis topic is", "say what difficulty they have", "ask when to send you the first chapter"] },
+  { role: "a clerk at the foreign nationals office (\u0627\u062f\u0627\u0631\u0647\u200c\u06cc \u0627\u062a\u0628\u0627\u0639) in Tehran; the learner, an Iraqi student, wants to extend their residence permit",
+    tasks: ["say they came to extend their residence permit", "say when their residence permit ends", "say which documents they brought", "ask when the new card will be ready"] },
+  { role: "the human resources manager of a company in Tehran interviewing the learner for a job after their studies",
+    tasks: ["introduce themselves and their field", "say how many years of experience they have", "say why they want to work at the company", "ask about the salary or the working hours"] },
+  { role: "an airline employee at Imam Khomeini airport; the learner's flight to Baghdad has been cancelled",
+    tasks: ["ask why the flight was cancelled", "ask for another flight to Baghdad", "ask about their suitcase or extra baggage", "thank you and ask where the boarding gate is"] },
+  { role: "Parsa, the learner's Iranian friend, at the tomb of the poet Hafez (Hafezieh) in Shiraz, near the end of the learner's studies",
+    tasks: ["say what they think of the place", "say what they know about Hafez or his poetry", "ask you to read them a Hafez fortune (fal)", "say what they wish for after graduating"] },
 ];
 
 
