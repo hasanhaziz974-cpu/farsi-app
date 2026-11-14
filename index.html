@@ -1087,7 +1087,9 @@ function rescue(){try{resetVolatile();tab='home';render()}catch(e){location.relo
 // A redraw of the same screen (same tab, heading and back button), such as choosing an answer, keeps the
 // page where it is; only moving to another screen starts from the top.
 var SKEY='';function scrKey(){var m=document.getElementById('main'),h=m&&m.querySelector('h2'),b=m&&m.querySelector('.back');return tab+'|'+(h?h.textContent:'')+'|'+(b?b.getAttribute('onclick'):'')}
-function render(){var y0=window.scrollY||0,k0=SKEY,st=STAY!==null;try{planCheck()}catch(e){}try{render0();markFa();SKEY=scrKey();if(!st&&k0&&SKEY===k0&&y0)window.scrollTo(0,y0)}catch(e){try{console.error(e);document.getElementById('main').innerHTML='<div class="det"><div class="big">⚠️</div><p>حدث خطأ غير متوقع، وتقدّمك محفوظ.</p><div class="btns"><button class="btn" onclick="rescue()">العودة للرئيسية</button></div></div>'}catch(x){}}}
+// Going back to a screen seen before in this visit (a list after a lesson, for example) returns to where it was left.
+var SSTK=[];function scrBack(k0,y0){if(SKEY===k0){if(y0)window.scrollTo(0,y0);return}for(var i=SSTK.length-1;i>=0;i--)if(SSTK[i].k===SKEY){var y=SSTK[i].y;SSTK.length=i;window.scrollTo(0,y);return}SSTK=SSTK.filter(function(x){return x.k!==k0});SSTK.push({k:k0,y:y0});if(SSTK.length>20)SSTK.shift()}
+function render(){var y0=window.scrollY||0,k0=SKEY,st=STAY!==null;try{planCheck()}catch(e){}try{render0();markFa();SKEY=scrKey();if(!st&&k0)scrBack(k0,y0)}catch(e){try{console.error(e);document.getElementById('main').innerHTML='<div class="det"><div class="big">⚠️</div><p>حدث خطأ غير متوقع، وتقدّمك محفوظ.</p><div class="btns"><button class="btn" onclick="rescue()">العودة للرئيسية</button></div></div>'}catch(x){}}}
 window.onerror=function(){try{toast('حدث خطأ بسيط، حاول مرة أخرى')}catch(e){}return false};
 var AC=null;
 function sfx(k){try{if(S.sfx===0)return;if(!AC){var C=window.AudioContext||window.webkitAudioContext;if(!C)return;AC=new C()}if(AC.state==='suspended')AC.resume();
