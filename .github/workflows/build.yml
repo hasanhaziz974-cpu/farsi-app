@@ -1,6 +1,12 @@
 name: Build Android AAB
 on:
   workflow_dispatch:
+    inputs:
+      audio:
+        description: 'Bundle the recorded audio in the APK (yes = fully offline but about 144 MB, which HONOR phones reject; no = the app streams it from the site and offers it as a downloadable pack)'
+        type: choice
+        options: ['no', 'yes']
+        default: 'no'
 permissions:
   contents: write
 jobs:
@@ -38,7 +44,7 @@ jobs:
         if: env.KS_B64 != ''
         run: |
           mkdir -p www && cp -r index.html bridge.js fonts www/
-          if [ -d audio ]; then cp -r audio www/; else echo "::warning::No audio folder, the app will use device text-to-speech"; fi
+          if [ "${{ inputs.audio }}" != "yes" ]; then sed -i "s#^window.PACK_URL = '';#window.PACK_URL = 'https://parsa-farsi.pages.dev/audio/';#" www/bridge.js; grep -q "pages.dev/audio/" www/bridge.js || { echo "::error::Could not set the audio pack URL"; exit 1; }; elif [ -d audio ]; then cp -r audio www/; else echo "::warning::No audio folder, the app will use device text-to-speech"; fi
           npm ci
           npx cap add android
           mkdir -p assets && cp icon-only.png assets/

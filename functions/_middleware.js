@@ -14,7 +14,8 @@ const PAGES = new Set(['/', '/index', '/index.html']);
 // Without a verified sign-in only the public pages may be served. They carry data-public on their
 // <html> tag; anything else (the app, or the app served as a fallback for an unknown path) is refused.
 // This also covers hosts Access does not cover, like a deployment's own *.pages.dev address.
-const PUBLIC = ['/welcome', '/fonts/', '/pwa/', '/login', '/api/auth/', '/logout'];
+// /audio/ is public: the Android app (no sign-in) streams the recorded pronunciation and downloads it as a pack.
+const PUBLIC = ['/welcome', '/fonts/', '/pwa/', '/audio/', '/login', '/api/auth/', '/logout'];
 const WELCOME = new Set(['/welcome', '/welcome/', '/welcome/index.html', '/login', '/login/', '/login/index.html']);
 
 async function publicOnly(request, next) {
@@ -58,6 +59,8 @@ export async function onRequest(context) {
     const path = new URL(context.request.url).pathname;
     const rule = CACHE.find(([re]) => re.test(path));
     if (rule) out.headers.set('Cache-Control', rule[1]);
+    // The Android app's page (https://localhost) fetches the audio pack across origins.
+    if (path.startsWith('/audio/')) out.headers.set('Access-Control-Allow-Origin', '*');
   }
   return out;
 }
