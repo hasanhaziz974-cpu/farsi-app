@@ -1187,25 +1187,31 @@ h+=c.miss.length?linksHtml('تعلّم الباقي في:',c.miss.slice(0,3),[],
 
 // Daily plan: three steps picked once a day from different sections, so each day reviews, moves the
 // current lesson on and applies it in a linked conversation or rule. Finishing all three gives +15.
-function planDone(x){var p=S.plan||{};switch(x.t){case'mi':return(p.mi||0)>=x.n;case'sy':return!!(S.story&&S.story[x.i]);case'cs':return!!(S.colp&&S.colp[x.s==='col'?x.i:x.s+x.i]);case'rv':return(p.rv||0)>=x.n;case'dc':return S.dc===ds(Date.now());case'st':return sp(x.l)>x.g;case'd':return!!(S.dp&&S.dp[x.i]);case'g':return!!(S.gp&&S.gp[x.i]);case'rd':return!!(S.rd&&S.rd[x.i]);case'rp':return!!(S.rpd&&S.rpd[x.i]);case'tr':return tripDone(x.i)}return false}
+function planDone(x){var p=S.plan||{};switch(x.t){case'mi':return(p.mi||0)>=x.n;case'sy':return!!(S.story&&S.story[x.i]);case'cs':return!!(S.colp&&S.colp[x.s==='col'?x.i:x.s+x.i]);case'rv':return(p.rv||0)>=x.n;case'dc':return S.dc===ds(Date.now());case'st':return sp(x.l)>x.g;case'd':return!!(S.dp&&S.dp[x.i]);case'g':return!!(S.gp&&S.gp[x.i]);case'rd':return!!(S.rd&&S.rd[x.i]);case'rp':return!!(S.rpd&&S.rpd[x.i]);case'tr':return tripDone(x.i);case'ex':return!!(S.exam&&S.exam[x.k]&&S.exam[x.k].ok);case'dt':return S.dct===ds(Date.now())}return false}
 function planApply(cur,it){var c=[],i,ls=cur===null?[]:[cur];if(cur>0)ls.push(cur-1);
 ls.forEach(function(l){LINK[l][1].forEach(function(d){c.push({t:'d',i:d,l:l})});c.push({t:'g',i:lg(l)[0],l:l})});
 for(i=0;i<DLG.length;i++)c.push({t:'d',i:i});for(i=0;i<GR.length;i++)c.push({t:'g',i:i});
-for(i=0;i<DLG.length;i++)if(S.dp&&S.dp[i]){c.push({t:'rd',i:i});c.push({t:'rp',i:i})}
+for(i=DLG.length-1;i>=0;i--)if(S.dp&&S.dp[i]){c.push({t:'rd',i:i});c.push({t:'rp',i:i})}
 for(i=0;i<c.length;i++){var x=c[i];if(it.some(function(y){return y.t===x.t&&y.i===x.i}))continue;if(planDone(x))continue;if(x.t==='d'&&!dOpen(x.i))continue;if(x.t==='g'&&!gOpen(x.i))continue;if((x.t==='rd'||x.t==='rp')&&!allowed('D',x.i))continue;return x}return null}
-function planMake(){var t=ds(Date.now());if(S.plan&&S.plan.d===t&&S.plan.v===2)return S.plan;var keep=S.plan&&S.plan.d===t?S.plan:null;var it=[],due=queue().due.length,ns=nextStep(),cur=ns?ns.l:LES.length-1;
+function planMake(){var t=ds(Date.now());if(S.plan&&S.plan.d===t&&S.plan.v===3)return S.plan;var keep=S.plan&&S.plan.d===t?S.plan:null;var it=[],due=queue().due.length,ns=nextStep(),cur=ns?ns.l:LES.length-1;
 it.push(due?{t:'rv',n:Math.min(due,8),s:queue().due.some(function(x){return x.sent})}:{t:'dc'});if(ns)it.push({t:'st',l:ns.l,g:ns.g});
 var ap=planApply(cur,it),tc=webApp()?tripNext():null;if(ap&&ap.t==='d'&&tc!==null)ap={t:'tr',i:tc};if(ap)it.push(ap);if(!ns){ap=planApply(cur,it);if(ap)it.push(ap)}
-var ex=planExtra();if(ex)it.push(ex);
-S.plan={d:t,it:it,rv:keep?keep.rv||0:0,mi:keep?keep.mi||0:0,ok:keep?keep.ok||0:0,v:2};snapTake();save();return S.plan}
-// A fourth step that brings in the other parts of the app: due mistakes from the notebook first, otherwise
-// (alternating by day) the next unread story or the next lesson of a special section.
-function planExtra(){if(!webFree()&&mistDue().length>=3)return{t:'mi',n:Math.min(mistDue().length,6)};
-var sy=null,cs=null,i,k;var ord=STORY.map(function(s,i){return i}).sort(function(a,b){return STORY[a].lv-STORY[b].lv||a-b});
-for(k=0;k<ord.length&&sy===null;k++){i=ord[k];if(!(S.story&&S.story[i])&&!stLock(i))sy={t:'sy',i:i}}
-var sl=['col','ar','soc','poem'],d0=dayNo(Date.now());for(k=0;k<sl.length&&cs===null;k++){var s=sl[(d0+k)%sl.length];for(i=0;i<SEC[s].d.length;i++){var key=s==='col'?i:s+i;if(S.colp&&S.colp[key])continue;if(!colLock(i))cs={t:'cs',s:s,i:i};break}}
-return d0%2?(sy||cs):(cs||sy)}
-var PMIN={rv:3,dc:2,st:4,d:4,g:4,rd:2,rp:3,tr:6,mi:3,sy:4,cs:4};
+var ex=planExtra(cur,!ns);if(ex)it.push(ex);
+S.plan={d:t,it:it,rv:keep?keep.rv||0:0,mi:keep?keep.mi||0:0,ok:keep?keep.ok||0:0,v:3};snapTake();save();return S.plan}
+// A fourth step that brings in the other parts of the app: due mistakes from the notebook first, then an
+// end-of-level exam that is open and not passed, otherwise (turning by day) a story, a lesson of a special
+// section or the daily dictation. The story is the current lesson's, else the nearest one to the learner's
+// level and never above it; the poetry corner waits for level 4.
+function planExtra(cur,end){if(!webFree()&&mistDue().length>=3)return{t:'mi',n:Math.min(mistDue().length,6)};
+var k,i,lv=end?LVL.length:lvOf(cur)+1;
+for(k=0;k<LVL.length;k++)if(lvlPct(k)>=80&&exState(k)===''&&!(S.exam&&S.exam[k]&&S.exam[k].ok))return{t:'ex',k:k};
+var sy=null,cs=null,dt=S.dct===ds(Date.now())?null:{t:'dt'},slv=function(i){return STORY[i].c?5:STORY[i].lv};
+var ord=STORY.map(function(s,i){return i}).filter(function(i){return slv(i)<=lv&&!(S.story&&S.story[i])&&!stLock(i)});
+var mine=lesStories(cur).filter(function(i){return ord.indexOf(i)>=0});
+ord.sort(function(a,b){return slv(b)-slv(a)||a-b});if(mine.length||ord.length)sy={t:'sy',i:mine.length?mine[0]:ord[0]};
+var sl=['col','ar','soc'].concat(lv>=4?['poem']:[]),d0=dayNo(Date.now());for(k=0;k<sl.length&&cs===null;k++){var s=sl[(d0+k)%sl.length];for(i=0;i<SEC[s].d.length;i++){var key=s==='col'?i:s+i;if(S.colp&&S.colp[key])continue;if(!colLock(i))cs={t:'cs',s:s,i:i};break}}
+var pick=[[sy,cs,dt],[cs,dt,sy],[dt,sy,cs]][d0%3];for(k=0;k<3;k++)if(pick[k])return pick[k];return null}
+var PMIN={rv:3,dc:2,st:4,d:4,g:4,rd:2,rp:3,tr:6,mi:3,sy:4,cs:4,ex:10,dt:4};
 function planLabel(x){switch(x.t){
 case'rv':return['🔁 راجع '+(x.s?cw(x.n,'بطاقات','بطاقة'):cw(x.n,'كلمات','كلمة')),(x.s?'كلمات وجمل ':'')+'حان موعد مراجعتها، قبل أن تنساها'];
 case'dc':return['⚡ تحدّي اليوم','6 أسئلة سريعة من كلماتك · +20 نقطة'];
@@ -1217,9 +1223,11 @@ case'rp':return['🎭 مثّل حوار «'+DLG[x.i].t+'»','تكلّم بدور
 case'mi':return['📕 تمرّن على أخطائك ('+x.n+')','أخطاء سابقة من دفترك حان موعد التمرين عليها'];
 case'sy':return['📖 قصة «'+STORY[x.i].ta+'»','اقرأ واستمع، ثم أجب عن 3 أسئلة'];
 case'cs':return[SEC[x.s].ic+' '+SEC[x.s].d[x.i].t,SEC[x.s].t+' · درس قصير وتمرين'];
-case'tr':return['🧳 الفصل '+(x.i+1)+' من رحلتك: '+TRIP[x.i].t,'تكلّم بالفارسية مع '+TRIP[x.i].who+' وأنجز مهامك']}return['','']}
+case'tr':return['🧳 الفصل '+(x.i+1)+' من رحلتك: '+TRIP[x.i].t,'تكلّم بالفارسية مع '+TRIP[x.i].who+' وأنجز مهامك'];
+case'ex':return['📝 اختبار نهاية المستوى '+(x.k+1)+': '+LVL[x.k].n,'أكملت '+lvlPct(x.k)+'% من المستوى · 20 سؤالاً تقيس ما تعلّمته'];
+case'dt':return['✍️ إملاء اليوم','5 جمل تسمعها وتكتبها بالفارسية']}return['','']}
 function planGo(k){var x=S.plan.it[k];switch(x.t){case'rv':go('review');break;case'dc':startDaily();break;case'st':goStep(x.l,x.g);break;case'd':openD(x.i);break;case'g':openG(x.i);break;
-case'rd':go('talk');D=x.i;RV=true;RQ=null;render();break;case'rp':go('talk');D=x.i;render();rpChoose();break;case'tr':go('talk');aiOpen();aiChapter(x.i);break;case'mi':go('review');MV={};mistStart();break;case'sy':go('talk');stOpen(x.i);break;case'cs':CS=x.s;CFROM='home';go('col');CL=x.i;render()}}
+case'rd':go('talk');D=x.i;RV=true;RQ=null;render();break;case'rp':go('talk');D=x.i;render();rpChoose();break;case'tr':go('talk');aiOpen();aiChapter(x.i);break;case'mi':go('review');MV={};mistStart();break;case'sy':go('talk');stOpen(x.i);break;case'cs':CS=x.s;CFROM='home';go('col');CL=x.i;render();break;case'ex':go('me');exStart(x.k);break;case'dt':go('review');dtStart('day')}}
 function planCard(){if(!S.xp)return'';var p=planMake(),n=0,h='';p.it.forEach(function(x,k){var dn=planDone(x),lb=planLabel(x);if(dn)n++;
 h+='<button class="prow'+(dn?' dn':'')+'" onclick="planGo('+k+')"><span class="pi">'+(dn?'✓':k+1)+'</span><div style="flex:1"><div style="font-weight:600">'+lb[0]+'</div><div class="mu">'+lb[1]+'</div></div><span class="mu">‹</span></button>'});
 var mn=0;p.it.forEach(function(x){if(!planDone(x))mn+=PMIN[x.t]||3});
