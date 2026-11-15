@@ -2,7 +2,7 @@
 // - The app page: network first, so the sign-in and trial checks in functions/_middleware.js still run
 //   whenever there is a connection. The last good copy is used only when the phone is offline.
 // - Fonts, scripts, icons and audio: cached on first use, so lessons heard once also play offline.
-// - Daily reminder: tools/send_reminders.py sends an empty push; the text is chosen here (on the
+// - Daily reminder: the reminder Worker (workers/reminders/index.js) sends an empty push; the text is chosen here (on the
 //   trial's last day it says the trial is ending).
 const APP = 'parsa-app-v1';
 const MEDIA = 'parsa-media-v1';

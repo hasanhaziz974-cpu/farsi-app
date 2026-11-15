@@ -12,6 +12,10 @@ It is authorised with VAPID (RFC 8292): an ES256 key pair kept in KV under "vapi
 the first run. Subscriptions the push service reports as gone (404 or 410) are deleted.
 
 Env: CF_API_TOKEN, CF_ACCOUNT_ID. Emails are never printed: Actions logs of this repository are public.
+
+The Cloudflare Worker in workers/reminders/ now does this job. While it runs (it writes the time of its
+last run to "reminders:worker"), this script stops at once, so no reminder goes out twice; it is kept
+only as a fallback until the Worker is deployed.
 """
 import base64, datetime, json, os, re, sys, time, urllib.error, urllib.parse, urllib.request
 
@@ -122,6 +126,13 @@ def push(key, public, sub):
 def main():
     account = os.environ['CF_ACCOUNT_ID'].strip()
     kv = kv_path(account)
+    try:
+        worker = int(cf('GET', f'{kv}/values/reminders:worker', raw=True))
+    except (urllib.error.HTTPError, ValueError):
+        worker = 0
+    if time.time() * 1000 - worker < 3600 * 1000:
+        print('The Cloudflare reminder Worker is running; nothing to do here.')
+        return
     key, public = vapid_key(kv)
     now = datetime.datetime.now(datetime.timezone.utc)
     counts = {'reminders': 0, 'sent': 0, 'studied': 0, 'removed': 0, 'failed': 0}

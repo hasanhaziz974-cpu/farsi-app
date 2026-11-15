@@ -1,0 +1,27 @@
+name: Deploy the reminder Worker
+# Puts workers/reminders/index.js on Cloudflare with its 10-minute schedule (tools/deploy_reminders.py).
+# Runs when the Worker changes on main, or by hand. Once it runs, the hourly GitHub job
+# (reminders.yml) stops sending by itself.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'workers/reminders/**'
+      - 'tools/deploy_reminders.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Deploy
+        env:
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+          REMINDER_BUDGET: ${{ vars.REMINDER_BUDGET }}
+        run: python3 tools/deploy_reminders.py

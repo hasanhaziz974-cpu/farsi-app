@@ -1,8 +1,9 @@
 // Daily reminder settings for the installed web app. Each signed-in learner has one KV entry,
 // "push:<email>" = {sub, hour, tz, last, sent}: the browser's push subscription, the local hour to
 // remind at, the browser's UTC offset (getTimezoneOffset, minutes), the last local day they studied
-// and the last local day a reminder went out. tools/send_reminders.py (hourly) sends the reminders.
-// The VAPID key pair is in KV under "vapid"; that script creates it on its first run.
+// and the last local day a reminder went out. The same record is kept as the key's metadata, so the
+// reminder Worker (workers/reminders/index.js, every 10 minutes) lists learners without reading each value.
+// The VAPID key pair is in KV under "vapid"; the Worker creates it if missing.
 import { accessEmail } from '../../lib/trial.js';
 
 const json = (body, status = 200) => new Response(JSON.stringify(body), {
@@ -11,6 +12,11 @@ const json = (body, status = 200) => new Response(JSON.stringify(body), {
 });
 
 const DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+// Same as meta() in workers/reminders/index.js: the record as metadata (1024 bytes at most).
+const meta = (rec) => JSON.stringify(rec).length <= 1000 ? rec
+  : { sub: { endpoint: rec.sub.endpoint }, hour: rec.hour, tz: rec.tz, last: rec.last, sent: rec.sent, big: 1 };
+const save = (kv, key, rec) => kv.put(key, JSON.stringify(rec), { metadata: meta(rec) });
 
 export async function onRequest({ request, env }) {
   const kv = env.TRIALS;
@@ -47,10 +53,10 @@ export async function onRequest({ request, env }) {
       return json({ error: 'invalid' }, 400);
     }
     const old = (await kv.get(key, 'json')) || {};
-    await kv.put(key, JSON.stringify({
+    await save(kv, key, {
       sub: { endpoint: sub.endpoint, keys: sub.keys }, hour, tz,
       last: old.last || '', sent: old.sent || '',
-    }));
+    });
     return json({ on: true, hour });
   }
 
@@ -58,7 +64,7 @@ export async function onRequest({ request, env }) {
     const rec = await kv.get(key, 'json');
     if (rec && DAY_RE.test(String(body.day)) && rec.last !== body.day) {
       rec.last = body.day;
-      await kv.put(key, JSON.stringify(rec));
+      await save(kv, key, rec);
     }
     return json({ ok: true });
   }
