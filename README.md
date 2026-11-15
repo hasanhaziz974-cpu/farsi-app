@@ -48,3 +48,15 @@ Learn Persian app
 ## الإصدار والمكتبات
 - رقم الإصدار الظاهر للمستخدم يُبنى تلقائياً: أول رقمين من `version` في `package.json` ثم رقم البناء، مثل `1.0.12`. لإصدار جديد مثل `1.1` غيّر `version` إلى `1.1.0`.
 - إصدارات Capacitor مثبّتة في `package.json` و`package-lock.json`، فلا يتغير البناء فجأة عند صدور إصدار جديد. لتحديثها عدّل الأرقام عمداً واختبر البناء.
+
+## صور صفحة الترحيب والمتجر
+
+`node tools/store-images.js` يلتقط من `index.html` (بتقدّم تجريبي) صور Google Play الست في `store/screenshots/` وصورة المتجر `store/feature-graphic.png`، ويكتب صورة المشاركة `welcome/og.png` (تظهر عند إرسال الرابط). صور «نظرة على التطبيق» في صفحة الترحيب هي `1-lessons` و`3-letters` و`4-dialogue` بحجم 540×960 WebP:
+
+```
+python3 -c "from PIL import Image
+for n in ['1-lessons','3-letters','4-dialogue']:
+  Image.open(f'store/screenshots/{n}.png').convert('RGB').resize((540,960),Image.LANCZOS).save(f'welcome/{n}.webp','WEBP',quality=82,method=6)"
+```
+
+أعد التقاطها بعد أي تغيير ظاهر في الشاشات، وحدّث الأعداد في `welcome/index.html` و`store/listing.md` بعد إضافة محتوى.
