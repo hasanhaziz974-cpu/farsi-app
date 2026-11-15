@@ -65,6 +65,11 @@ jobs:
           APK=$(find android -name "*release*.apk" | head -1)
           "$BT/zipalign" -f -p 4 "$APK" aligned.apk
           "$BT/apksigner" sign --ks upload.jks --ks-key-alias upload --ks-pass env:KS_PASS --key-pass env:KS_PASS --out farsi-app.apk aligned.apk
+          # Check the signed APK installs: signature schemes, minimum Android version, size and checksum
+          # (compare the size and SHA-256 with the downloaded file when a phone says the package is invalid).
+          "$BT/apksigner" verify --verbose farsi-app.apk | grep -E "Verifies|Verified using v[123]"
+          "$BT/aapt2" dump badging farsi-app.apk | grep -E "^package:|sdkVersion" || true
+          ls -l farsi-app.apk farsi-app.aab; sha256sum farsi-app.apk
       - name: Publish the signed file
         if: env.KS_B64 != ''
         uses: actions/upload-artifact@v6
