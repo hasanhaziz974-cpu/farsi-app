@@ -169,7 +169,8 @@ try{var s0=JSON.parse(localStorage.getItem("fa-app")||"null");if(s0){S=s0;S.srs=
 if(S.v!==2){try{migrateV2()}catch(e){}S.v=2;try{save()}catch(e){}}
 function save(){try{localStorage.setItem("fa-app",JSON.stringify(S))}catch(e){}try{syncMark()}catch(e){}}
 // Arabic counting: plural for 3 to 10, singular otherwise; two = the dual word, said without the number.
-function cw(n,p,s,two){return n===2&&two?two:n+' '+(n>=3&&n<=10?p:s)}
+// One of a noun given in the accusative (يوماً، درساً) reads «يوم واحد»: «1 يوماً» is wrong Arabic.
+function cw(n,p,s,two){return n===2&&two?two:n===1&&/اً$/.test(s)?s.slice(0,-2)+' واحد':n+' '+(n>=3&&n<=10?p:s)}
 function ds(t){return new Date(t).toDateString()}
 function gain(n){var ol=lvl(S.xp);S.xp+=n;var t=ds(Date.now()),nd=S.last!==t;if(nd){S.st=S.last===ds(Date.now()-DAY)?S.st+1:1;S.last=t}
 var dg=S.dg;if(!dg||dg.d!==t)dg=S.dg={d:t,x:0,ok:0};dg.x+=n;var dn=dayNo(Date.now());S.hist=S.hist||{};S.hist[dn]=(S.hist[dn]||0)+n;Object.keys(S.hist).forEach(function(k){if(+k<dn-30)delete S.hist[k]});var hit=false;if(!dg.ok&&dg.x>=GOAL){dg.ok=1;S.dgn=(S.dgn||0)+1;S.xp+=10;hit=true}
@@ -1739,7 +1740,7 @@ function bkCheck(t){if(t===undefined)t=document.getElementById('bki').value;var 
 function bkLoad(inp){var f=inp.files&&inp.files[0];if(!f)return;var r=new FileReader();r.onload=function(){bkCheck(String(r.result))};r.onerror=function(){toast('تعذّرت قراءة الملف')};r.readAsText(f)}
 function bkApply(){var o=BK&&BK.o;if(!o)return;o.prem=S.prem;o.rem=S.rem;o.remDay=S.remDay;o.resetAt=Date.now();S=o;S.srs=S.srs||{};S.xp=S.xp||0;S.st=S.st||0;S.last=S.last||'';if(S.v!==2){try{migrateV2()}catch(e){}S.v=2}resetVolatile();BK=null;save();render();toast('✅ استُعيد تقدّمك')}
 function settingsBox(){return'<div class="det" style="text-align:start"><b>⚙️ عام</b><div class="btns"><button class="btn alt" onclick="S.sfx=S.sfx===0?1:0;save();render();sfx(\'ok\')">'+(S.sfx===0?'🔇 الأصوات والاهتزاز: متوقفة':'🔊 الأصوات والاهتزاز: تعمل')+'</button></div><div class="btns"><button class="btn alt" onclick="testAudio()">🔈 اختبر الصوت</button><button class="btn alt" onclick="shareProg()">📣 شارك تقدّمك</button></div><div id="aud" style="margin-top:8px;line-height:1.9"></div></div>'}
-function shareProg(){var l=lvl(S.xp),t='أتعلّم الفارسية مع تطبيق «الفارسية من الصفر» 🌹\nالمستوى '+(l+1)+' ('+LT[Math.min(l,LT.length-1)]+') · '+cw(cnt(S.srs),'كلمات','كلمة')+' · سلسلة '+cw((S.st||0),'أيام','يوماً','يومان')+' 🔥\nجرّبه معي مجاناً:\nhttps://parsa-farsi.pages.dev/welcome/';
+function shareProg(){var l=lvl(S.xp),t='أتعلّم الفارسية مع تطبيق «الفارسية من الصفر» 🌹\nالمستوى '+(l+1)+' ('+LT[Math.min(l,LT.length-1)]+') · '+cw(cnt(S.srs),'كلمات','كلمة')+' · سلسلة '+cw((S.st||0),'أيام','يوماً','يومان')+' 🔥\nجرّبه معي مجاناً:\nhttps://parsa-farsi.pages.dev/welcome';
 try{if(navigator.share){navigator.share({text:t}).catch(function(){});return}if(navigator.clipboard){navigator.clipboard.writeText(t).then(function(){toast('نُسخ النص، الصقه حيث تشاء')},function(){toast(t)});return}}catch(e){}toast('انسخ هذا النص: '+t)}
 function weekBox(){var dn=dayNo(Date.now()),nm=['ح','ن','ث','ر','خ','ج','س'],xs=[],mx=1,i,tot=0;
 for(i=6;i>=0;i--){var v=(S.hist&&S.hist[dn-i])||0;xs.push([dn-i,v]);if(v>mx)mx=v;tot+=v}
