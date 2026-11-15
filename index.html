@@ -186,8 +186,11 @@ function say(t,cb){try{speechSynthesis.cancel()}catch(e){}
 try{if(AU)AU.pause()}catch(e){}
 var done=false,n=hs(t)+'.mp3';function f(){if(done)return;done=true;tts(t,cb)}
 function play(src){try{AU=new Audio(src);AU.onerror=f;AU.onended=function(){if(src.indexOf('blob:')===0)try{URL.revokeObjectURL(src)}catch(e){}if(cb)cb()};var p=AU.play();if(p&&p.catch)p.catch(f)}catch(e){f()}}
-if(S.packOk&&PACK_URL&&window.caches){caches.open('farsi-audio-v1').then(function(c){return c.match(packUrl(n))}).then(function(r){if(!r)return play('audio/'+n);return r.blob().then(function(b){play(URL.createObjectURL(b))})}).catch(function(){play('audio/'+n)})}
-else play('audio/'+n)}
+// With a pack URL (the Android app, whose APK carries no audio) a file not yet in the downloaded pack
+// streams from the site; without internet it falls back to the phone voice.
+var src0=PACK_URL?packUrl(n):'audio/'+n;
+if(S.packOk&&PACK_URL&&window.caches){caches.open('farsi-audio-v1').then(function(c){return c.match(packUrl(n))}).then(function(r){if(!r)return play(src0);return r.blob().then(function(b){play(URL.createObjectURL(b))})}).catch(function(){play(src0)})}
+else play(src0)}
 function sh(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t}return a}
 function esc(s){return s.replace(/'/g,"&#39;")}
 var tab="home",sub=null,Q=null,R={show:false},selL=null;
@@ -868,7 +871,7 @@ function testAudio(){var t=LES[0].w[0][0],o=document.getElementById('aud'),done=
 say(t);
 function fin(){if(done)return;done=true;var v=[];try{v=speechSynthesis.getVoices().filter(function(x){return /^fa/i.test(x.lang)})}catch(e){}
 o.innerHTML='ملف الصوت المسجّل: '+(file?'✅ يعمل'+(S.packOk?' (من الحزمة المنزّلة)':''):'❌ غير موجود (يُستخدم صوت الهاتف)')+'<br>صوت الهاتف الفارسي: '+(v.length?'✅ '+v[0].name:'❌ غير مثبّت')+(!file&&!v.length?'<br><span class="mu">لن تسمع صوتاً حالياً. ثبّت صوتاً فارسياً من إعدادات تحويل النص إلى كلام، أو أضف ملفات الصوت (انظر README).</span>':'')}
-try{var a=new Audio('audio/'+hs(t)+'.mp3');a.oncanplaythrough=function(){file=true;fin()};a.onerror=function(){fin()};a.load()}catch(e){}
+try{var a=new Audio((PACK_URL?packUrl(''):'audio/')+hs(t)+'.mp3');a.oncanplaythrough=function(){file=true;fin()};a.onerror=function(){fin()};a.load()}catch(e){}
 setTimeout(fin,2500)}
 
 var PACK_URL=window.PACK_URL||'',PK={busy:false,cancel:false,done:0,total:0,err:''};
@@ -877,8 +880,8 @@ function packHint(){return PACK_URL&&!S.packOk?'<div class="det" style="text-ali
 function packHtml(){
 if(!PACK_URL)return '<p class="mu">غير مفعّلة في هذه النسخة (لم يُحدَّد عنوان الحزمة بعد).</p>';
 if(PK.busy){var p=PK.total?Math.round(PK.done/PK.total*100):0;return '<p>جارٍ التنزيل... '+p+'% ('+PK.done+' من '+PK.total+')</p><div class="bar"><i style="width:'+p+'%"></i></div><div class="btns"><button class="btn alt" onclick="PK.cancel=true">إيقاف</button></div>'}
-if(S.packOk)return '<p>✅ الحزمة منزّلة، والنطق عالي الجودة يعمل بدون إنترنت.</p><div class="btns"><button class="btn alt" onclick="packDel()">حذف الحزمة</button></div>';
-return (PK.err?'<p class="mu">'+PK.err+'</p>':'')+'<p class="mu">نطق عالي الجودة يعمل بدون إنترنت بعد التنزيل. يُفضَّل الاتصال بشبكة Wi-Fi.</p><div class="btns"><button class="btn" onclick="packStart()">تنزيل حزمة الصوت</button></div>'}
+if(S.packOk)return '<p>✅ الحزمة منزّلة، والنطق عالي الجودة يعمل بدون إنترنت.</p><p class="mu">بعد إضافة دروس جديدة: «تحديث» يُنزّل الملفات الجديدة فقط.</p><div class="btns"><button class="btn" onclick="packStart()">تحديث الحزمة</button><button class="btn alt" onclick="packDel()">حذف الحزمة</button></div>';
+return (PK.err?'<p class="mu">'+PK.err+'</p>':'')+'<p class="mu">قبل التنزيل يُسمع النطق المسجّل مع الإنترنت فقط. بعد التنزيل يعمل بدون إنترنت. يُفضَّل الاتصال بشبكة Wi-Fi.</p><div class="btns"><button class="btn" onclick="packStart()">تنزيل حزمة الصوت</button></div>'}
 function packBox(){if(!PACK_URL)return'';return '<div class="det" style="text-align:start"><b>📦 حزمة الصوت</b><div id="pk" style="margin-top:8px">'+packHtml()+'</div></div>'}
 function packUi(){var e=document.getElementById('pk');if(e)e.innerHTML=packHtml()}
 function packDel(){S.packOk=false;save();try{caches.delete('farsi-audio-v1')}catch(e){}packUi();toast('حُذفت الحزمة')}
