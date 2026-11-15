@@ -23,7 +23,7 @@ export const MODELS = [
   '@cf/google/gemma-3-12b-it',
 ];
 const TASTE = 12; // messages in the free version's one taste of Parsa (trip chapter 1)
-const LIMIT = { list: 100, member: 40, trial: 15, free: 3 }; // free: after the trial or subscription ended
+const LIMIT = { list: 100, member: 20, trial: 15, free: 3 }; // free: after the trial or subscription ended
 const VOICE_BYTES = 1024 * 1024; // about a minute of compressed speech; recordings stop at 15 seconds
 const CHECK_MODELS = ['@cf/openai/gpt-oss-120b', '@cf/meta/llama-3.3-70b-instruct-fp8-fast']; // checking trip replies
 const MAX_TURNS = 12, MAX_CHARS = 300;
