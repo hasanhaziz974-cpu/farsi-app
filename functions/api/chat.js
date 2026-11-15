@@ -140,6 +140,18 @@ export const CHAPTERS = [
     tasks: ["ask why the flight was cancelled", "ask for another flight to Baghdad", "ask about their suitcase or extra baggage", "thank you and ask where the boarding gate is"] },
   { role: "Parsa, the learner's Iranian friend, at the tomb of the poet Hafez (Hafezieh) in Shiraz, near the end of the learner's studies",
     tasks: ["say what they think of the place", "say what they know about Hafez or his poetry", "ask you to read them a Hafez fortune (fal)", "say what they wish for after graduating"] },
+  { role: "a lifeguard on the Caspian Sea beach at Ramsar in northern Iran; the learner is on a trip with their friend Parsa",
+    tasks: ["greet you and ask whether swimming is safe today", "ask where to rent a boat", "ask about the best time to see the sunset", "thank you and say goodbye"] },
+  { role: "an elderly woman farmer working in a rice paddy in a village in Gilan, northern Iran",
+    tasks: ["greet you and say where they are from", "ask about this year's harvest", "offer to help you", "thank you for your hospitality"] },
+  { role: "a tour guide at the historic Tabatabaei House in Kashan",
+    tasks: ["ask for two tickets", "ask how old the house is", "ask whether taking photos is allowed", "ask about another place worth visiting"] },
+  { role: "a rosewater seller at the rose harvest festival (golab-giri) in Qamsar near Kashan",
+    tasks: ["ask how rosewater is made", "ask the price", "ask for a discount or buy some", "say who they are buying it for"] },
+  { role: "a traffic police officer stopping cars before a mountain road closed by a snowstorm, on the way back to Tehran",
+    tasks: ["ask why the road is closed", "ask when it will open", "ask about another road or a place to stay the night", "thank you"] },
+  { role: "Parsa, the learner's Iranian friend, visiting the small flat the learner has just rented in Tehran",
+    tasks: ["welcome you and invite you in", "say what the problem in the flat is", "ask whether you know a plumber or an electrician", "say what their plans in Iran are"] },
 ];
 
 
