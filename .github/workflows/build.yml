@@ -1,6 +1,12 @@
 name: Build Android AAB
 on:
   workflow_dispatch:
+    inputs:
+      audio:
+        description: 'Bundle the recorded audio in the APK (no = smaller test build; the app falls back to the phone voice)'
+        type: choice
+        options: ['yes', 'no']
+        default: 'yes'
 permissions:
   contents: write
 jobs:
@@ -38,7 +44,7 @@ jobs:
         if: env.KS_B64 != ''
         run: |
           mkdir -p www && cp -r index.html bridge.js fonts www/
-          if [ -d audio ]; then cp -r audio www/; else echo "::warning::No audio folder, the app will use device text-to-speech"; fi
+          if [ "${{ inputs.audio }}" = "no" ]; then echo "::warning::Test build without the audio folder"; elif [ -d audio ]; then cp -r audio www/; else echo "::warning::No audio folder, the app will use device text-to-speech"; fi
           npm ci
           npx cap add android
           mkdir -p assets && cp icon-only.png assets/
