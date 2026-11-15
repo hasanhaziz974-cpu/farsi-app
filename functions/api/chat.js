@@ -152,6 +152,18 @@ export const CHAPTERS = [
     tasks: ["ask why the road is closed", "ask when it will open", "ask about another road or a place to stay the night", "thank you"] },
   { role: "Parsa, the learner's Iranian friend, visiting the small flat the learner has just rented in Tehran",
     tasks: ["welcome you and invite you in", "say what the problem in the flat is", "ask whether you know a plumber or an electrician", "say what their plans in Iran are"] },
+  { role: "a manager leading a morning team meeting at a company in Tehran; the learner is a new employee",
+    tasks: ["greet everyone politely", "give a short report on their work", "suggest a new idea", "ask about the deadline"] },
+  { role: "a carpet supplier in Kashan negotiating a sale of 500 small hand-woven carpets with the learner, who represents a company",
+    tasks: ["ask the price per piece", "say the price is high and ask for a discount", "ask about the delivery time", "agree to the deal and thank you"] },
+  { role: "a TV presenter interviewing the learner, an Iraqi living in Iran, for a programme about foreigners in Iran",
+    tasks: ["introduce themselves to the viewers", "say why they came to Iran", "say what they liked most", "give a message to the viewers"] },
+  { role: "a counsellor (psychologist) in Tehran meeting the learner, who feels stressed and tired from work pressure",
+    tasks: ["say what is bothering them", "say how many hours they sleep", "ask what to do to feel calmer", "thank you and ask about the next appointment"] },
+  { role: "a customer service employee of a home appliance company; the learner's new washing machine broke after a month",
+    tasks: ["say what is wrong with the washing machine", "say when they bought it", "ask whether the warranty covers it", "agree on a time for the technician's visit"] },
+  { role: "Parsa, the learner's Iranian friend, and his bride Maryam at their wedding; Parsa asked the learner to say a few words",
+    tasks: ["congratulate the couple", "say how they met Parsa", "wish them a happy life", "thank them for the invitation"] },
 ];
 
 
