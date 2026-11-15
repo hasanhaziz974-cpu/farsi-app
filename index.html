@@ -419,13 +419,16 @@ var DTK={'پ':'ب','چ':'ج','ژ':'ز','گ':'ک'};
 function dtEq(e,t){if(e===t)return true;if(e.length!==t.length)return false;for(var k=0;k<e.length;k++)if(e[k]!==t[k]&&DTK[e[k]]!==t[k])return false;return true}
 function dtDiff(exp,got){var t=[];if(exp.length!==got.length)return'';for(var k=0;k<exp.length;k++)if(exp[k]!==got[k]&&DTK[exp[k]]!==got[k]&&t.indexOf(exp[k]+got[k])<0)t.push(exp[k]+got[k]);
 return t.length&&t.length<=2?t.map(function(x){return'«'+x[0]+'» لا «'+x[1]+'»'}).join('، '):''}
+// The meaning of a word from the lesson word lists, else the glossary: when the learner wrote another real word
+// (با for به) the note gives both meanings instead of a spelling hint.
+var DTW=null;function dtMean(w){if(!DTW){DTW={};LES.forEach(function(l){(l.w||[]).forEach(function(x){if(!DTW[x[0]])DTW[x[0]]=x[2]})})}return DTW[w]||GLS[w]||''}
 function dtMark(exp,got){var a=dtN(exp),b=dtN(got),n=a.length,m=b.length,L=[],i,j;for(i=0;i<=n;i++){L[i]=[];for(j=0;j<=m;j++)L[i][j]=0}
 for(i=n-1;i>=0;i--)for(j=m-1;j>=0;j--)L[i][j]=dtEq(a[i],b[j])?L[i+1][j+1]+1:Math.max(L[i+1][j],L[i][j+1]);
 var st=[],tip=[],at=[],k;for(k=0;k<n;k++){st.push(0);tip.push('');at.push(-1)}i=0;j=0;
 while(i<n&&j<m){if(dtEq(a[i],b[j])){st[i]=a[i]===b[j]?2:1;at[i]=j;i++;j++}else if(L[i+1][j]>=L[i][j+1])i++;else j++}
 for(k=0;k<n;k++){if(st[k]===1){var d=[];for(var c=0;c<a[k].length;c++)if(a[k][c]!==b[at[k]][c]&&d.indexOf(a[k][c])<0)d.push(a[k][c]);tip[k]='تُكتب بـ'+d.map(function(x){return'«'+x+'»'}).join(' و')}
 if(st[k]===0){var lo=-1,hi=m,p;for(p=k-1;p>=0;p--)if(at[p]>=0){lo=at[p];break}for(p=k+1;p<n;p++)if(at[p]>=0){hi=at[p];break}
-var cand=b.slice(lo+1,hi);if(cand.length===1){var df=dtDiff(a[k],cand[0]);tip[k]=df?'هنا '+df:''}}}
+var cand=b.slice(lo+1,hi);if(cand.length===1){var me=dtMean(a[k]),mg=dtMean(cand[0]),df=dtDiff(a[k],cand[0]);tip[k]=me&&mg&&me!==mg?'«'+a[k]+'» تعني «'+me+'»، أما «'+cand[0]+'» فتعني «'+mg+'»':df?'هنا '+df:''}}}
 return{st:st,tip:tip}}
 function dtCheck(){var el=document.getElementById('dtin'),v=el?el.value.trim():'';if(!v||DT.a!==null)return;var q=DT.qs[DT.i];DT.v=v;DT.ok=dtMark(q.fa,v);DT.a=DT.ok.st.every(Boolean);snd(DT.a);
 if(DT.a)DT.sc++;else if(q.m)mistX(q.m[0],q.m[1]);stay()}
