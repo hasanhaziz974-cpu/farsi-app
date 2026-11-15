@@ -1197,7 +1197,7 @@ function openL(i){if(!unlocked(i)){locked();return}go('home');goLesson(i);scroll
 function chip(ic,t,on,act,lv){return'<button class="chip'+(on?'':' off')+'" onclick="'+act+'">'+(on?ic:'🔒')+' '+t+(!on&&lv?' · المستوى '+lv:'')+'</button>'}
 // Lessons and texts that lead to a lesson of a special section (spoken Persian, Arabic words, phrases, poetry).
 var SECL={"les": {"0": [["soc", 0], ["soc", 1]], "2": [["col", 15]], "3": [["col", 16], ["soc", 3]], "9": [["col", 0], ["ar", 5]], "10": [["col", 15]], "11": [["col", 12]], "12": [["col", 12]], "20": [["ar", 7], ["col", 13]], "23": [["soc", 6], ["soc", 8]], "26": [["ar", 0]], "27": [["col", 14]], "29": [["soc", 2]], "30": [["ar", 6], ["soc", 7]], "33": [["ar", 8]], "35": [["soc", 8]], "46": [["poem", 0], ["poem", 1], ["poem", 2]], "48": [["poem", 6]]}, "st": {"حافظ، شاعر شيراز": [["poem", 0]], "الفردوسي والشاهنامه": [["poem", 3]], "نوروز: رأس السنة الإيرانية": [["soc", 2]]}};
-function secLinks(title,list){var h='';(list||[]).forEach(function(x){var X=SEC[x[0]];if(!X||!X.d[x[1]])return;var lk=colLock(x[1]);h+=chip(X.ic,X.t+': «'+X.d[x[1]].t+'»',!lk,"CS='"+x[0]+"';CFROM=tab;go('col');"+(lk?'':'CL='+x[1]+';render();')+'scrollTo(0,0)')});return h?'<div class="links"><div class="mu">'+title+'</div>'+h+'</div>':''}
+function secLinks(title,list){var h='';(list||[]).forEach(function(x){var X=SEC[x[0]];if(!X||!X.d[x[1]])return;var pl=x[0]==='poem'&&!poemOpen(),lk=pl||colLock(x[1]);h+=chip(X.ic,X.t+': «'+X.d[x[1]].t+'»',!lk,pl?'poemLocked()':"CS='"+x[0]+"';CFROM=tab;go('col');"+(lk?'':'CL='+x[1]+';render();')+'scrollTo(0,0)',pl?5:0)});return h?'<div class="links"><div class="mu">'+title+'</div>'+h+'</div>':''}
 function linksHtml(title,ls,gs,ds,ss,ts){var h='';ls.forEach(function(l){h+=chip('📘','درس «'+LES[l].t+'»',unlocked(l),'openL('+l+')',lvOf(l)+1)});gs.forEach(function(g){h+=chip('✍️','قاعدة «'+GR[g].t+'»',gOpen(g),'openG('+g+')',lvOf(g,'G')+1)});ds.forEach(function(d){h+=chip('💬','محادثة «'+DLG[d].t+'»',dOpen(d),'openD('+d+')',lvOf(d,'D')+1)});(ss||[]).forEach(function(s){h+=chip('📖',(STORY[s].c?'نص':'قصة')+' «'+STORY[s].ta+'»',!stLock(s),'go(\'talk\');stOpen('+s+')')});(ts||[]).forEach(function(t){h+=chip('🧳','الفصل '+(t+1)+': '+TRIP[t].t,webApp()&&!tripLock(t),'openTrip('+t+')',lvOf(t,'T')+1)});return h?'<div class="links"><div class="mu">'+title+'</div>'+h+'</div>':''}
 function uniq(a){return a.filter(function(x,i){return a.indexOf(x)===i})}
 
@@ -1236,7 +1236,7 @@ var sy=null,cs=null,dt=S.dct===ds(Date.now())?null:{t:'dt'},slv=function(i){retu
 var ord=STORY.map(function(s,i){return i}).filter(function(i){return slv(i)<=lv&&!(S.story&&S.story[i])&&!stLock(i)});
 var mine=lesStories(cur).filter(function(i){return ord.indexOf(i)>=0});
 ord.sort(function(a,b){return slv(b)-slv(a)||a-b});if(mine.length||ord.length)sy={t:'sy',i:mine.length?mine[0]:ord[0]};
-var sl=['col','ar','soc'].concat(lv>=4?['poem']:[]),d0=dayNo(Date.now());for(k=0;k<sl.length&&cs===null;k++){var s=sl[(d0+k)%sl.length];for(i=0;i<SEC[s].d.length;i++){var key=s==='col'?i:s+i;if(S.colp&&S.colp[key])continue;if(!colLock(i))cs={t:'cs',s:s,i:i};break}}
+var sl=['col','ar','soc'].concat(poemOpen()?['poem']:[]),d0=dayNo(Date.now());for(k=0;k<sl.length&&cs===null;k++){var s=sl[(d0+k)%sl.length];for(i=0;i<SEC[s].d.length;i++){var key=s==='col'?i:s+i;if(S.colp&&S.colp[key])continue;if(!colLock(i))cs={t:'cs',s:s,i:i};break}}
 var pick=[[sy,cs,dt],[cs,dt,sy],[dt,sy,cs]][d0%3];for(k=0;k<3;k++)if(pick[k])return pick[k];return null}
 var PMIN={rv:3,dc:2,st:4,d:4,g:4,rd:2,rp:3,tr:6,mi:3,sy:4,cs:4,ex:10,dt:4};
 function planLabel(x){switch(x.t){
@@ -1367,12 +1367,17 @@ var SEC={col:{d:COL,ic:'🗣️',t:'الفارسية المحكيّة',sub:'كي
  in:'الشعر جزء من حياة الإيرانيين اليومية: يحفظونه ويردّدونه ويتفاءلون به. هنا أشهر أبيات حافظ وسعدي ومولوي والفردوسي والخيّام، مع نطقها ومعناها. استمع واقرأ، ولا تقلق إن صعبت عليك بعض الكلمات.'}};
 var CS='col',CFROM='gram',CL=null,CQZ=null;
 function csKey(i){return CS==='col'?i:CS+i}
-function colCard(s){var x=SEC[s||'col'];return'<button class="row" onclick="CS=\''+(s||'col')+'\';CFROM=tab;go(\'col\')"><div><div style="font-weight:600">'+x.ic+' '+x.t+'</div><div class="mu">'+x.d.length+' دروس: '+x.sub+'</div></div><span class="mu">‹</span></button>'}
+function colCard(s){var x=SEC[s||'col'];return'<button class="row" onclick="CS=\''+(s||'col')+'\';CFROM=tab;go(\'col\')"><div><div style="font-weight:600">'+(s==='poem'&&!poemOpen()?'🔒 ':'')+x.ic+' '+x.t+'</div><div class="mu">'+x.d.length+' دروس: '+x.sub+(s==='poem'&&!poemOpen()?' · يُفتح مع المستوى 5':'')+'</div></div><span class="mu">‹</span></button>'}
 function colCards(){return colCard('col')+colCard('ar')+colCard('soc')+colCard('poem')}
 function colLock(i){return!OPEN&&webLite()&&i>=2}
-function colView(){var X=SEC[CS],D=X.d,h;if(CQZ)return colQuiz();
+// The poetry corner opens with level 5 «متقدّم» (its first lesson unlocked, by lessons or by the placement test):
+// classical verse needs that level's grammar (relative clauses, the passive...).
+function poemOpen(){return OPEN||unlocked(LVL[4].L[0])}
+function poemLocked(){toast('🔒 ركن الشعر يُفتح مع المستوى 5 «'+LVL[4].n+'»')}
+function colView(){var X=SEC[CS],D=X.d,h;if(CS==='poem'&&!poemOpen()){CL=null;CQZ=null}if(CQZ)return colQuiz();
 if(CL===null){h='<button class="back" onclick="go(\''+(CFROM==='home'?'home':'gram')+'\')">› رجوع</button><h2>'+X.ic+' '+X.t+'</h2><p class="mu">'+X.in+'</p>';
-D.forEach(function(c,i){var lk=colLock(i);h+='<button class="row" style="'+(lk?'opacity:.6':'')+'" onclick="'+(lk?'freeGate(\''+X.t+'\')':'CL='+i+';render()')+'"><div><div style="font-weight:600">'+(lk?'⭐ ':S.colp&&S.colp[csKey(i)]?'✅ ':'▶️ ')+c.t+'</div><div class="mu fa" style="font-size:15px">'+c.s+'</div></div><span class="mu">‹</span></button>'});return h}
+var pl=CS==='poem'&&!poemOpen();if(pl)h+='<div class="det" style="text-align:start"><b>🔒 يُفتح ركن الشعر مع المستوى 5 «'+LVL[4].n+'»</b><div class="mu" style="margin-top:4px">حين تصل إلى درس «'+LES[LVL[4].L[0]].t+'». الشعر الفارسي يحتاج قواعد تتعلّمها في ذلك المستوى. تستطيع أن تقرأ عناوين الدروس الآن.</div></div>';
+D.forEach(function(c,i){var lk=pl||colLock(i);h+='<button class="row" style="'+(lk?'opacity:.6':'')+'" onclick="'+(pl?'poemLocked()':lk?'freeGate(\''+X.t+'\')':'CL='+i+';render()')+'"><div><div style="font-weight:600">'+(pl?'🔒 ':lk?'⭐ ':S.colp&&S.colp[csKey(i)]?'✅ ':'▶️ ')+c.t+'</div><div class="mu fa" style="font-size:15px">'+c.s+'</div></div><span class="mu">‹</span></button>'});return h}
 var c=D[CL];h='<button class="back" onclick="CL=null;render()">› كل الدروس</button><h2>'+c.t+'</h2><div class="det" style="text-align:start;line-height:1.9">'+c.n+'</div><h2>أمثلة</h2>';
 c.e.forEach(function(x){h+='<div class="row" style="cursor:default"><div style="flex:1"><div class="mu" style="font-size:13px">'+X.top+'<span'+(X.top?' class="fa" style="font-size:16px"':'')+'>'+x[0]+'</span></div><div class="fa" style="font-size:24px">'+X.mi+x[1]+'</div><div class="tr" style="font-size:14px">'+x[2]+'</div><div class="mu">'+x[3]+'</div></div><button class="spk" aria-label="استمع" onclick="say(\''+esc(x[1])+'\')">🔊</button></div>'});
 return h+'<div class="btns"><button class="btn" onclick="colStart()">تمرين على هذا الدرس</button></div><div class="btns">'+(CL>0?'<button class="btn alt" onclick="CL--;render();scrollTo(0,0)">السابق</button>':'')+(CL<D.length-1&&!colLock(CL+1)?'<button class="btn alt" onclick="CL++;render();scrollTo(0,0)">التالي</button>':'')+'</div>'}
