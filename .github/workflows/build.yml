@@ -1,5 +1,11 @@
 name: Build Android AAB
 on:
+  # Every change to what the app bundles, once merged into main, builds a new APK, which the last step
+  # publishes on the site (download/), so installed apps see the new version without a manual build.
+  # The bot's own commit (download/ only) is not among these paths, so it does not start another build.
+  push:
+    branches: [main]
+    paths: ['index.html', 'bridge.js', 'fonts/**', 'icon-only.png', 'capacitor.config.json', 'package.json', 'package-lock.json']
   workflow_dispatch:
     inputs:
       audio:
@@ -9,6 +15,10 @@ on:
         default: 'no'
 permissions:
   contents: write
+# Builds wait for each other, so two quick merges never push download/ at the same time.
+concurrency:
+  group: android-build
+  cancel-in-progress: false
 jobs:
   build:
     runs-on: ubuntu-latest
