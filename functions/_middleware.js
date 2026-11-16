@@ -16,7 +16,7 @@ const PAGES = new Set(['/', '/index', '/index.html']);
 // This also covers hosts Access does not cover, like a deployment's own *.pages.dev address.
 // /audio/ is public: the Android app (no sign-in) streams the recorded pronunciation and downloads it as a pack.
 // /download/ holds the Android APK and its version.json, linked from the welcome page and from older apps.
-const PUBLIC = ['/welcome', '/fonts/', '/pwa/', '/audio/', '/download/', '/login', '/api/auth/', '/logout'];
+const PUBLIC = ['/welcome', '/fonts/', '/pwa/', '/audio/', '/download/', '/docs/', '/login', '/api/auth/', '/logout'];
 const WELCOME = new Set(['/welcome', '/welcome/', '/welcome/index.html', '/login', '/login/', '/login/index.html']);
 
 async function publicOnly(request, next) {
@@ -52,8 +52,16 @@ const CACHE = [
   [/^\/(pwa|welcome)\/.+\.(png|webp)$/, 'public, max-age=604800'],
 ];
 
+// Repository files that are not part of the site (admin tools, server code, store listing, notes). Pages
+// publishes the whole repository, so they are answered with 404 for everyone, signed in or not.
+const INTERNAL = /^\/(tools|lib|workers|store|functions|\.github)(\/|$)|^\/(README\.md|package(-lock)?\.json|capacitor\.config\.json|icon-only\.png|\.gitignore)$|\.(py|pyc|gs|md)$/i;
+
 export async function onRequest(context) {
-  const res = await handle(context);
+  let path0 = '/';
+  try {
+    path0 = decodeURIComponent(new URL(context.request.url).pathname);
+  } catch (e) {}
+  const res = INTERNAL.test(path0) ? new Response('Not found', { status: 404 }) : await handle(context);
   const out = new Response(res.body, res);
   for (const [k, v] of Object.entries(SECURITY)) out.headers.set(k, v);
   if (out.status === 200) {
