@@ -3,7 +3,7 @@
 // (lib/progress.js), so the same email finds the same progress on any device. A write happens only
 // when the merge changes the stored copy, to stay well inside the KV free plan's daily write limit.
 import { accessEmail } from '../../lib/trial.js';
-import { mergeProgress, stripDevice } from '../../lib/progress.js';
+import { mergeProgress, stripDevice, upgrade } from '../../lib/progress.js';
 
 const MAX_BYTES = 1 << 20;
 const json = (body, status = 200) => Response.json(body, { status, headers: { 'Cache-Control': 'no-store' } });
@@ -13,7 +13,8 @@ export async function onRequest({ request, env }) {
   const email = await accessEmail(request, env);
   if (!email || !kv) return json({ error: 'signin' }, 401);
   const key = 'prog:' + email;
-  const stored = (await kv.get(key, 'json')) || { t: 0, data: null };
+  const kept = (await kv.get(key, 'json')) || { t: 0, data: null };
+  const stored = kept.data ? { ...kept, data: upgrade(kept.data) } : kept;
 
   if (request.method === 'GET') return json(stored);
   if (request.method !== 'POST') return json({ error: 'method' }, 405);
@@ -34,8 +35,8 @@ export async function onRequest({ request, env }) {
     return json({ error: 'invalid' }, 400);
   }
 
-  const merged = stored.data ? mergeProgress(stored.data, incoming) : stripDevice(incoming);
-  if (stored.data && JSON.stringify(merged) === JSON.stringify(stored.data)) return json(stored);
+  const merged = stored.data ? mergeProgress(stored.data, incoming) : upgrade(stripDevice(incoming));
+  if (stored.data && JSON.stringify(merged) === JSON.stringify(kept.data)) return json(stored);
   const out = { t: Date.now(), data: merged };
   await kv.put(key, JSON.stringify(out));
   return json(out);
