@@ -45,6 +45,8 @@ jobs:
         run: |
           mkdir -p www && cp -r index.html bridge.js fonts www/
           if [ "${{ inputs.audio }}" != "yes" ]; then sed -i "s#^window.PACK_URL = '';#window.PACK_URL = 'https://parsa-farsi.pages.dev/audio/';#" www/bridge.js; grep -q "pages.dev/audio/" www/bridge.js || { echo "::error::Could not set the audio pack URL"; exit 1; }; elif [ -d audio ]; then cp -r audio www/; else echo "::warning::No audio folder, the app will use device text-to-speech"; fi
+          # The build number, compared with download/version.json on the site to offer a newer APK.
+          echo "window.APP_BUILD = ${{ github.run_number }};" >> www/bridge.js
           npm ci
           npx cap add android
           mkdir -p assets && cp icon-only.png assets/
@@ -99,3 +101,17 @@ jobs:
             --title "الفارسية من الصفر $VERSION_NAME" --notes "نسخة تجريبية للتثبيت المباشر. ملف farsi-app.apk للهاتف، وfarsi-app.aab لـ Google Play."
           gh api "repos/$GITHUB_REPOSITORY/releases?per_page=100" --jq '[.[] | select(.draft)] | sort_by(.created_at) | reverse | .[3:] | .[].id' |
             while read -r id; do gh api -X DELETE "repos/$GITHUB_REPOSITORY/releases/$id"; done
+      - name: Publish the APK on the site
+        # Builds of main without bundled audio are what learners install: download/farsi-app.apk on the
+        # site (functions/_middleware.js makes /download/ public), and download/version.json tells older
+        # apps that a newer build exists. Committed to main, so Cloudflare Pages deploys it.
+        if: env.KS_B64 != '' && github.ref == 'refs/heads/main' && inputs.audio != 'yes'
+        run: |
+          mkdir -p download
+          cp farsi-app.apk download/farsi-app.apk
+          printf '{"build": %s, "version": "%s"}\n' "${{ github.run_number }}" "$VERSION_NAME" > download/version.json
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add download/farsi-app.apk download/version.json
+          git commit -m "Android build $VERSION_NAME on the site"
+          for i in 1 2 3; do git pull --rebase -q origin main && git push -q origin HEAD:main && break; sleep 5; done

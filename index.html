@@ -174,14 +174,19 @@ function save(){try{localStorage.setItem("fa-app",JSON.stringify(S))}catch(e){}t
 // One of a noun given in the accusative (يوماً، درساً) reads «يوم واحد»: «1 يوماً» is wrong Arabic.
 function cw(n,p,s,two){return n===2&&two?two:n===1&&/اً$/.test(s)?s.slice(0,-2)+' واحد':n+' '+(n>=3&&n<=10?p:s)}
 function ds(t){return new Date(t).toDateString()}
-function gain(n){var ol=lvl(S.xp);S.xp+=n;var t=ds(Date.now()),nd=S.last!==t;if(nd){S.st=S.last===ds(Date.now()-DAY)?S.st+1:1;S.last=t}
+function gain(n){var ol=lvl(S.xp);S.xp+=n;var t=ds(Date.now()),nd=S.last!==t;if(nd){var fz=false;if(S.last===ds(Date.now()-DAY))S.st++;else if(S.last===ds(Date.now()-2*DAY)&&(S.frz||0)>0){S.frz--;S.st++;fz=true}else S.st=1;S.last=t;if(fz)setTimeout(function(){toast('🛡️ حمت «حماية السلسلة» سلسلتك من يوم أمس')},800);if(S.st%7===0&&(S.frz||0)<2){S.frz=(S.frz||0)+1;setTimeout(function(){toast('🛡️ ربحت يوم حماية لسلسلتك: إن فاتك يوم لن تنقطع')},2200)}}
 var dg=S.dg;if(!dg||dg.d!==t)dg=S.dg={d:t,x:0,ok:0};dg.x+=n;var dn=dayNo(Date.now());S.hist=S.hist||{};S.hist[dn]=(S.hist[dn]||0)+n;Object.keys(S.hist).forEach(function(k){if(+k<dn-30)delete S.hist[k]});var hit=false;if(!dg.ok&&dg.x>=GOAL){dg.ok=1;S.dgn=(S.dgn||0)+1;S.xp+=10;hit=true}
 var ms=[];if(hit)ms.push('🏆 حققت هدفك اليومي! +10 نقاط');var nl=lvl(S.xp);if(nl>ol)ms.push('🎉 ارتقيت إلى الرتبة '+(nl+1)+': '+LT[Math.min(nl,LT.length-1)]);
 if(nd&&MS.indexOf(S.st)>=0)ms.push('🔥 '+cw(S.st,'أيام','يوماً','يومان')+' متتالية، استمر!');
 chk().forEach(function(b){ms.push('🏅 إنجاز جديد: '+b.n)});
 covNew().forEach(function(i){ms.push('📖 صرت تعرف أغلب كلمات محادثة «'+DLG[i].t+'»، جرّبها!')});
 save();top_();try{remStudied()}catch(e){}if(ms.length)celebrate(ms)}
-function top_(){var live=S.last===ds(Date.now())||S.last===ds(Date.now()-DAY);var sn=live?S.st:0;document.getElementById("st").innerHTML="🔥 <b>"+sn+"</b> "+(sn>=3&&sn<=10?"أيام":"يوم");document.getElementById("xp").innerHTML="⭐ <b>"+S.xp+"</b>"}
+// The streak is alive if the learner studied today or yesterday, or the day before with a protection day left
+// (one is earned every 7 days in a row, at most 2; gain() spends it when a single day was missed).
+// Text size for the whole page above the tab bar: zoom reflows the layout, so nothing spills sideways.
+function fsApply(){var m=document.getElementById('main');if(m)m.style.zoom=[1,1.12,1.25][S.fs||0]===1?'':String([1,1.12,1.25][S.fs||0])}
+function stLive(){return S.last===ds(Date.now())||S.last===ds(Date.now()-DAY)||(S.last===ds(Date.now()-2*DAY)&&(S.frz||0)>0)}
+function top_(){var live=stLive();var sn=live?S.st:0;document.getElementById("st").innerHTML="🔥 <b>"+sn+"</b> "+(sn>=3&&sn<=10?"أيام":"يوم");document.getElementById("xp").innerHTML="⭐ <b>"+S.xp+"</b>"}
 var AU=null;
 function hs(t){var h=2166136261;for(var i=0;i<t.length;i++){h^=t.charCodeAt(i);h=Math.imul(h,16777619)>>>0}return h.toString(16)}
 function tts(t,cb){try{var u=new SpeechSynthesisUtterance(t);u.lang="fa-IR";u.rate=.85;if(cb)u.onend=cb;speechSynthesis.cancel();speechSynthesis.speak(u)}catch(e){}}
@@ -216,7 +221,12 @@ var STAY=null;
 // Redraw the same screen without jumping to the top (a translation shown or hidden, hints opened...).
 function stay(){STAY=window.scrollY||0;render()}
 function known(l){return ALL.filter(function(w){return w.l===l&&S.srs[w.id]}).length}
-function home(){var fw=firstWin(),h=fw+freeBanner()+meBanner()+(fw?'':(INST?installBox():'')+heroPanel()+planCard()+dcHome()+remAskCard()+proverbCard())+placeCard()+'<h2>🧰 أقسام مساعدة</h2>'+packHint()+helpTiles()+'<h2 style="margin-top:26px;padding-top:16px;border-top:2px solid var(--bd)">📘 الدروس</h2><p class="mu">أنهِ المراحل الخمس لكل درس بإجابات صحيحة لتفتح الدرس التالي. اضغط عنوان المستوى لتطويه أو تفتحه.</p>';
+// Android app (installed from the site, so it does not update by itself): on opening, download/version.json
+// on the site is compared with the build number written into bridge.js; a newer build shows a card at the top.
+var UPD=null,SITE='https://parsa-farsi.pages.dev';
+function updCheck(){if(!bkNative()||!window.APP_BUILD||!navigator.onLine)return;fetch(SITE+'/download/version.json',{cache:'no-store'}).then(function(r){return r.ok?r.json():null}).then(function(j){if(j&&j.build>window.APP_BUILD){UPD=j;if(tab==='home')render()}}).catch(function(){})}
+function updCard(){return UPD?'<a class="row" href="'+SITE+'/download/farsi-app.apk" target="_blank" rel="noopener" style="border-color:var(--ac);text-decoration:none;color:inherit"><div><div style="font-weight:600">🆕 نسخة جديدة من التطبيق ('+UPD.version+')</div><div class="mu">فيها محتوى وتحسينات جديدة. اضغط لتنزيلها، ثم افتح الملف وثبّته فوق النسخة الحالية: تقدّمك يبقى كما هو.</div></div><span class="mu">‹</span></a>':''}
+function home(){var fw=firstWin(),h=updCard()+fw+freeBanner()+meBanner()+(fw?'':(INST?installBox():'')+heroPanel()+planCard()+dcHome()+remAskCard()+proverbCard())+placeCard()+'<h2>🧰 أقسام مساعدة</h2>'+packHint()+helpTiles()+'<h2 style="margin-top:26px;padding-top:16px;border-top:2px solid var(--bd)">📘 الدروس</h2><p class="mu">أنهِ المراحل الخمس لكل درس بإجابات صحيحة لتفتح الدرس التالي. اضغط عنوان المستوى لتطويه أو تفتحه.</p>';
 LES.forEach(function(l,i){var k=known(i),p=sp(i)*20;h+=lvHead(i);
 var lk=!unlocked(i),pm=!lk&&!allowed('L',i);if(lk){h+='<button class="row lkd" onclick="locked()">🔒 '+l.t+'</button>'+(lvEnd(i)?'</div>':'');return}h+='<button class="row" style="'+(pm?'opacity:.6':'')+'" onclick="'+(pm?'gate(\'L\','+i+')':'sub='+i+';render()')+'"><div style="flex:1"><div style="font-weight:600">'+(lk?'🔒 ':pm?'⭐ ':(S.pass&&S.pass[i]?'✅ ':''))+l.t+'</div><div class="mu">'+(lk?'أنهِ مراحل الدرس السابق لفتحه':pm?premTxt():cw(l.w.length,'كلمات','كلمة')+' · '+sp(i)+' من 5 مراحل')+'</div><div class="bar"><i style="width:'+p+'%"></i></div></div><span class="mu">‹</span></button>'+(lvEnd(i)?'</div>':'')});
 return h+bannerSlot()}
@@ -337,9 +347,9 @@ return h}
 function pickRv(k){if(RC.a!==null)return;var ok=RC.o[k].id===RC.id;if(!ok&&ALLBY(RC.id))mistX('w',RC.id);snd(ok);RC.a=k;RC.m=Math.random();STK=ok?STK+1:0;RC.s=STK;srsRate(RC.id,ok,RC.retry);if(!ok)RSQ.push({id:RC.id,at:RN+3});RN++;render();if(RC.mode==='rev')say(RC.w.fa)}
 function rvNext(){RC=null;render();if(RC&&RC.mode==='aud'&&RC.a===null)say(RC.w.fa)}
 function rate(id,ok){planReviewed();var c=srsOf(id),b=c?c.b:0;if(ok){b=Math.min(b+1,5);srsPut(id,{b:b,d:Date.now()+[1,2,4,8,16][b-1]*DAY})}else srsPut(id,{b:1,d:Date.now()+6e4});R.show=false;RC=null;if(!ok)RSQ.push({id:id,at:RN+3});RN++;gain(ok?3:1);render();var c=ok?CHEER[Math.floor(Math.random()*CHEER.length)]:TRYP[Math.floor(Math.random()*TRYP.length)];toast(c[0]+' — '+c[2])}
-function me(){if(SETV)return setView();var k=Object.keys(S.srs).length,m=Object.keys(S.srs).filter(function(i){return S.srs[i].b>=4}).length,live=S.last===ds(Date.now())||S.last===ds(Date.now()-DAY);
+function me(){if(SETV)return setView();var k=Object.keys(S.srs).length,m=Object.keys(S.srs).filter(function(i){return S.srs[i].b>=4}).length,live=stLive();
 function tile(ic,v,t){return '<div class="tile"><div class="tv">'+ic+' '+v+'</div><div class="mu">'+t+'</div></div>'}
-return '<h2>تقدّمي</h2><div class="stats">'+tile('🔥',live?S.st:0,'أيام متتالية')+tile('📚',k+' من '+ALL.length,'كلمات بدأتها')+tile('🧠',m,'كلمات ثبتت في ذاكرتك')+tile('🏆',S.dgn||0,'أهداف يومية حققتها')+'</div>'
+return '<h2>تقدّمي</h2><div class="stats">'+tile('🔥',live?S.st:0,'أيام متتالية'+(S.frz?' · 🛡️'+S.frz:''))+tile('📚',k+' من '+ALL.length,'كلمات بدأتها')+tile('🧠',m,'كلمات ثبتت في ذاكرتك')+tile('🏆',S.dgn||0,'أهداف يومية حققتها')+'</div>'
 +lvlBox()+inviteBox()+weekSum()+weekBox()+badgeBox()+premBox()
 +'<h2>الحساب والإعدادات</h2>'+meCard()+'<button class="row" onclick="SETV=true;render()"><div><div style="font-weight:600">⚙️ الإعدادات</div><div class="mu">التذكير اليومي، والنسخة الاحتياطية، والأصوات، وتثبيت التطبيق</div></div><span class="mu">‹</span></button>'}
 var SETV=false;
@@ -1490,13 +1500,13 @@ return'<div class="det" style="text-align:start"><b>👤 اشتراكي</b><div 
 // ---- Cloud progress (web version): the progress is also kept on the server under the sign-in email
 // (functions/api/progress.js merges it with the stored copy), so the same email finds it on any device.
 // Synced when the app opens, at most every 15 minutes after a change, and when the app is closed.
-var SYNC={on:false,busy:false,dirty:false,last:0,ver:0,timer:null,quiet:false},SYNC_GAP=15*60e3,DEVF=['rem','remDay','remAsk','free','tri','sfx','sv','plan','prem','syncT'];
+var SYNC={on:false,busy:false,dirty:false,last:0,ver:0,timer:null,quiet:false},SYNC_GAP=15*60e3,DEVF=['rem','remDay','remAsk','free','tri','sfx','sv','plan','prem','syncT','fs'];
 function syncData(){var o={};for(var k in S)if(DEVF.indexOf(k)<0)o[k]=S[k];return o}
 function syncMark(){if(!SYNC.on||SYNC.quiet)return;SYNC.ver++;SYNC.dirty=true;syncSoon()}
 function syncSoon(){if(SYNC.timer)return;SYNC.timer=setTimeout(function(){SYNC.timer=null;syncNow(false)},Math.max(5e3,SYNC.last+SYNC_GAP-Date.now()))}
 function syncNow(first){if(!SYNC.on||SYNC.busy||!navigator.onLine)return;SYNC.busy=true;var v=SYNC.ver,before=S.xp;
 fetch('/api/progress',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data:syncData()}),credentials:'same-origin'}).then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(res){SYNC.busy=false;SYNC.last=Date.now();if(SYNC.ver!==v){syncSoon();return}SYNC.dirty=false;if(res&&res.data)syncAdopt(res.data,first&&(res.data.xp||0)>before)}).catch(function(){SYNC.busy=false;if(SYNC.dirty)syncSoon()})}
-function syncAdopt(d,restored){if(JSON.stringify(d)===JSON.stringify(syncData()))return;var keep={};DEVF.forEach(function(k){if(S[k]!==undefined)keep[k]=S[k]});S=d;for(var k in keep)S[k]=keep[k];S.srs=S.srs||{};S.xp=S.xp||0;S.st=S.st||0;S.last=S.last||'';
+function syncAdopt(d,restored){if(JSON.stringify(d)===JSON.stringify(syncData()))return;var keep={};DEVF.forEach(function(k){if(S[k]!==undefined)keep[k]=S[k]});S=d;if(S.v===2){try{migrateV3()}catch(e){}S.v=3}for(var k in keep)S[k]=keep[k];S.srs=S.srs||{};S.xp=S.xp||0;S.st=S.st||0;S.last=S.last||'';
 SYNC.quiet=true;save();SYNC.quiet=false;try{top_();render()}catch(e){}if(restored)setTimeout(function(){celebrate(['☁️ استعدنا تقدّمك المحفوظ مع بريدك','⭐ '+cw(S.xp,'نقاط','نقطة')+' · 📚 '+cw(cnt(S.srs),'كلمات','كلمة')])},600)}
 function syncStart(){if(SYNC.on||!webApp())return;SYNC.on=true;syncNow(true);
 document.addEventListener('visibilitychange',function(){if(document.visibilityState!=='hidden'||!SYNC.dirty||!navigator.sendBeacon)return;try{if(navigator.sendBeacon('/api/progress',new Blob([JSON.stringify({data:syncData()})],{type:'application/json'}))){SYNC.dirty=false;SYNC.last=Date.now()}}catch(e){}})}
@@ -1763,7 +1773,7 @@ function bkFile(){try{var a=document.createElement('a');a.href=URL.createObjectU
 function bkCheck(t){if(t===undefined)t=document.getElementById('bki').value;var o=bkRead(t);if(!o){toast('هذا الرمز غير صحيح، تأكد أنك نسخته كاملاً');return}BK={o:o,t:String(t).replace(/[<>&"]/g,'')};render()}
 function bkLoad(inp){var f=inp.files&&inp.files[0];if(!f)return;var r=new FileReader();r.onload=function(){bkCheck(String(r.result))};r.onerror=function(){toast('تعذّرت قراءة الملف')};r.readAsText(f)}
 function bkApply(){var o=BK&&BK.o;if(!o)return;o.prem=S.prem;o.rem=S.rem;o.remDay=S.remDay;o.resetAt=Date.now();S=o;S.srs=S.srs||{};S.xp=S.xp||0;S.st=S.st||0;S.last=S.last||'';if(S.v!==2&&S.v!==3){try{migrateV2()}catch(e){}S.v=2}if(S.v===2){try{migrateV3()}catch(e){}S.v=3}resetVolatile();BK=null;save();render();toast('✅ استُعيد تقدّمك')}
-function settingsBox(){return'<div class="det" style="text-align:start"><b>⚙️ عام</b><div class="btns"><button class="btn alt" onclick="S.sfx=S.sfx===0?1:0;save();render();sfx(\'ok\')">'+(S.sfx===0?'🔇 الأصوات والاهتزاز: متوقفة':'🔊 الأصوات والاهتزاز: تعمل')+'</button></div><div class="btns"><button class="btn alt" onclick="testAudio()">🔈 اختبر الصوت</button><button class="btn alt" onclick="shareProg()">📣 شارك تقدّمك</button></div><div id="aud" style="margin-top:8px;line-height:1.9"></div></div>'}
+function settingsBox(){return'<div class="det" style="text-align:start"><b>⚙️ عام</b><div style="margin-top:8px">🔠 حجم الخط</div><div class="btns">'+['عادي','كبير','كبير جداً'].map(function(t,i){return'<button class="btn'+((S.fs||0)===i?'':' alt')+'" onclick="S.fs='+i+';save();fsApply();render()">'+t+'</button>'}).join('')+'</div><div class="btns"><button class="btn alt" onclick="S.sfx=S.sfx===0?1:0;save();render();sfx(\'ok\')">'+(S.sfx===0?'🔇 الأصوات والاهتزاز: متوقفة':'🔊 الأصوات والاهتزاز: تعمل')+'</button></div><div class="btns"><button class="btn alt" onclick="testAudio()">🔈 اختبر الصوت</button><button class="btn alt" onclick="shareProg()">📣 شارك تقدّمك</button></div><div id="aud" style="margin-top:8px;line-height:1.9"></div></div>'}
 function shareProg(){var l=lvl(S.xp),t='أتعلّم الفارسية مع تطبيق «الفارسية من الصفر» 🌹\nالمستوى '+(l+1)+' ('+LT[Math.min(l,LT.length-1)]+') · '+cw(cnt(S.srs),'كلمات','كلمة')+' · سلسلة '+cw((S.st||0),'أيام','يوماً','يومان')+' 🔥\nجرّبه معي مجاناً:\nhttps://parsa-farsi.pages.dev/welcome';
 try{if(navigator.share){navigator.share({text:t}).catch(function(){});return}if(navigator.clipboard){navigator.clipboard.writeText(t).then(function(){toast('نُسخ النص، الصقه حيث تشاء')},function(){toast(t)});return}}catch(e){}toast('انسخ هذا النص: '+t)}
 function weekBox(){var dn=dayNo(Date.now()),nm=['ح','ن','ث','ر','خ','ج','س'],xs=[],mx=1,i,tot=0;
@@ -1795,7 +1805,7 @@ if(S.srs){var n={};Object.keys(S.srs).forEach(function(id){var a=id.split('-');n
 if(S.sv){var m={};Object.keys(S.sv).forEach(function(k){var a=/^(\d+)-(\d)$/.exec(k);if(a){if(+a[1]<8)m[k]=S.sv[k]}else m[k]=S.sv[k]});S.sv=m}
 if(S.unl){var u={};Object.keys(S.unl).forEach(function(k){var a=/^L(\d+)$/.exec(k);u[a?'L'+up(+a[1]):k]=S.unl[k]});S.unl=u}}
 if(!S.cov){S.cov={};covNew()}snapTake();
-render();meLoad();openInit();
+fsApply();render();meLoad();openInit();updCheck();
 </script>
 </body>
 </html>
