@@ -164,6 +164,18 @@ export const CHAPTERS = [
     tasks: ["say what is wrong with the washing machine", "say when they bought it", "ask whether the warranty covers it", "agree on a time for the technician's visit"] },
   { role: "Parsa, the learner's Iranian friend, and his bride Maryam at their wedding; Parsa asked the learner to say a few words",
     tasks: ["congratulate the couple", "say how they met Parsa", "wish them a happy life", "thank them for the invitation"] },
+  { role: "a young tour guide at Hafezieh, the tomb of the poet Hafez in Shiraz",
+    tasks: ["say they love Hafez's poetry", "ask when Hafez lived", "ask about \u00abfal-e Hafez\u00bb (telling fortunes with Hafez's book)", "thank you and say goodbye"] },
+  { role: "a guard at the entrance of Persepolis (Takht-e Jamshid) near Shiraz",
+    tasks: ["ask the ticket price for foreigners", "ask who built the palace", "ask if taking photos is allowed", "ask where to buy a book about the place"] },
+  { role: "a boatman at the pier in Bandar Abbas who takes tourists to Hormuz island",
+    tasks: ["ask when the boat leaves for Hormuz", "ask the price of a return trip", "ask if the sea is calm today", "say they want seats for three people"] },
+  { role: "a shopkeeper selling khatam-kari (inlaid marquetry) boxes in the Vakil bazaar of Shiraz",
+    tasks: ["say they are looking for a gift for their mother", "ask how long it takes to make the box", "ask to have her name written on it", "ask if you accept card payment"] },
+  { role: "a customer support agent of an Iranian online shop; the learner received shoes in the wrong size",
+    tasks: ["say the size they received is wrong", "give the order number", "ask to exchange it for size 42", "ask when the new pair will arrive"] },
+  { role: "a Persian teacher in Tehran at the graduation ceremony of the learner's language course; you asked the learner to give a short speech",
+    tasks: ["thank the teachers", "say what was hardest for them in Persian", "use a Persian proverb or idiom", "say what they will do with Persian in the future"] },
 ];
 
 
