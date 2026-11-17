@@ -34,6 +34,7 @@ function collectTexts(A) {
   A.RD.forEach(d => d.s.forEach(l => add(l[0])));
   A.GR.forEach(g => g.e.forEach(e => add(e[0])));
   A.PRV.forEach(p => add(p[0]));
+  (A.RID || []).forEach(r => { add(r[0]); add(r[3]); });
   A.CHEER.forEach(c => add(c[0]));
   A.STORY.forEach(x => x.s.forEach(l => add(l[0])));
   Object.keys(A.GLS).forEach(w => add(w));

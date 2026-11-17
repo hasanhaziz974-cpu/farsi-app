@@ -9,7 +9,7 @@
  * 3. free      the free version opens exactly level 1's lessons and rules, 4 stories, 5 conversations and
  *              one lesson per special section; a subscriber opens everything
  * 4. links     lesson, rule, conversation, story and trip links point at things that exist
- * 5. progress  a saved state from every older version (v2-v5) lands on the same rules and conversations,
+ * 5. progress  a saved state from every older version (v2-v6) lands on the same rules and conversations,
  *              in the app (migrateV3-V5) and on the server (lib/progress.js)
  * 6. games     each mini-game runs to its result; today's dictation is graded by level, easiest first
  * 7. server    the server modules load; internal repository files are not served
@@ -79,7 +79,7 @@ const SCREENS = [
   ['home', "go('home')"], ['lesson', "go('home');sub=0;render()"],
   ...[0, 1, 2, 3, 4].map((g) => ['lesson stage ' + (g + 1), `go('home');startStage(3,${g})`]),
   ['letters', "go('letters')"], ['games', "go('games')"], ['memory', "go('games');startMem()"], ['letter game', "go('games');startLG('name')"], ['spell', "go('games');startLG('spell')"],
-  ...['prv', 'ant', 'lis', 'tf', 'tm'].map((m) => ['game ' + m, `go('games');gmStart('${m}')`]), ['daily challenge', "go('home');startDaily()"],
+  ...['prv', 'ant', 'lis', 'tf', 'rid', 'tm'].map((m) => ['game ' + m, `go('games');gmStart('${m}')`]), ['daily challenge', "go('home');startDaily()"],
   ['dictionary', "DQ='سلام';go('dict')"], ['rules', "go('gram')"], ['rule', "go('gram');G=34;render()"], ['rule quiz', "go('gram');G=34;render();startGQ()"], ['word order', "go('gram');G=10;render();wbStart(10)"],
   ['verbs', "go('verbs')"], ['verb', "go('verbs');CV=3;render()"], ['verb quiz', "go('verbs');startCQ(true)"],
   ['talk', "go('talk')"], ['conversation list', "go('talk');DLV=true;render()"], ['conversation', "go('talk');D=44;render()"], ['listening', "go('talk');D=44;render();startLQ()"], ['reading', "go('talk');D=44;RV=true;RQ=null;render()"], ['role-play', "go('talk');D=44;render();startRP('A')"], ['dictation', "go('talk');dtStart('d',44)"],
@@ -92,7 +92,7 @@ const SCREENS = [
 
 async function screens(b, url) {
   for (const [fs_, label] of [[0, 'normal text'], [2, 'largest text']]) {
-    const p = await page(b, url, { state: { xp: 400, st: 3, last: '', srs: {}, v: 6, fs: fs_, prem: 1, pass: all(69), gp: all(50), dp: all(64), story: all(120), mist: { 'w:3-1': { k: 'w', x: '3-1', at: Date.now() - 864e5, b: 0, d: 0 } } } });
+    const p = await page(b, url, { state: { xp: 400, st: 3, last: '', srs: {}, v: 7, fs: fs_, prem: 1, pass: all(69), gp: all(50), dp: all(68), story: all(120), mist: { 'w:3-1': { k: 'w', x: '3-1', at: Date.now() - 864e5, b: 0, d: 0 } } } });
     for (const [name, code] of SCREENS) {
       p.errs = [];
       try { await p.evaluate((c) => eval(c), code); } catch (e) { fail('screens', `${name} (${label}): ${e.message.split('\n')[0]}`); continue; }
@@ -113,7 +113,7 @@ async function screens(b, url) {
 }
 
 async function free(b, url) {
-  const st = { xp: 50, st: 1, last: '', srs: {}, v: 6 };
+  const st = { xp: 50, st: 1, last: '', srs: {}, v: 7 };
   const p = await page(b, url, { state: st, me: { email: 'f@example.com', kind: 'member', ok: false } });
   const r = await p.evaluate(() => ({ lite: webLite(), L: [7, 8].map((i) => allowed('L', i)), G: [4, 5].map((i) => allowed('G', i)), D: [4, 5].map((i) => allowed('D', i)), stories: STORY.filter((s, i) => !stLock(i)).length, col: [0, 1].map((i) => !colLock(i)), trip: [0, 1].map((i) => !tripLock(i) || tripLock(i).indexOf('⭐') < 0) }));
   const want = { lite: true, L: [true, false], G: [true, false], D: [true, false], stories: 4, col: [true, false], trip: [true, false] };
@@ -152,6 +152,7 @@ async function progress(b, url) {
     { v: 3, gp: { 10: 1, 34: 1 }, dp: { 42: 1, 53: 1 }, rules: ['المستقبل', '«با این‌که»: رغم أنّ'], convs: ['في المخبز', 'عند المحامي'] },
     { v: 4, gp: { 9: 1, 10: 1, 16: 1, 28: 1 }, dp: { 46: 1 }, rules: ['حروف الجر', 'المستقبل', 'الماضي القريب (النقلي)', 'الماضي الالتزامي'], convs: ['في المخبز'] },
     { v: 5, gp: {}, dp: {}, rules: [], convs: [], pass: { 15: 1, 16: 1, 25: 1, 48: 1, 63: 1 }, srs: { '16-2': { b: 2, d: 1 } }, lessons: ['البيت والأشياء', 'الأرقام 11 إلى 1000', 'المطبخ والطبخ', 'الفن والسينما والموسيقى', 'العلاقات والمشاعر الدقيقة'], word: 'الأرقام 11 إلى 1000' },
+    { v: 6, gp: {}, dp: { 6: 1, 7: 1, 20: 1, 63: 1 }, rules: [], convs: ['في المطار', 'في التاكسي', 'تهنئة العيد', 'نقاش عن تغيّر المناخ'] },
   ];
   const { upgrade } = await import(path.join(ROOT, 'lib/progress.js'));
   const same = (a, b2) => JSON.stringify([...a].sort()) === JSON.stringify([...b2].sort());
@@ -164,18 +165,18 @@ async function progress(b, url) {
     if (c.word && r.word !== c.word) fail('progress', `v${c.v} word review lands in lesson «${r.word}»`);
     const serverRules = await p.evaluate((g) => Object.keys(g).map((k) => GR[k] && GR[k].t), sv.gp);
     const serverConvs = await p.evaluate((d) => Object.keys(d).map((k) => DLG[k] && DLG[k].t), sv.dp);
-    if (r.v !== 6) fail('progress', `v${c.v} state ends at v${r.v} in the app`);
+    if (r.v !== 7) fail('progress', `v${c.v} state ends at v${r.v} in the app`);
     if (!same(r.rules, c.rules)) fail('progress', `v${c.v} rules in the app: ${r.rules.join(', ')}`);
     if (!same(r.convs, c.convs)) fail('progress', `v${c.v} conversations in the app: ${r.convs.join(', ')}`);
-    if (sv.v !== 6 || !same(serverRules, c.rules) || !same(serverConvs, c.convs)) fail('progress', `v${c.v} on the server: v${sv.v}, ${serverRules.join(', ')} / ${serverConvs.join(', ')}`);
+    if (sv.v !== 7 || !same(serverRules, c.rules) || !same(serverConvs, c.convs)) fail('progress', `v${c.v} on the server: v${sv.v}, ${serverRules.join(', ')} / ${serverConvs.join(', ')}`);
     p.errs.forEach((e) => fail('progress', 'JS error ' + e));
     await p.close();
   }
 }
 
 async function games(b, url) {
-  const p = await page(b, url, { state: { xp: 10, st: 1, last: '', srs: {}, v: 6, pass: all(20) } });
-  for (const m of ['prv', 'ant', 'lis', 'tf']) {
+  const p = await page(b, url, { state: { xp: 10, st: 1, last: '', srs: {}, v: 7, pass: all(20) } });
+  for (const m of ['prv', 'ant', 'lis', 'tf', 'rid']) {
     const ok = await p.evaluate((m) => { go('games'); gmStart(m); for (let i = 0; i < 40 && !GM.fin; i++) { const q = GM.qs[GM.i]; gmPick(q.o.indexOf(q.a)); gmNext(); } return GM.fin && GM.sc === GM.qs.length; }, m);
     if (!ok) fail('games', m + ' did not finish with every answer right');
   }
@@ -187,8 +188,8 @@ async function games(b, url) {
 
 // Today's dictation is graded: within the learner's level and length, easiest first.
 async function dictation(b, url) {
-  for (const [name, st, maxLv, maxWords] of [['beginner', { pass: all(2) }, 0, 4], ['level 7', { pass: all(68), gp: all(50), dp: all(63) }, 6, 9]]) {
-    const p = await page(b, url, { state: Object.assign({ xp: 10, st: 1, last: '', srs: {}, v: 6, prem: 1 }, st) });
+  for (const [name, st, maxLv, maxWords] of [['beginner', { pass: all(2) }, 0, 4], ['level 7', { pass: all(68), gp: all(50), dp: all(67) }, 6, 9]]) {
+    const p = await page(b, url, { state: Object.assign({ xp: 10, st: 1, last: '', srs: {}, v: 7, prem: 1 }, st) });
     const r = await p.evaluate(() => dtPick(5).map((q) => [q.lv, dtN(q.fa).length]));
     if (r.length !== 5) fail('dictation', `${name}: ${r.length} sentences`);
     if (r.some(([lv, n]) => lv > maxLv || n > maxWords)) fail('dictation', `${name}: sentence above the level or too long ${JSON.stringify(r)}`);
