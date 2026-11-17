@@ -123,6 +123,9 @@ async function free(b, url) {
   const q = await page(b, url, { state: st, me: { email: 's@example.com', kind: 'member', ok: true } });
   const s = await q.evaluate(() => ({ lite: webLite(), locked: STORY.filter((x, i) => stLock(i)).length + [0, 1, 3].filter((i) => colLock(i)).length }));
   if (s.lite || s.locked) fail('free', 'a subscriber sees locked content: ' + JSON.stringify(s));
+  // Stories open with their level: a new subscriber reads level-1 stories only, and culture texts open with level 5.
+  const lvl = await q.evaluate(() => { const open = (f) => STORY.filter((x, i) => f(x) && stLvOpen(i)).length; STV = null; stOpen(STORY.findIndex((x) => x.lv === 7)); return { l1: open((x) => x.lv === 1 && !x.c), later: open((x) => x.lv > 1 || x.c), opened: !!(STV && STV.i !== undefined) }; });
+  if (!lvl.l1 || lvl.later || lvl.opened) fail('free', 'stories do not follow the level for a new subscriber: ' + JSON.stringify(lvl));
   [...p.errs, ...q.errs].forEach((e) => fail('free', 'JS error ' + e));
   await q.close();
 }
