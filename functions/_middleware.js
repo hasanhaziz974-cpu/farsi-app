@@ -15,8 +15,7 @@ const PAGES = new Set(['/', '/index', '/index.html']);
 // <html> tag; anything else (the app, or the app served as a fallback for an unknown path) is refused.
 // This also covers hosts Access does not cover, like a deployment's own *.pages.dev address.
 // /audio/ is public: the Android app (no sign-in) streams the recorded pronunciation and downloads it as a pack.
-// /download/ holds the Android APK and its version.json, linked from the welcome page and from older apps.
-const PUBLIC = ['/welcome', '/fonts/', '/pwa/', '/audio/', '/download/', '/docs/', '/login', '/api/auth/', '/logout'];
+const PUBLIC = ['/welcome', '/fonts/', '/pwa/', '/audio/', '/docs/', '/login', '/api/auth/', '/logout'];
 const WELCOME = new Set(['/welcome', '/welcome/', '/welcome/index.html', '/login', '/login/', '/login/index.html']);
 
 async function publicOnly(request, next) {
@@ -69,13 +68,7 @@ export async function onRequest(context) {
     const rule = CACHE.find(([re]) => re.test(path));
     if (rule) out.headers.set('Cache-Control', rule[1]);
     // The Android app's page (https://localhost) fetches the audio pack across origins.
-    if (path.startsWith('/audio/') || path === '/download/version.json') out.headers.set('Access-Control-Allow-Origin', '*');
-    if (path === '/download/version.json') out.headers.set('Cache-Control', 'no-cache');
-    if (path.endsWith('.apk')) {
-      out.headers.set('Content-Type', 'application/vnd.android.package-archive');
-      out.headers.set('Content-Disposition', 'attachment; filename="farsi-app.apk"');
-      out.headers.set('Cache-Control', 'no-cache');
-    }
+    if (path.startsWith('/audio/')) out.headers.set('Access-Control-Allow-Origin', '*');
   }
   return out;
 }
