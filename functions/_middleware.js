@@ -15,7 +15,7 @@ const PAGES = new Set(['/', '/index', '/index.html']);
 // <html> tag; anything else (the app, or the app served as a fallback for an unknown path) is refused.
 // This also covers hosts Access does not cover, like a deployment's own *.pages.dev address.
 // /audio/ is public: the Android app (no sign-in) streams the recorded pronunciation and downloads it as a pack.
-const PUBLIC = ['/welcome', '/fonts/', '/pwa/', '/audio/', '/docs/', '/login', '/api/auth/', '/logout'];
+const PUBLIC = ['/welcome', '/fonts/', '/pwa/', '/audio/', '/login', '/api/auth/', '/logout'];
 const WELCOME = new Set(['/welcome', '/welcome/', '/welcome/index.html', '/login', '/login/', '/login/index.html']);
 
 async function publicOnly(request, next) {
@@ -51,9 +51,9 @@ const CACHE = [
   [/^\/(pwa|welcome)\/.+\.(png|webp)$/, 'public, max-age=604800'],
 ];
 
-// Repository files that are not part of the site (admin tools, server code, store listing, notes). Pages
-// publishes the whole repository, so they are answered with 404 for everyone, signed in or not.
-const INTERNAL = /^\/(tools|lib|workers|store|functions|\.github)(\/|$)|^\/(README\.md|package(-lock)?\.json|capacitor\.config\.json|icon-only\.png|\.gitignore)$|\.(py|pyc|gs|md)$/i;
+// Repository files that are not part of the site (admin tools, server code, store listing, notes). The Pages
+// build copies only the site's files to www, so these are not published; a 404 for everyone in case that changes.
+const INTERNAL = /^\/(tools|tests|lib|workers|store|functions|\.github)(\/|$)|^\/(README\.md|package(-lock)?\.json|capacitor\.config\.json|icon-only\.png|\.gitignore)$|\.(py|pyc|gs|md)$/i;
 
 export async function onRequest(context) {
   let path0 = '/';

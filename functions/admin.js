@@ -74,8 +74,26 @@ function payForm(c) {
 <div class="row"><button>حفظ</button></div></form>`;
 }
 
+// App error reports and learner notes (functions/api/report.js): delete one, or clear them all.
+async function clearPrefix(kv, prefix) {
+  let cursor, n = 0;
+  do {
+    const res = await kv.list({ prefix, cursor });
+    for (const k of res.keys) { await kv.delete(k.name); n++; }
+    cursor = res.list_complete ? null : res.cursor;
+  } while (cursor);
+  return n;
+}
+
 async function act(kv, form) {
   if (form.get('action') === 'paycfg') return savePay(kv, form);
+  const key0 = String(form.get('key') || '');
+  if (form.get('action') === 'del-report' && /^(err|fb):[\w:.-]+$/.test(key0)) {
+    await kv.delete(key0);
+    return 'حُذف.';
+  }
+  if (form.get('action') === 'clear-err') return `مُسحت ${await clearPrefix(kv, 'err:')} من أخطاء التطبيق.`;
+  if (form.get('action') === 'clear-fb') return `مُسحت ${await clearPrefix(kv, 'fb:')} من الملاحظات.`;
   const email = String(form.get('email') || '').trim().toLowerCase();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return 'اكتب بريداً صحيحاً.';
   const key = 'allow:' + email;
@@ -175,6 +193,29 @@ async function view(kv, msg) {
     + (quiet.length ? `<details><summary>لم يتعلّموا منذ شهر (${quiet.length}) · يمكنك مراسلتهم</summary>${quiet.map(trialCard).join('')}</details>` : '');
 
   const pay = (await kv.get('paycfg', 'json')) || {};
+  const reports = async (prefix) => {
+    const out = [];
+    let cursor;
+    do {
+      const res = await kv.list({ prefix, cursor });
+      for (const k of res.keys) { const v = await kv.get(k.name, 'json'); if (v) out.push({ key: k.name, ...v }); }
+      cursor = res.list_complete ? null : res.cursor;
+    } while (cursor);
+    return out;
+  };
+  const when = (t) => ltr(new Date(t).toISOString().slice(0, 16).replace('T', ' '));
+  const del = (key) => `<form method="post" style="display:inline"><input type="hidden" name="key" value="${esc(key)}"><button name="action" value="del-report" class="alt" style="padding:4px 10px">حذف</button></form>`;
+  const errs = (await reports('err:')).sort((a, b) => b.last - a.last);
+  const notes = (await reports('fb:')).sort((a, b) => b.at - a.at);
+  const errRows = errs.map((x) => `<div class="card"><div class="p"><b>${x.n} ${x.n === 1 ? 'مرة' : 'مرات'}</b><span class="mu">آخرها ${when(x.last)}</span></div>
+<div class="e" style="font-weight:400;margin-top:6px">${esc(x.m)}</div><div class="mu">الشاشة: ${esc(x.w || '-')} · أول مرة ${when(x.first)}</div><div class="row">${del(x.key)}</div></div>`).join('')
+    || '<p class="mu">لا أخطاء مسجّلة. 🎉</p>';
+  const noteRows = notes.map((x) => `<div class="card"><div class="p"><span class="e">${esc(x.e)}</span><span class="mu">${when(x.at)}</span></div>
+<p style="margin:6px 0;white-space:pre-wrap">${esc(x.t)}</p><div class="mu">في: ${esc(x.w || '-')}</div><div class="row">${del(x.key)}</div></div>`).join('')
+    || '<p class="mu">لا ملاحظات بعد.</p>';
+  const clearBtn = (n, action, label) => (n ? `<form method="post" class="row"><button name="action" value="${action}" class="no" onclick="return confirm('${label}؟')">${label}</button></form>` : '');
+  const reportSection = `<h2>💬 ملاحظات المتعلّمين (${notes.length})</h2><p class="mu">ما أرسله المتعلّمون من زر «🐞 وجدت خطأ؟» في التطبيق.</p>${noteRows}${clearBtn(notes.length, 'clear-fb', 'مسح كل الملاحظات')}
+<h2>🐞 أخطاء التطبيق (${errs.length})</h2><p class="mu">أخطاء برمجية ظهرت في أجهزة المتعلّمين، الأحدث أولاً، بلا بيانات شخصية. أرسل نصّ الخطأ لمن يطوّر التطبيق ليصلحه.</p>${errRows}${clearBtn(errs.length, 'clear-err', 'مسح كل الأخطاء')}`;
   return page(`<h1>إدارة المشتركين</h1><p class="mu">التغييرات تعمل خلال دقيقة تقريباً. · <a href="/logout">خروج</a></p>
 ${msg ? `<div class="msg">${esc(msg)}</div>` : ''}
 <div class="stats"><div><b>${activeMembers}</b><span>مشترك</span></div><div><b>${trials.length}</b><span>مجانيون</span></div><div><b>${week}</b><span>تعلّموا هذا الأسبوع</span></div><div><b>${reminders}</b><span>فعّلوا التذكير</span></div></div>
@@ -185,6 +226,7 @@ ${usage(mailsToday, Object.values(learn).filter((l) => l && l.saved >= Date.pars
 ${allowed.length + trials.length > 8 ? '<input type="search" id="q" placeholder="ابحث ببريد…" oninput="flt(this.value)">' : ''}
 <h2>المشتركون (${allowed.length})</h2>${people}
 <h2>المستخدمون المجانيون (${trials.length})</h2>${trialRows}
+${reportSection}
 ${payForm(pay)}
 <script>function flt(q){q=q.trim().toLowerCase();document.querySelectorAll('.card').forEach(function(c){var e=c.querySelector('.e');if(e)c.style.display=!q||e.textContent.toLowerCase().indexOf(q)>=0?'':'none'});document.querySelectorAll('details').forEach(function(d){if(q)d.open=true})}</script>`);
 }

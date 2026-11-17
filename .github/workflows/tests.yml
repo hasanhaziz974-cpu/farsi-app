@@ -1,0 +1,25 @@
+name: Tests
+# The app's automatic checks (tests/run.js): content, every screen, the free version, links, saved progress
+# from older versions, the games and the server modules. A pull request shows ✅ or ❌ before it is merged.
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+      - name: Install Playwright with Chromium
+        run: |
+          npm install -g playwright@1.63.0
+          playwright install --with-deps chromium
+      - name: Run the checks
+        run: NODE_PATH="$(npm root -g)" node tests/run.js
