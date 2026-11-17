@@ -176,6 +176,18 @@ export const CHAPTERS = [
     tasks: ["say the size they received is wrong", "give the order number", "ask to exchange it for size 42", "ask when the new pair will arrive"] },
   { role: "a Persian teacher in Tehran at the graduation ceremony of the learner's language course; you asked the learner to give a short speech",
     tasks: ["thank the teachers", "say what was hardest for them in Persian", "use a Persian proverb or idiom", "say what they will do with Persian in the future"] },
+  { role: "Parsa, the learner's Iranian friend, who has just landed at Baghdad airport to visit the learner; now the learner is the host",
+    tasks: ["welcome you to Iraq", "ask how your flight was", "offer to carry your suitcase", "tell you the plan for today"] },
+  { role: "an elderly Iranian woman pilgrim in Karbala who got separated from her group and asks the learner for help",
+    tasks: ["ask where you came from and with whom", "tell you not to worry and that they will help", "ask the name of your hotel", "tell you where to leave your shoes and where the entrance is"] },
+  { role: "Parsa, a guest at the learner's home in Iraq, eating an Iraqi dinner the learner made",
+    tasks: ["invite you to eat", "explain what masgouf is", "insist that you eat more", "reply to your thanks after the meal"] },
+  { role: "Parsa, shopping in the Shorja market in Baghdad while the learner translates for him",
+    tasks: ["tell you what this is (cardamom and spices)", "tell you the price the seller said", "advise you to buy dates in the next shop", "tell you the seller will give a discount"] },
+  { role: "Parsa, staying with the learner in Iraq, who woke up with a stomach ache",
+    tasks: ["ask what hurts", "ask what you ate yesterday", "advise you to drink water and rest", "say they will bring medicine from the pharmacy"] },
+  { role: "Parsa, at Baghdad airport at the end of his visit, saying goodbye to the learner",
+    tasks: ["say they will miss you", "give you a gift and say what it is", "invite you to come again with your family", "say goodbye and wish you a good trip"] },
 ];
 
 
