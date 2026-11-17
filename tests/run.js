@@ -9,7 +9,7 @@
  * 3. free      the free version opens exactly level 1's lessons and rules, 4 stories, 5 conversations and
  *              one lesson per special section; a subscriber opens everything
  * 4. links     lesson, rule, conversation, story and trip links point at things that exist
- * 5. progress  a saved state from every older version (v2-v4) lands on the same rules and conversations,
+ * 5. progress  a saved state from every older version (v2-v5) lands on the same rules and conversations,
  *              in the app (migrateV3-V5) and on the server (lib/progress.js)
  * 6. games     each mini-game runs to its result
  * 7. server    the server modules load; internal repository files are not served
@@ -87,12 +87,12 @@ const SCREENS = [
   ['trip map', "go('talk');aiOpen()"], ['trip chapter', "go('talk');aiOpen();aiChapter(64)"],
   ['review', "go('review')"], ['daily dictation', "go('review');dtStart('day')"], ['mistakes', "go('review');MV={};render()"],
   ['progress', "go('me')"], ['settings', "go('me');SETV=true;render()"], ['level exam', "go('me');exStart(2)"], ['placement', "go('home');pcStart()"],
-  ...['col', 'ar', 'soc', 'poem'].flatMap((s) => [[s + ' list', `CS='${s}';go('col')`], [s + ' lesson', `CS='${s}';go('col');CL=1;render()`], [s + ' quiz', `CS='${s}';go('col');CL=1;render();colStart()`]]),
+  ...['col', 'ar', 'soc', 'mis', 'poem'].flatMap((s) => [[s + ' list', `CS='${s}';go('col')`], [s + ' lesson', `CS='${s}';go('col');CL=1;render()`], [s + ' quiz', `CS='${s}';go('col');CL=1;render();colStart()`]]),
 ];
 
 async function screens(b, url) {
   for (const [fs_, label] of [[0, 'normal text'], [2, 'largest text']]) {
-    const p = await page(b, url, { state: { xp: 400, st: 3, last: '', srs: {}, v: 5, fs: fs_, prem: 1, pass: all(64), gp: all(50), dp: all(64), story: all(110), mist: { 'w:3-1': { k: 'w', x: '3-1', at: Date.now() - 864e5, b: 0, d: 0 } } } });
+    const p = await page(b, url, { state: { xp: 400, st: 3, last: '', srs: {}, v: 6, fs: fs_, prem: 1, pass: all(69), gp: all(50), dp: all(64), story: all(120), mist: { 'w:3-1': { k: 'w', x: '3-1', at: Date.now() - 864e5, b: 0, d: 0 } } } });
     for (const [name, code] of SCREENS) {
       p.errs = [];
       try { await p.evaluate((c) => eval(c), code); } catch (e) { fail('screens', `${name} (${label}): ${e.message.split('\n')[0]}`); continue; }
@@ -113,14 +113,14 @@ async function screens(b, url) {
 }
 
 async function free(b, url) {
-  const st = { xp: 50, st: 1, last: '', srs: {}, v: 5 };
+  const st = { xp: 50, st: 1, last: '', srs: {}, v: 6 };
   const p = await page(b, url, { state: st, me: { email: 'f@example.com', kind: 'member', ok: false } });
   const r = await p.evaluate(() => ({ lite: webLite(), L: [7, 8].map((i) => allowed('L', i)), G: [4, 5].map((i) => allowed('G', i)), D: [4, 5].map((i) => allowed('D', i)), stories: STORY.filter((s, i) => !stLock(i)).length, col: [0, 1].map((i) => !colLock(i)), trip: [0, 1].map((i) => !tripLock(i) || tripLock(i).indexOf('⭐') < 0) }));
   const want = { lite: true, L: [true, false], G: [true, false], D: [true, false], stories: 4, col: [true, false], trip: [true, false] };
   if (JSON.stringify(r) !== JSON.stringify(want)) fail('free', 'free version opens ' + JSON.stringify(r) + ', expected ' + JSON.stringify(want));
   await p.close();
   const q = await page(b, url, { state: st, me: { email: 's@example.com', kind: 'member', ok: true } });
-  const s = await q.evaluate(() => ({ lite: webLite(), locked: STORY.filter((x, i) => stLock(i)).length + [0, 1, 5].filter((i) => colLock(i)).length }));
+  const s = await q.evaluate(() => ({ lite: webLite(), locked: STORY.filter((x, i) => stLock(i)).length + [0, 1, 3].filter((i) => colLock(i)).length }));
   if (s.lite || s.locked) fail('free', 'a subscriber sees locked content: ' + JSON.stringify(s));
   [...p.errs, ...q.errs].forEach((e) => fail('free', 'JS error ' + e));
   await q.close();
@@ -151,26 +151,30 @@ async function progress(b, url) {
     { v: 2, gp: { 33: 1, 34: 1, 39: 1 }, dp: { 41: 1, 42: 1 }, rules: ['«هر» و«هیچ»', 'اسم الفاعل واسم المفعول', 'لغة الاحترام: بنده، تشریف، فرمودن'], convs: ['عن حافظ والشعر', 'في المخبز'] },
     { v: 3, gp: { 10: 1, 34: 1 }, dp: { 42: 1, 53: 1 }, rules: ['المستقبل', '«با این‌که»: رغم أنّ'], convs: ['في المخبز', 'عند المحامي'] },
     { v: 4, gp: { 9: 1, 10: 1, 16: 1, 28: 1 }, dp: { 46: 1 }, rules: ['حروف الجر', 'المستقبل', 'الماضي القريب (النقلي)', 'الماضي الالتزامي'], convs: ['في المخبز'] },
+    { v: 5, gp: {}, dp: {}, rules: [], convs: [], pass: { 15: 1, 16: 1, 25: 1, 48: 1, 63: 1 }, srs: { '16-2': { b: 2, d: 1 } }, lessons: ['البيت والأشياء', 'الأرقام 11 إلى 1000', 'المطبخ والطبخ', 'الفن والسينما والموسيقى', 'العلاقات والمشاعر الدقيقة'], word: 'الأرقام 11 إلى 1000' },
   ];
   const { upgrade } = await import(path.join(ROOT, 'lib/progress.js'));
+  const same = (a, b2) => JSON.stringify([...a].sort()) === JSON.stringify([...b2].sort());
   for (const c of cases) {
-    const p = await page(b, url, { state: { xp: 10, st: 1, last: '', srs: {}, v: c.v, gp: c.gp, dp: c.dp } });
-    const r = await p.evaluate(() => ({ v: S.v, rules: Object.keys(S.gp).map((k) => GR[k] && GR[k].t), convs: Object.keys(S.dp).map((k) => DLG[k] && DLG[k].t) }));
-    const sv = upgrade({ v: c.v, xp: 1, srs: {}, gp: c.gp, dp: c.dp });
+    const p = await page(b, url, { state: { xp: 10, st: 1, last: '', srs: c.srs || {}, v: c.v, gp: c.gp, dp: c.dp, pass: c.pass || {} } });
+    const r = await p.evaluate(() => ({ v: S.v, rules: Object.keys(S.gp || {}).map((k) => GR[k] && GR[k].t), convs: Object.keys(S.dp || {}).map((k) => DLG[k] && DLG[k].t), lessons: Object.keys(S.pass || {}).map((k) => LES[k] && LES[k].t), word: Object.keys(S.srs || {}).map((id) => LES[+id.split('-')[0]] && LES[+id.split('-')[0]].t)[0] }));
+    const sv = upgrade({ v: c.v, xp: 1, srs: c.srs || {}, gp: c.gp, dp: c.dp, pass: c.pass || {} });
+    const serverLessons = await p.evaluate((d) => Object.keys(d).map((k) => LES[k] && LES[k].t), sv.pass);
+    if (c.lessons && (!same(r.lessons, c.lessons) || !same(serverLessons, c.lessons))) fail('progress', `v${c.v} lessons: app ${r.lessons.join(', ')} / server ${serverLessons.join(', ')}`);
+    if (c.word && r.word !== c.word) fail('progress', `v${c.v} word review lands in lesson «${r.word}»`);
     const serverRules = await p.evaluate((g) => Object.keys(g).map((k) => GR[k] && GR[k].t), sv.gp);
     const serverConvs = await p.evaluate((d) => Object.keys(d).map((k) => DLG[k] && DLG[k].t), sv.dp);
-    const same = (a, b2) => JSON.stringify([...a].sort()) === JSON.stringify([...b2].sort());
-    if (r.v !== 5) fail('progress', `v${c.v} state ends at v${r.v} in the app`);
+    if (r.v !== 6) fail('progress', `v${c.v} state ends at v${r.v} in the app`);
     if (!same(r.rules, c.rules)) fail('progress', `v${c.v} rules in the app: ${r.rules.join(', ')}`);
     if (!same(r.convs, c.convs)) fail('progress', `v${c.v} conversations in the app: ${r.convs.join(', ')}`);
-    if (sv.v !== 5 || !same(serverRules, c.rules) || !same(serverConvs, c.convs)) fail('progress', `v${c.v} on the server: v${sv.v}, ${serverRules.join(', ')} / ${serverConvs.join(', ')}`);
+    if (sv.v !== 6 || !same(serverRules, c.rules) || !same(serverConvs, c.convs)) fail('progress', `v${c.v} on the server: v${sv.v}, ${serverRules.join(', ')} / ${serverConvs.join(', ')}`);
     p.errs.forEach((e) => fail('progress', 'JS error ' + e));
     await p.close();
   }
 }
 
 async function games(b, url) {
-  const p = await page(b, url, { state: { xp: 10, st: 1, last: '', srs: {}, v: 5, pass: all(20) } });
+  const p = await page(b, url, { state: { xp: 10, st: 1, last: '', srs: {}, v: 6, pass: all(20) } });
   for (const m of ['prv', 'ant', 'lis', 'tf']) {
     const ok = await p.evaluate((m) => { go('games'); gmStart(m); for (let i = 0; i < 40 && !GM.fin; i++) { const q = GM.qs[GM.i]; gmPick(q.o.indexOf(q.a)); gmNext(); } return GM.fin && GM.sc === GM.qs.length; }, m);
     if (!ok) fail('games', m + ' did not finish with every answer right');
