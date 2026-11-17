@@ -8,7 +8,8 @@
  * 2. screens   every main screen opens without a JavaScript error, "undefined", or sideways overflow
  * 3. free      the free version opens exactly level 1's lessons and rules, 4 stories, 5 conversations and
  *              one lesson per special section; a subscriber opens everything
- * 4. links     lesson, rule, conversation, story and trip links point at things that exist
+ * 4. links     lesson, rule, conversation, story and trip links point at things that exist; every rule,
+ *              lesson and special-section lesson is linked
  * 5. progress  a saved state from every older version (v2-v6) lands on the same rules and conversations,
  *              in the app (migrateV3-V5) and on the server (lib/progress.js)
  * 6. games     each mini-game runs to its result; today's dictation is graded by level, easiest first
@@ -135,6 +136,11 @@ async function links(b, url) {
     TRIP.forEach((t, i) => { if (t.req >= LES.length) bad.push('chapter ' + (i + 1) + ' needs missing lesson ' + t.req); else if (t.req >= 0 && lvOf(t.req) > lvOf(i, 'T')) bad.push('chapter ' + (i + 1) + ' needs a lesson of a later level'); });
     Object.keys(SECL.les).forEach((l) => SECL.les[l].forEach((x) => { if (!SEC[x[0]] || !SEC[x[0]].d[x[1]]) bad.push('special-section link ' + l + ' ' + x); }));
     Object.keys(SLESM).forEach((t) => { if (!STORY.some((s) => s.t === t)) bad.push('SLESM names a missing story ' + t); });
+    // Nothing new without links: every rule is used by a lesson, every lesson has a story to read, and every
+    // special-section lesson is shown on some lesson's page.
+    GR.forEach((g, i) => { if (!lesFor('g', i).length) bad.push('rule «' + g.t + '» is linked from no lesson (LINK)'); });
+    LES.forEach((l, i) => { if (!lesStories(i).length) bad.push('lesson «' + l.t + '» has no story (SLESM)'); });
+    Object.keys(SEC).forEach((k) => SEC[k].d.forEach((c, i) => { if (!Object.values(SECL.les).some((a) => a.some((x) => x[0] === k && x[1] === i))) bad.push(SEC[k].t + ' «' + c.t + '» is shown on no lesson (SECL.les)'); }));
     // Culture texts (c) link the lessons of their topic, whatever the level; stories only lessons up to their level.
     STORY.forEach((s, i) => s.c || storyLes(i).forEach((l) => { if (lvOf(l) + 1 > s.lv) bad.push('story «' + s.ta + '» links lesson ' + (l + 1) + ' of a later level'); }));
     return bad;
