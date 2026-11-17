@@ -439,13 +439,24 @@ var DLV=false;
 // (conversations, rules passed, stories of their levels); each conversation has its own. S.dct = day done.
 var DT=null;
 function dtN(s){return String(s||'').replace(/ائ/g,'ای').replace(/[ً-ٰٟـ]/g,'').replace(/[يى]/g,'ی').replace(/ك/g,'ک').replace(/ة/g,'ه').replace(/[أإٱ]/g,'ا').replace(/ؤ/g,'و').replace(/[٠-٩]/g,function(d){return String(d.charCodeAt(0)-0x660)}).replace(/[۰-۹]/g,function(d){return String(d.charCodeAt(0)-0x6f0)}).replace(/‌/g,'').replace(/[.,،؛؟?!:«»"()\-]/g,' ').trim().split(/\s+/).filter(Boolean)}
-function dtPool(){var r=[],ok=function(s){var n=dtN(s).length;return n>=3&&n<=8};
-DLG.forEach(function(d,i){if(i===0||(S.dp&&S.dp[i-1]))d.l.forEach(function(l){if(ok(l[0]))r.push({fa:l[0],tr:l[1],ar:l[2],m:['l',lnId(l)]})})});
-GR.forEach(function(g,i){if(S.gp&&S.gp[i])g.e.forEach(function(e){if(ok(e[0]))r.push({fa:e[0],tr:e[1],ar:e[2],m:['g',exId(e)]})})});
-STORY.forEach(function(x,i){if(!stLock(i)&&S.story&&S.story[i])x.s.forEach(function(l){if(ok(l[0]))r.push({fa:l[0],tr:l[1],ar:l[2]})})});
-if(r.length<5)DLG[0].l.concat(DLG[1].l).forEach(function(l){if(ok(l[0]))r.push({fa:l[0],tr:l[1],ar:l[2],m:['l',lnId(l)]})});return r}
-function dtCard(){var done=S.dct===ds(Date.now());return'<button class="row" style="border-color:var(--ac)" onclick="dtStart(\'day\')"><div><div style="font-weight:600">✍️ إملاء اليوم'+(done?' ✅':'')+'</div><div class="mu">'+(done?'أنجزته اليوم. يمكنك التمرّن مرة أخرى.':'استمع إلى 5 جمل واكتبها بالفارسية')+'</div></div><span class="mu">‹</span></button>'}
-function dtStart(src,i){var qs=src==='d'?DLG[i].l.map(function(l){return{fa:l[0],tr:l[1],ar:l[2],m:['l',lnId(l)]}}).slice(0,6):sh(dtPool()).slice(0,5);
+// ✍️ Today's dictation is graded: sentences from the learner's level and the one before (lessons passed, conversations
+// and rules finished, stories read), as long as that level allows (DTLEN), lengthened or shortened by recent results
+// (S.dtx, -2..+2: up after a near-perfect dictation, down after a weak one), and given from the easiest to the hardest.
+var DTLEN=[[2,4],[3,5],[3,6],[4,7],[4,8],[5,8],[5,9]];
+function dtLevel(){var k=0;LVL.forEach(function(x,i){if(unlocked(x.L[0])&&allowed('L',x.L[0]))k=i});return k}
+function dtPool(cur,lo,hi){var r=[],ok=function(s){var n=dtN(s).length;return n>=lo&&n<=hi},add=function(lv,x){if(lv<=cur&&ok(x.fa)){x.lv=lv;r.push(x)}};
+LES.forEach(function(l,i){if(S.pass&&S.pass[i])l.w.forEach(function(w){if(w[0].indexOf(' ')>0)add(lvOf(i),{fa:w[0],tr:w[1],ar:w[2]})})});
+DLG.forEach(function(d,i){if((i===0||(S.dp&&S.dp[i-1]))&&allowed('D',i))d.l.forEach(function(l){add(lvOf(i,'D'),{fa:l[0],tr:l[1],ar:l[2],m:['l',lnId(l)]})})});
+GR.forEach(function(g,i){if(S.gp&&S.gp[i])g.e.forEach(function(e){add(lvOf(i,'G'),{fa:e[0],tr:e[1],ar:e[2],m:['g',exId(e)]})})});
+STORY.forEach(function(x,i){if(!stLock(i)&&S.story&&S.story[i])x.s.forEach(function(l){add(x.c?4:x.lv-1,{fa:l[0],tr:l[1],ar:l[2]})})});
+return r}
+function dtPick(n){var cur=dtLevel(),w=DTLEN[cur],x=S.dtx||0,lo=Math.max(2,w[0]+Math.min(0,x)),hi=Math.max(lo+1,w[1]+x),r=dtPool(cur,lo,hi);
+if(r.length<n)r=dtPool(cur,2,Math.max(hi,8));
+if(r.length<n)DLG[0].l.concat(DLG[1].l).forEach(function(l){var c=dtN(l[0]).length;if(c>=2&&c<=6)r.push({fa:l[0],tr:l[1],ar:l[2],m:['l',lnId(l)],lv:0})});
+var seen={},near=sh(r).filter(function(q){if(seen[q.fa])return false;seen[q.fa]=1;return true}).sort(function(a,b){return(b.lv>=cur-1)-(a.lv>=cur-1)}).slice(0,n);
+return near.sort(function(a,b){return dtN(a.fa).length-dtN(b.fa).length||a.fa.length-b.fa.length})}
+function dtCard(){var done=S.dct===ds(Date.now());return'<button class="row" style="border-color:var(--ac)" onclick="dtStart(\'day\')"><div><div style="font-weight:600">✍️ إملاء اليوم'+(done?' ✅':'')+'</div><div class="mu">'+(done?'أنجزته اليوم. يمكنك التمرّن مرة أخرى.':'5 جمل على قدر مستواك، من الأسهل إلى الأصعب')+'</div></div><span class="mu">‹</span></button>'}
+function dtStart(src,i){var qs=src==='d'?DLG[i].l.map(function(l){return{fa:l[0],tr:l[1],ar:l[2],m:['l',lnId(l)]}}).slice(0,6):dtPick(5);
 DT={src:src,d:i,i:0,sc:0,qs:qs,a:null,v:'',back:tab};render();scrollTo(0,0);setTimeout(function(){say(qs[0].fa)},300)}
 // Which expected words the learner wrote (longest common subsequence of the words). Letters missing from an
 // Arabic keyboard (پ چ ژ گ written ب ج ز ک) still count, as status 1 with a note; status 2 is exact, 0 wrong.
@@ -468,7 +479,7 @@ var cand=b.slice(lo+1,hi);if(cand.length===1){var me=dtMean(a[k]),mg=dtMean(cand
 return{st:st,tip:tip}}
 function dtCheck(){var el=document.getElementById('dtin'),v=el?el.value.trim():'';if(!v||DT.a!==null)return;var q=DT.qs[DT.i];DT.v=v;DT.ok=dtMark(q.fa,v);DT.a=DT.ok.st.every(Boolean);snd(DT.a);
 if(DT.a)DT.sc++;else if(q.m)mistX(q.m[0],q.m[1]);stay()}
-function dtNext(){DT.i++;DT.a=null;DT.v='';if(DT.i>=DT.qs.length){gain(DT.sc*5);if(DT.src==='day')S.dct=ds(Date.now());save()}render();scrollTo(0,0);var q=DT.qs[DT.i];if(q)setTimeout(function(){say(q.fa)},300)}
+function dtNext(){DT.i++;DT.a=null;DT.v='';if(DT.i>=DT.qs.length){if(DT.src==='day'){var dn=DT.qs.length;S.dtx=Math.max(-2,Math.min(2,(S.dtx||0)+(DT.sc>=dn-1?1:DT.sc<=dn/2?-1:0)))}gain(DT.sc*5);if(DT.src==='day')S.dct=ds(Date.now());save()}render();scrollTo(0,0);var q=DT.qs[DT.i];if(q)setTimeout(function(){say(q.fa)},300)}
 function dtView(){var bk=DT.src==='d'?'DT=null;D='+DT.d+';render()':'DT=null;render()',h='<button class="back" onclick="'+bk+'">› '+(DT.src==='d'?'رجوع للمحادثة':'رجوع للمراجعة')+'</button><h2>✍️ '+(DT.src==='d'?'إملاء: '+DLG[DT.d].t:'إملاء اليوم')+'</h2>',n=DT.qs.length;
 if(DT.i>=n)return h+'<div class="det" style="margin-top:20px"><div class="big">'+DT.sc+' من '+n+'</div><p>'+(DT.sc===n?'ممتاز! كتبت كل الجمل بشكل صحيح.':'أحسنت! الجمل التي أخطأت فيها حُفظت في «دفتر أخطائي».')+'</p><div class="btns"><button class="btn" onclick="dtStart(\''+DT.src+'\','+(DT.d==null?'':DT.d)+')">'+(DT.src==='d'?'أعد الإملاء':'جمل أخرى')+'</button><button class="btn alt" onclick="'+bk+'">رجوع</button></div></div>';
 var q=DT.qs[DT.i];h+='<p class="mu">الجملة '+(DT.i+1)+' من '+n+' · استمع ثم اكتب ما سمعته بالفارسية (تقبل الحروف العربية أيضاً).</p>';

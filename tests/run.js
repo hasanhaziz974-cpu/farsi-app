@@ -11,7 +11,7 @@
  * 4. links     lesson, rule, conversation, story and trip links point at things that exist
  * 5. progress  a saved state from every older version (v2-v5) lands on the same rules and conversations,
  *              in the app (migrateV3-V5) and on the server (lib/progress.js)
- * 6. games     each mini-game runs to its result
+ * 6. games     each mini-game runs to its result; today's dictation is graded by level, easiest first
  * 7. server    the server modules load; internal repository files are not served
  * 8. audio     every Persian text has its audio file (a warning only: the audio is generated after a push)
  * Exits with 1 when a check fails, so GitHub shows a red ❌ before merging.
@@ -185,6 +185,19 @@ async function games(b, url) {
   await p.close();
 }
 
+// Today's dictation is graded: within the learner's level and length, easiest first.
+async function dictation(b, url) {
+  for (const [name, st, maxLv, maxWords] of [['beginner', { pass: all(2) }, 0, 4], ['level 7', { pass: all(68), gp: all(50), dp: all(63) }, 6, 9]]) {
+    const p = await page(b, url, { state: Object.assign({ xp: 10, st: 1, last: '', srs: {}, v: 6, prem: 1 }, st) });
+    const r = await p.evaluate(() => dtPick(5).map((q) => [q.lv, dtN(q.fa).length]));
+    if (r.length !== 5) fail('dictation', `${name}: ${r.length} sentences`);
+    if (r.some(([lv, n]) => lv > maxLv || n > maxWords)) fail('dictation', `${name}: sentence above the level or too long ${JSON.stringify(r)}`);
+    if (r.some((x, i) => i && x[1] < r[i - 1][1])) fail('dictation', `${name}: not from easiest to hardest ${JSON.stringify(r)}`);
+    p.errs.forEach((e) => fail('dictation', 'JS error ' + e));
+    await p.close();
+  }
+}
+
 async function server() {
   for (const f of ['functions/_middleware.js', 'functions/admin.js', 'functions/logout.js', ...fs.readdirSync(path.join(ROOT, 'functions/api')).filter((x) => x.endsWith('.js')).map((x) => 'functions/api/' + x), ...fs.readdirSync(path.join(ROOT, 'functions/api/auth')).map((x) => 'functions/api/auth/' + x)]) {
     try { await import(path.join(ROOT, f)); } catch (e) { fail('server', f + ' does not load: ' + e.message); }
@@ -207,7 +220,7 @@ function audio() {
 (async () => {
   // "localhost" counts as the site for webApp(), like https://, so the signed-in features and the free version run.
   const srv = await serve(), url = 'http://localhost:' + srv.address().port, b = await chromium.launch();
-  const steps = [['content', content], ['screens', screens], ['free', free], ['links', links], ['progress', progress], ['games', games], ['server', server], ['audio', audio]];
+  const steps = [['content', content], ['screens', screens], ['free', free], ['links', links], ['progress', progress], ['games', games], ['dictation', dictation], ['server', server], ['audio', audio]];
   for (const [name, fn] of steps) {
     const n = fails.length, t = Date.now();
     try { await fn(b, url); } catch (e) { fail(name, 'crashed: ' + (e && e.stack ? e.stack.split('\n').slice(0, 3).join(' ') : e)); }
