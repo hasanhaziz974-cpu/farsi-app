@@ -187,7 +187,7 @@ async function server() {
   }
   const { onRequest } = await import(path.join(ROOT, 'functions/_middleware.js'));
   const next = async () => new Response('<html data-public>ok</html>', { headers: { 'Content-Type': 'text/html' } });
-  for (const [p, want] of [['/README.md', 404], ['/tools/sync_access.py', 404], ['/lib/trial.js', 404], ['/workers/reminders/index.js', 404], ['/store/listing.md', 404], ['/package.json', 404], ['/welcome/', 200], ['/docs/privacy-policy.html', 200], ['/audio/x.mp3', 200]]) {
+  for (const [p, want] of [['/README.md', 404], ['/tools/sync_access.py', 404], ['/lib/trial.js', 404], ['/workers/reminders/index.js', 404], ['/store/listing.md', 404], ['/package.json', 404], ['/welcome/', 200], ['/welcome/privacy.html', 200], ['/audio/x.mp3', 200]]) {
     const r = await onRequest({ request: new Request('https://example.dev' + p), env: {}, next });
     if (r.status !== want) fail('server', `${p} answers ${r.status}, expected ${want}`);
   }

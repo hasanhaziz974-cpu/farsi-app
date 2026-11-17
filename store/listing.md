@@ -49,7 +49,7 @@ Grow users ← Store presence ← Main store listing.
 |---|---|
 | الفئة (Category) | Education |
 | البريد للتواصل | languageparsa777@gmail.com |
-| سياسة الخصوصية | https://parsa-farsi.pages.dev/docs/privacy-policy.html |
+| سياسة الخصوصية | https://parsa-farsi.pages.dev/welcome/privacy.html |
 | اللغة الافتراضية | العربية (ar) |
 
 ## الصور (في مجلد store)
