@@ -53,7 +53,7 @@ const CACHE = [
 
 // Repository files that are not part of the site (admin tools, server code, store listing, notes). Pages
 // publishes the whole repository, so they are answered with 404 for everyone, signed in or not.
-const INTERNAL = /^\/(tools|lib|workers|store|functions|\.github)(\/|$)|^\/(README\.md|package(-lock)?\.json|capacitor\.config\.json|icon-only\.png|\.gitignore)$|\.(py|pyc|gs|md)$/i;
+const INTERNAL = /^\/(tools|tests|lib|workers|store|functions|\.github)(\/|$)|^\/(README\.md|package(-lock)?\.json|capacitor\.config\.json|icon-only\.png|\.gitignore)$|\.(py|pyc|gs|md)$/i;
 
 export async function onRequest(context) {
   let path0 = '/';
