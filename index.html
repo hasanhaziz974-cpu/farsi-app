@@ -362,7 +362,7 @@ return '<h2>تقدّمي</h2><div class="stats">'+tile('🔥',live?S.st:0,'أي�
 +lvlBox()+inviteBox()+weekSum()+weekBox()+badgeBox()+premBox()
 +'<h2>الحساب والإعدادات</h2>'+meCard()+'<button class="row" onclick="SETV=true;render()"><div><div style="font-weight:600">⚙️ الإعدادات</div><div class="mu">التذكير اليومي، والنسخة الاحتياطية، والأصوات، وتثبيت التطبيق</div></div><span class="mu">‹</span></button>'}
 var SETV=false;
-function setView(){return'<button class="back" onclick="SETV=false;render()">› رجوع لتقدّمي</button><h2>⚙️ الإعدادات</h2>'+reminderBox()+backupBox()+settingsBox()+installBox()+packBox()
+function setView(){return'<button class="back" onclick="SETV=false;render()">› رجوع لتقدّمي</button><h2>⚙️ الإعدادات</h2>'+reminderBox()+backupBox()+settingsBox()+installBox(true)+packBox()
 +'<div style="text-align:center;margin:4px 0 8px"><button class="lnk-no" onclick="resetAll()">إعادة تعيين التقدّم</button></div>'}
 function resetAll(){if(!confirm('سيُحذف كل تقدّمك في هذا الجهاز ولا يمكن التراجع. هل أنت متأكد؟'))return;S={xp:0,st:0,last:'',srs:{},v:7,prem:S.prem,rem:S.rem,remDay:S.remDay,sfx:S.sfx,resetAt:Date.now()};resetVolatile();save();render();top_()}
 
@@ -1594,7 +1594,7 @@ return'<div class="det" style="text-align:start"><b>👤 اشتراكي</b><div 
 // ---- Cloud progress (web version): the progress is also kept on the server under the sign-in email
 // (functions/api/progress.js merges it with the stored copy), so the same email finds it on any device.
 // Synced when the app opens, at most every 15 minutes after a change, and when the app is closed.
-var SYNC={on:false,busy:false,dirty:false,last:0,ver:0,timer:null,quiet:false},SYNC_GAP=15*60e3,DEVF=['rem','remDay','remAsk','free','tri','sfx','sv','plan','prem','syncT','fs'];
+var SYNC={on:false,busy:false,dirty:false,last:0,ver:0,timer:null,quiet:false},SYNC_GAP=15*60e3,DEVF=['rem','remDay','remAsk','free','tri','sfx','sv','plan','prem','syncT','fs','inst','instHide'];
 function syncData(){var o={};for(var k in S)if(DEVF.indexOf(k)<0)o[k]=S[k];return o}
 function syncMark(){if(!SYNC.on||SYNC.quiet)return;SYNC.ver++;SYNC.dirty=true;syncSoon()}
 function syncSoon(){if(SYNC.timer)return;SYNC.timer=setTimeout(function(){SYNC.timer=null;syncNow(false)},Math.max(5e3,SYNC.last+SYNC_GAP-Date.now()))}
@@ -1812,7 +1812,13 @@ return h}
 // Installing the web version as an app (Chrome's "Install app"). Not used inside the Android app.
 var INST=null;
 function webApp(){return !bkNative()&&(location.protocol==='https:'||location.hostname==='localhost')}
-function installed(){try{return matchMedia('(display-mode: standalone)').matches||navigator.standalone===true}catch(e){return false}}
+// Installed: running from the home-screen icon now, or seen installed on this phone before (S.inst: set when the
+// app runs standalone, when the browser reports the install, or when Chrome's getInstalledRelatedApps finds it).
+// S.instHide: the learner closed the install card. Both belong to the device and are not synced.
+function standalone(){try{return matchMedia('(display-mode: standalone)').matches||navigator.standalone===true}catch(e){return false}}
+function installed(){return standalone()||!!S.inst}
+function instMark(){if(!S.inst){S.inst=1;save();try{render()}catch(x){}}}
+function instHide(){S.instHide=1;save();render();toast('لن تظهر هذه البطاقة مرة أخرى. تجد الشرح في الإعدادات.')}
 if(webApp()){
 if('serviceWorker' in navigator)window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});
 // Ask the browser not to clear the progress kept in this site's storage when the phone is short of space.
@@ -1820,11 +1826,13 @@ try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persisted(
 // Keep the reminder switch in step with the server (e.g. after reinstalling or on a second device).
 if(remOk()&&navigator.onLine)remApi().then(function(i){var on=!!i.on,h=i.hour==null?(S.rem||{}).hour:i.hour;if(!S.rem||S.rem.on!==on||S.rem.hour!==h){S.rem={on:on,hour:h};save();if(tab==='me')render()}}).catch(function(){})});
 window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();INST=e;try{render()}catch(x){}});
-window.addEventListener('appinstalled',function(){INST=null;toast('✅ ثُبّت التطبيق، ستجده بين تطبيقات هاتفك');try{render()}catch(x){}});
+if(standalone()&&!S.inst){S.inst=1;save()}
+try{if(navigator.getInstalledRelatedApps)navigator.getInstalledRelatedApps().then(function(a){if(a&&a.length)instMark()}).catch(function(){})}catch(e){}
+window.addEventListener('appinstalled',function(){INST=null;S.inst=1;save();toast('✅ صار الموقع على شاشة هاتفك، افتحه من أيقونته');try{render()}catch(x){}});
 }
-function installBox(){if(!webApp()||installed())return'';
-if(INST)return'<div class="det" style="text-align:start"><b>📲 ثبّت التطبيق على هاتفك</b><p class="mu" style="margin:6px 0 0">يظهر بأيقونة بين تطبيقاتك، ويفتح بملء الشاشة، والدروس التي سمعتها تعمل دون إنترنت.</p><div class="btns"><button class="btn" onclick="doInstall()">تثبيت</button></div></div>';
-return'<div class="det" style="text-align:start"><b>📲 ثبّت التطبيق على هاتفك</b><p class="mu" style="margin:6px 0 0">في Chrome اضغط ⋮ في الأعلى ثم «تثبيت التطبيق» أو «إضافة إلى الشاشة الرئيسية». وفي iPhone من Safari: زر المشاركة ثم «إضافة إلى الشاشة الرئيسية».</p></div>'}
+function installBox(set){if(!webApp())return'';if(installed())return set?'<div class="det" style="text-align:start">✅ <b>الموقع على شاشة هذا الهاتف</b><p class="mu" style="margin:6px 0 0">افتحه من أيقونته بين تطبيقاتك، فيعمل بملء الشاشة وبلا إنترنت.</p></div>':'';if(!set&&S.instHide)return'';var x=set?'':'<div class="btns"><button class="btn alt" style="border-color:var(--bd);color:var(--mu);padding:6px 12px;font-size:14px" onclick="instHide()">✕ لا تظهر مرة أخرى</button></div>';
+if(INST)return'<div class="det" style="text-align:start"><b>📲 ضع الموقع على شاشة هاتفك</b><p class="mu" style="margin:6px 0 0">يظهر بأيقونة بين تطبيقاتك ويفتح بملء الشاشة كأي تطبيق، والدروس التي سمعتها تعمل دون إنترنت. هو الموقع نفسه بحسابك وتقدّمك.</p><div class="btns"><button class="btn" onclick="doInstall()">ضعه على الشاشة</button></div>'+x+'</div>';
+return'<div class="det" style="text-align:start"><b>📲 ضع الموقع على شاشة هاتفك</b><p class="mu" style="margin:6px 0 0">في Chrome اضغط ⋮ في الأعلى ثم «إضافة إلى الشاشة الرئيسية» (أو «تثبيت التطبيق»). وفي iPhone من Safari: زر المشاركة ⬆️ ثم «إضافة إلى الشاشة الرئيسية».</p>'+x+'</div>'}
 function doInstall(){if(!INST)return;var e=INST;INST=null;e.prompt();e.userChoice.then(function(c){if(c&&c.outcome!=='accepted')INST=e;render()},function(){render()})}
 // Daily reminder (installed web app): a push notification at the hour the learner picks, skipped on
 // days they already studied. Settings live on the server (functions/api/reminder.js); the hourly
@@ -1836,7 +1844,7 @@ function remApi(body){return fetch('/api/reminder',body?{method:'POST',headers:{
 function remKey(b){b=b.replace(/-/g,'+').replace(/_/g,'/');b+='===='.slice(b.length%4||4);var r=atob(b),a=new Uint8Array(r.length);for(var i=0;i<r.length;i++)a[i]=r.charCodeAt(i);return a}
 function remHourLabel(h){var p=h<12?'صباحاً':'مساءً',x=h%12||12;return x+' '+p}
 function reminderBox(){if(!webApp())return'';var r=S.rem||{},h='<div class="det" style="text-align:start"><b>🔔 تذكير يومي</b>';
-if(!remOk()){h+='<p class="mu" style="margin:6px 0 0">'+(/iPhone|iPad/.test(navigator.userAgent)&&!installed()?'ثبّت التطبيق على الشاشة الرئيسية أولاً، ثم افتحه من أيقونته لتفعيل التذكير.':'متصفحك لا يدعم الإشعارات. استعمل Chrome، أو ثبّت التطبيق.')+'</p></div>';return h}
+if(!remOk()){h+='<p class="mu" style="margin:6px 0 0">'+(/iPhone|iPad/.test(navigator.userAgent)&&!installed()?'ضع الموقع على الشاشة الرئيسية أولاً، ثم افتحه من أيقونته لتفعيل التذكير.':'متصفحك لا يدعم الإشعارات. استعمل Chrome، أو ضع الموقع على شاشة هاتفك.')+'</p></div>';return h}
 var sel='<select id="remh" onchange="remSave(+this.value)" style="font:inherit;padding:8px;border-radius:10px;border:1px solid var(--bd);background:var(--sf);color:var(--tx)">';for(var i=6;i<=23;i++)sel+='<option value="'+i+'"'+(i===(r.hour==null?20:r.hour)?' selected':'')+'>'+remHourLabel(i)+'</option>';sel+='</select>';
 h+='<p class="mu" style="margin:6px 0 0">'+(r.on?'سيصلك إشعار كل يوم في الساعة '+remHourLabel(r.hour)+'، إلا إذا درست قبلها.':'إشعار واحد كل يوم في الوقت الذي تختاره، يذكّرك بالمراجعة. لا يصلك إن كنت درست ذلك اليوم.')+'</p>';
 if(REM.err)h+='<p style="margin:6px 0 0;color:var(--no)">'+REM.err+'</p>';

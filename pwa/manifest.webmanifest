@@ -39,5 +39,11 @@
       "navigate-existing",
       "auto"
     ]
-  }
+  },
+  "related_applications": [
+    {
+      "platform": "webapp",
+      "url": "https://parsa-farsi.pages.dev/pwa/manifest.webmanifest"
+    }
+  ]
 }
