@@ -10,6 +10,7 @@
  *              one lesson per special section; a subscriber opens everything
  * 4. links     lesson, rule, conversation, story and trip links point at things that exist; every rule,
  *              lesson and special-section lesson is linked
+ *    levels    a level opens only when everything in the level before is finished
  * 5. progress  a saved state from every older version (v2-v9) lands on the same rules and conversations,
  *              in the app (migrateV3-V5) and on the server (lib/progress.js)
  * 6. games     each mini-game runs to its result; today's dictation is graded by level, easiest first
@@ -187,6 +188,29 @@ async function progress(b, url) {
   }
 }
 
+// A level opens only when the one before is finished: lessons, rules, trip chapters, conversations and stories.
+async function levels(b, url) {
+  const p = await page(b, url, { state: { xp: 10, st: 1, last: '', srs: {}, v: 10, prem: 1 } });
+  const r = await p.evaluate(() => {
+    const x = LVL[0], fill = (o, a) => { for (let i = a[0]; i < a[1]; i++) o[i] = 1; return o; };
+    S.pass = fill({}, x.L); S.gp = fill({}, x.G); S.dp = fill({}, x.D); S.trip = {}; for (let i = x.T[0]; i < x.T[1]; i++) S.trip[i] = { stars: 3 };
+    S.story = {}; STORY.forEach((s, i) => { if (s.lv === 1 && !s.c) S.story[i] = 1; });
+    const open = () => [unlocked(LVL[1].L[0]), gOpen(LVL[1].G[0]), dOpen(LVL[1].D[0]), tripLock(LVL[1].T[0]).indexOf('المستوى') < 0, stLvOpen(STORY.findIndex((s) => s.lv === 2 && !s.c))];
+    const full = open();
+    delete S.story[STORY.findIndex((s) => s.lv === 1 && !s.c)];
+    const missing = open(), msg = lvLockMsg('L', LVL[1].L[0]);
+    S.story[STORY.findIndex((s) => s.lv === 1 && !s.c)] = 1; delete S.gp[x.G[1] - 1];
+    return { full, missing, rule: open(), msg, inside: unlocked(1) };
+  });
+  if (!r.full.every(Boolean)) fail('levels', 'level 2 stays locked with level 1 finished: ' + JSON.stringify(r.full));
+  if (r.missing.some(Boolean)) fail('levels', 'level 2 opens with a level 1 story unread: ' + JSON.stringify(r.missing));
+  if (r.rule.some(Boolean)) fail('levels', 'level 2 opens with a level 1 rule not passed: ' + JSON.stringify(r.rule));
+  if (!/المستوى 1/.test(r.msg)) fail('levels', 'the lock message does not name level 1: ' + r.msg);
+  if (!r.inside) fail('levels', 'lesson 2 does not open after lesson 1');
+  p.errs.forEach((e) => fail('levels', 'JS error ' + e));
+  await p.close();
+}
+
 async function games(b, url) {
   const p = await page(b, url, { state: { xp: 10, st: 1, last: '', srs: {}, v: 10, pass: all(20) } });
   for (const m of ['prv', 'ant', 'lis', 'tf', 'rid']) {
@@ -234,7 +258,7 @@ function audio() {
 (async () => {
   // "localhost" counts as the site for webApp(), like https://, so the signed-in features and the free version run.
   const srv = await serve(), url = 'http://localhost:' + srv.address().port, b = await chromium.launch();
-  const steps = [['content', content], ['screens', screens], ['free', free], ['links', links], ['progress', progress], ['games', games], ['dictation', dictation], ['server', server], ['audio', audio]];
+  const steps = [['content', content], ['screens', screens], ['free', free], ['links', links], ['levels', levels], ['progress', progress], ['games', games], ['dictation', dictation], ['server', server], ['audio', audio]];
   for (const [name, fn] of steps) {
     const n = fails.length, t = Date.now();
     try { await fn(b, url); } catch (e) { fail(name, 'crashed: ' + (e && e.stack ? e.stack.split('\n').slice(0, 3).join(' ') : e)); }
