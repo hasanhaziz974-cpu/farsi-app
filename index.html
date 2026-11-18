@@ -253,7 +253,7 @@ var HX={};
 function lvOf(i,G){G=G||'L';for(var k=0;k<LVL.length;k++)if(i>=LVL[k][G][0]&&i<LVL[k][G][1])return k;return LVL.length-1}
 function lvEnd(i,G){return i===(G==='G'?GR:G==='D'?DLG:LES).length-1||lvOf(i+1,G)!==lvOf(i,G)}
 function lvHead(i,G){G=G||'L';var k=lvOf(i,G),x=LVL[k],R=x[G],key=G+k,P=G==='G'?S.gp:G==='D'?S.dp:S.pass;if(i!==R[0])return'';var n=R[1]-R[0],d=0;for(var j=R[0];j<R[1];j++)if(P&&P[j])d++;var open=HX[key]!=null?HX[key]:d<n;
-return'<button class="lvh" aria-expanded="'+open+'" onclick="lvTog(\''+key+'\',this)" style="display:flex;width:100%;align-items:center;gap:8px;margin:14px 0 6px;padding:10px 12px;border:0;border-radius:12px;background:var(--sf);color:var(--tx);font:inherit;font-weight:700;cursor:pointer"><span>'+x.e+' المستوى '+(k+1)+': '+x.n+'</span><span class="mu" style="margin-inline-start:auto;font-weight:400">'+(d===n?'✅ ':'')+d+' من '+n+'</span><span class="mu">'+(open?'▾':'◂')+'</span></button><div'+(open?'':' style="display:none"')+'>'+(!OPEN&&k>0&&!(P&&P[R[0]])&&!lvDone(k-1)?'<div class="mu" style="padding:2px 12px 8px">🔒 يُفتح بعد إكمال دروس المستوى '+k+' وقواعده ومحادثاته ('+lvReqPct(k-1)+'٪ حتى الآن). القصص ورحلة پارسا اختيارية.</div>':'')}
+return'<button class="lvh" aria-expanded="'+open+'" onclick="lvTog(\''+key+'\',this)" style="display:flex;width:100%;align-items:center;gap:8px;margin:14px 0 6px;padding:10px 12px;border:0;border-radius:12px;background:var(--sf);color:var(--tx);font:inherit;font-weight:700;cursor:pointer"><span>'+x.e+' المستوى '+(k+1)+': '+x.n+'</span><span class="mu" style="margin-inline-start:auto;font-weight:400">'+(d===n?'✅ ':'')+d+' من '+n+'</span><span class="mu">'+(open?'▾':'◂')+'</span></button><div'+(open?'':' style="display:none"')+'>'+(!OPEN&&k>0&&!(P&&P[R[0]])&&!lvDone(k-1)?'<div class="mu" style="padding:2px 12px 8px">🔒 يُفتح بعد إكمال دروس المستوى '+k+' وقواعده ومحادثاته ('+lvReqPct(k-1)+'٪ حتى الآن). القصص ورحلة پارسا اختيارية.'+(!webLite()&&lvDone(k-2)?'<div><button class="lnk-no" style="color:var(--pr);font-size:14px;margin-top:6px" onclick="skStart('+(k-1)+')">🚀 أعرف المستوى '+k+'، اختبرني لأتخطّاه</button></div>':'')+'</div>':'')}
 function lvTog(k,b){var d=b.nextElementSibling,open=d.style.display==='none';d.style.display=open?'':'none';HX[k]=open;b.setAttribute('aria-expanded',open);var a=b.lastElementChild;if(a)a.textContent=open?'▾':'◂'}
 function helpTiles(){var t=[['🔤','الحروف الفارسية',"go('letters')"]];['col','ar','soc','mis','poem'].forEach(function(s){t.push([SEC[s].ic,SEC[s].t,"CS='"+s+"';CFROM='home';go('col')"])});
 t.push(['🔎','القاموس',"DQ='';go('dict')"],['🎮','ألعاب وتحديات',"go('games')"]);if(webApp()&&S.xp)t.push(['🎁','ادعُ صديقاً',"go('me')"]);
@@ -776,31 +776,32 @@ V.push(["پیشنهاد کردن", "pishnahād kardan", "الاقتراح", "ک�
 // [from, to), stories S by their lv). S.place: the level a placement test put the learner at (0, 1, 2): the
 // lessons, grammar and chapters of the levels below it open without being done first.
 var LVL=[{n:'مبتدئ',en:'Beginner',e:'🌱',L:[0,8],G:[0,7],T:[0,7],S:1,D:[0,8]},{n:'أساسي',en:'Elementary',e:'🌿',L:[8,17],G:[7,13],T:[7,14],S:2,D:[8,17]},{n:'ما قبل المتوسط',en:'Pre-intermediate',e:'🌳',L:[17,28],G:[13,20],T:[14,21],S:3,D:[17,25]},{n:'متوسط',en:'Intermediate',e:'🌲',L:[28,37],G:[20,27],T:[21,28],S:4,D:[25,34]},{n:'متقدّم',en:'Upper-intermediate',e:'⛰️',L:[37,47],G:[27,35],T:[28,41],S:5,D:[34,42]},{n:'متقدّم جداً',en:'Advanced',e:'🏔️',L:[47,56],G:[35,45],T:[41,48],S:6,D:[42,53]},{n:'إتقان',en:'Mastery',e:'🏆',L:[56,72],G:[45,55],T:[48,73],S:7,D:[53,72]}];
-function plc(){return Math.min(2,Math.max(0,+S.place||0))}
+function plc(){return Math.min(4,Math.max(0,+S.place||0))}
 // In the free version only what it opens counts, so a free learner can reach 100% of level 1.
 function lvlParts(k){var x=LVL[k],a=[],i,lt=webLite();for(i=x.L[0];i<x.L[1];i++)a.push(!!(S.pass&&S.pass[i]));for(i=x.G[0];i<x.G[1];i++)a.push(!!(S.gp&&S.gp[i]));for(i=x.T[0];i<x.T[1];i++)if(!lt||OPEN||i===0)a.push(tripDone(i));for(i=x.D[0];i<x.D[1];i++)if(!lt||allowed('D',i))a.push(!!(S.dp&&S.dp[i]));STORY.forEach(function(st,i){if(st.lv===x.S&&!st.c&&!stLock(i))a.push(!!(S.story&&S.story[i]))});return a}
 function lvlPct(k){var a=lvlParts(k);return Math.round(a.filter(Boolean).length/a.length*100)}
 function lvlBox(){var h='<div class="det" style="text-align:start"><b>🎯 مستواي اللغوي</b>';LVL.forEach(function(x,k){var p=lvlPct(k),es=exState(k);h+='<div style="margin-top:10px">'+x.e+' المستوى '+(k+1)+': '+x.n+' <span class="mu">('+p+'%)</span><div class="bar"><i style="width:'+p+'%"></i></div><button class="lnk-no" style="color:var(--pr);font-size:14px;'+(es&&es.indexOf('✅')!==0?'opacity:.7':'')+'" onclick="exStart('+k+')">📝 اختبار نهاية المستوى'+(es?' · '+es:'')+'</button></div>'});
 return h+'<div class="btns"><button class="btn alt" onclick="pcStart()">'+(S.placeAt?'أعد اختبار تحديد المستوى':'🎯 حدّد مستواك')+'</button></div></div>'}
 // Shown to new learners only (the older one-skill placement test, S.pl, was replaced by this one).
-function placeCard(){if(S.placeAt||S.pl||S.plSkip||cnt(S.pass)>=3)return'';return'<div class="det" style="text-align:start"><b>🎯 تعرف بعض الفارسية؟ حدّد مستواك</b><p class="mu">15 سؤالاً في 5 دقائق: كلمات واستماع وقواعد وقراءة، ونفتح لك ما تعرفه. أو ابدأ من الصفر.</p><div class="btns"><button class="btn" onclick="pcStart()">حدّد مستواي</button><button class="btn alt" onclick="S.plSkip=true;save();render()">ابدأ من الصفر</button></div></div>'}
-// Placement test: five questions per level, built from that level's own checked content (words with their
-// audio, grammar examples, story sentences). It stops at the first level with fewer than 4 right.
+function placeCard(){if(S.placeAt||S.pl||S.plSkip||cnt(S.pass)>=3)return'';return'<div class="det" style="text-align:start"><b>🎯 تعرف بعض الفارسية؟ حدّد مستواك</b><p class="mu">8 أسئلة لكل مستوى (حتى المستوى الخامس): كلمات واستماع وقواعد وقراءة، ونفتح لك ما تعرفه. أو ابدأ من الصفر.</p><div class="btns"><button class="btn" onclick="pcStart()">حدّد مستواي</button><button class="btn alt" onclick="S.plSkip=true;save();render()">ابدأ من الصفر</button></div></div>'}
+// Placement test: PCN questions per level, built from that level's own checked content (words with their
+// audio, grammar examples, story sentences). It stops at the first level with fewer than PCOK right, at most level PCMAX+1.
 var PC=null;
 function pcQs(k){var x=LVL[k],ws=sh(ALL.filter(function(w){return w.l>=x.L[0]&&w.l<x.L[1]&&!/\s/.test(w.fa.trim())})),
 gs=[],ss=[];GR.slice(x.G[0],x.G[1]).forEach(function(g){g.e.forEach(function(e){gs.push(e)})});STORY.forEach(function(st){if(st.lv===x.S&&!st.c)st.s.forEach(function(l){ss.push(l)})});gs=sh(gs);ss=sh(ss);
 function mc(right,pool){var o=sh(pool.filter(function(v){return v!==right})).slice(0,3);return sh([right].concat(o))}
 var wa=ALL.map(function(w){return w.ar}),ga=[],sa=[];GR.forEach(function(g){g.e.forEach(function(e){ga.push(e[2])})});STORY.forEach(function(st){st.s.forEach(function(l){sa.push(l[2])})});
-return[{k:'w',fa:ws[0].fa,a:ws[0].ar,o:mc(ws[0].ar,wa)},{k:'w',fa:ws[1].fa,a:ws[1].ar,o:mc(ws[1].ar,wa)},{k:'au',fa:ws[2].fa,a:ws[2].ar,o:mc(ws[2].ar,wa)},
-{k:'g',fa:gs[0][0],a:gs[0][2],o:mc(gs[0][2],ga)},{k:'r',fa:ss[0][0],a:ss[0][2],o:mc(ss[0][2],sa)}]}
+var q=[];[0,1,2].forEach(function(i){q.push({k:'w',fa:ws[i].fa,a:ws[i].ar,o:mc(ws[i].ar,wa)})});[3,4].forEach(function(i){q.push({k:'au',fa:ws[i].fa,a:ws[i].ar,o:mc(ws[i].ar,wa)})});
+[0,1].forEach(function(i){q.push({k:'g',fa:gs[i][0],a:gs[i][2],o:mc(gs[i][2],ga)})});q.push({k:'r',fa:ss[0][0],a:ss[0][2],o:mc(ss[0][2],sa)});return q}
+var PCN=8,PCOK=7,PCMAX=4; // questions per level, right answers needed to go on, highest level it can place in (index)
 function pcStart(){PC={k:0,i:0,qs:pcQs(0),ok:0,a:null,res:null};render();scrollTo(0,0)}
 function pcAns(o){if(PC.a!==null)return;var q=PC.qs[PC.i];PC.a=o;if(o===q.a){PC.ok++;sfx('ok')}else sfx('no');render()}
 function pcNext(){PC.i++;PC.a=null;if(PC.i<PC.qs.length){render();return}
-if(PC.ok>=4&&PC.k<2){PC.k++;PC.i=0;PC.ok=0;PC.qs=pcQs(PC.k);render();return}
-var lv=PC.ok>=4?2:PC.k;PC.res=lv;S.place=Math.max(+S.place||0,lv);S.placeAt=Date.now();save();render();scrollTo(0,0)}
+if(PC.ok>=PCOK&&PC.k<PCMAX){PC.k++;PC.i=0;PC.ok=0;PC.qs=pcQs(PC.k);render();return}
+var lv=PC.ok>=PCOK?PCMAX:PC.k;PC.res=lv;S.place=Math.max(+S.place||0,lv);S.placeAt=Date.now();save();render();scrollTo(0,0)}
 function pcView(){var h='<button class="back" onclick="PC=null;render()">› رجوع</button><h2>🎯 اختبار تحديد المستوى</h2>';if(!PC)return h;
-if(PC.res!=null){var x=LVL[PC.res];return h+'<div class="det"><div class="big">'+x.e+'</div><p style="font-size:20px">مستواك: <b>المستوى '+(PC.res+1)+' · '+x.n+'</b></p>'+(PC.res?'<p>فتحنا لك دروس المستوى الذي قبله وقواعده وفصول رحلته، فابدأ من حيث يناسبك. ويمكنك الرجوع إليها متى شئت.</p>':'<p>ابدأ من الدرس الأول وتقدّم خطوة خطوة.</p>')+'<div class="btns"><button class="btn" onclick="PC=null;go(\'home\')">ابدأ التعلّم</button></div></div>'}
-var q=PC.qs[PC.i],n=PC.k*5+PC.i+1;h+='<p class="mu">'+LVL[PC.k].e+' أسئلة المستوى '+(PC.k+1)+' · سؤال '+(PC.i+1)+' من 5</p><div class="bar"><i style="width:'+Math.round(n/15*100)+'%"></i></div>';
+if(PC.res!=null){var x=LVL[PC.res];return h+'<div class="det"><div class="big">'+x.e+'</div><p style="font-size:20px">مستواك: <b>المستوى '+(PC.res+1)+' · '+x.n+'</b></p>'+(PC.res?'<p>فتحنا لك '+(PC.res>1?'المستويات التي قبله':'المستوى الذي قبله')+'، فابدأ من حيث يناسبك. ويمكنك الرجوع إليها متى شئت.</p>':'<p>ابدأ من الدرس الأول وتقدّم خطوة خطوة.</p>')+'<div class="btns"><button class="btn" onclick="PC=null;go(\'home\')">ابدأ التعلّم</button></div></div>'}
+var q=PC.qs[PC.i],n=PC.k*PCN+PC.i+1;h+='<p class="mu">'+LVL[PC.k].e+' أسئلة المستوى '+(PC.k+1)+' · سؤال '+(PC.i+1)+' من '+PCN+'</p><div class="bar"><i style="width:'+Math.round(n/((PCMAX+1)*PCN)*100)+'%"></i></div>';
 h+='<h3>'+{w:'ما معنى هذه الكلمة؟',au:'استمع واختر المعنى',g:'ما معنى هذه الجملة؟',r:'ما معنى هذه الجملة؟'}[q.k]+'</h3><div class="card">'+(q.k==='au'?'':'<div class="fa" style="font-size:'+(q.k==='w'?34:22)+'px">'+hesc(q.fa)+'</div>')+'<button class="spk" style="margin:10px 0" aria-label="استمع" onclick="say(\''+esc(q.fa)+'\')">🔊</button></div>';
 q.o.forEach(function(o){var c=PC.a===null?'':o===q.a?' good':o===PC.a?' bad':'';h+='<button class="opt'+c+'" onclick="pcAns(\''+esc(o).replace(/"/g,'&quot;')+'\')">'+hesc(o)+'</button>'});
 if(PC.a!==null)h+='<div class="btns"><button class="btn" onclick="pcNext()">التالي</button></div>';else h+='<p class="mu" style="text-align:center"><button class="lnk-no" onclick="pcAns(\'\')">لا أعرف</button></p>';return h}
@@ -840,11 +841,12 @@ fetch('/api/chat?s=0',{method:'POST',headers:{'Content-Type':b.type||'audio/webm
 mr.start();REC.t=setTimeout(function(){if(REC.on)try{mr.stop()}catch(e){}},15000);render()}).catch(function(){toast('اسمح للتطبيق باستعمال الميكروفون، ثم أعد المحاولة')})}
 function exNext(){EX.i++;EX.a=null;if(EX.i<EX.qs.length){render();scrollTo(0,0);return}
 var ok=EX.qs.filter(function(q){return q.ok}).length,p=Math.round(ok/EX.qs.length*100),k=EX.k,e=S.exam&&S.exam[k]||{};S.exam=S.exam||{};
+if(EX.skip){var f=S.skip&&S.skip[k]||{};S.skip=S.skip||{};S.skip[k]={p:Math.max(f.p||0,p),ok:!!f.ok||p>=SKP,at:Date.now()};if(p>=SKP){S.exam[k]={p:Math.max(e.p||0,p),ok:true,at:Date.now()};save();EX.res=p;gain(100);celebrate(['🚀 فُتح لك المستوى '+(k+2)+'!']);render();scrollTo(0,0);return}save();EX.res=p;render();scrollTo(0,0);return}
 S.exam[k]={p:Math.max(e.p||0,p),ok:!!e.ok||p>=70,at:Date.now()};save();EX.res=p;if(p>=70){gain(e.ok?20:100);celebrate(['🎓 نجحت في اختبار المستوى '+(k+1)+'!'])}render();scrollTo(0,0)}
-function exView(){var h='<button class="back" onclick="'+(EX.res==null?"if(confirm('الخروج من الاختبار؟ لن تُحفظ إجاباتك.')){EX=null;render()}":'EX=null;render()')+'">› '+(EX.res==null?'خروج':'رجوع')+'</button><h2>📝 اختبار المستوى '+(EX.k+1)+': '+LVL[EX.k].n+'</h2>';
-if(EX.res!=null){var pass=EX.res>=70;h+='<div class="det"><div class="big">'+(pass?'🎓':'📚')+'</div><p style="font-size:22px"><b>'+EX.res+'%</b> · '+(pass?'نجحت!':'لم تنجح هذه المرة')+'</p>'+(pass?'<p>أتممت المستوى '+(EX.k+1)+' ('+LVL[EX.k].n+') في «الفارسية من الصفر».</p>':'<p class="mu">النجاح من 70%. يمكنك إعادة الاختبار غداً، وراجع قبله المهارات الأضعف:</p>');
+function exView(){var h='<button class="back" onclick="'+(EX.res==null?"if(confirm('الخروج من الاختبار؟ لن تُحفظ إجاباتك.')){EX=null;render()}":'EX=null;render()')+'">› '+(EX.res==null?'خروج':'رجوع')+'</button><h2>'+(EX.skip?'🚀 اختبار تخطّي المستوى ':'📝 اختبار المستوى ')+(EX.k+1)+': '+LVL[EX.k].n+'</h2>';
+if(EX.res!=null){var pm=EX.skip?SKP:70,pass=EX.res>=pm;h+='<div class="det"><div class="big">'+(pass?(EX.skip?'🚀':'🎓'):'📚')+'</div><p style="font-size:22px"><b>'+EX.res+'%</b> · '+(pass?'نجحت!':'لم تنجح هذه المرة')+'</p>'+(pass?(EX.skip?'<p>فُتح لك المستوى '+(EX.k+2)+' ('+LVL[Math.min(EX.k+1,LVL.length-1)].n+'). ودروس المستوى '+(EX.k+1)+' تبقى مفتوحة لك متى شئت.</p>':'<p>أتممت المستوى '+(EX.k+1)+' ('+LVL[EX.k].n+') في «الفارسية من الصفر».</p>'):'<p class="mu">النجاح من '+pm+'%. يمكنك إعادة الاختبار غداً، وراجع قبله المهارات الأضعف:</p>');
 Object.keys(EX.sc).forEach(function(k){var x=EX.sc[k],pc=Math.round(x[0]/x[1]*100);h+='<div style="text-align:start;margin-top:8px">'+EXSK[k]+' <span class="mu">('+x[0]+' من '+x[1]+')</span><div class="bar"><i style="width:'+pc+'%;'+(pc<60?'background:var(--no)':'')+'"></i></div></div>'});
-return h+'<div class="btns"><button class="btn" onclick="EX=null;go(\'me\')">تقدّمي</button></div></div>'}
+return h+'<div class="btns">'+(EX.skip&&pass?'<button class="btn" onclick="EX=null;go(\'home\')">إلى الدروس</button>':'<button class="btn" onclick="EX=null;go(\'me\')">تقدّمي</button>')+'</div></div>'}
 var q=EX.qs[EX.i];h+='<p class="mu">'+EXSK[q.sk]+' · سؤال '+(EX.i+1)+' من '+EX.qs.length+'</p><div class="bar"><i style="width:'+Math.round(EX.i/EX.qs.length*100)+'%"></i></div><h3>'+hesc(q.p)+'</h3>';
 if(q.t==='mc'){if(q.fa||q.au)h+='<div class="card">'+(q.fa?'<div class="fa" style="font-size:'+(q.fa.length<12?34:22)+'px">'+hesc(q.fa)+'</div>':'')+(q.au?'<button class="spk" style="margin:10px 0;width:64px;height:64px;font-size:30px" aria-label="استمع" onclick="say(\''+esc(q.au)+'\')">🔊</button>':'')+'</div>';
 q.o.forEach(function(o){var c=EX.a===null?'':o===q.a?' ok':o===EX.a?' no':'';h+='<button class="opt'+c+(q.fo?' fa':'')+'"'+(q.fo?' style="font-size:22px"':'')+' onclick="exAns(\''+esc(o).replace(/"/g,'&quot;')+'\')">'+hesc(o)+'</button>'})}
@@ -859,9 +861,15 @@ if(EX.a!==null)h+='<div class="btns"><button class="btn" onclick="exNext()">'+(E
 // are optional), unless the placement test put the learner further. Whatever was already finished stays open.
 function lvReq(k){var x=LVL[k],a=[],i,lt=webLite();for(i=x.L[0];i<x.L[1];i++)a.push(!!(S.pass&&S.pass[i]));for(i=x.G[0];i<x.G[1];i++)a.push(!!(S.gp&&S.gp[i]));for(i=x.D[0];i<x.D[1];i++)if(!lt||allowed('D',i))a.push(!!(S.dp&&S.dp[i]));return a}
 function lvReqPct(k){var a=lvReq(k);return Math.round(a.filter(Boolean).length/a.length*100)}
-function lvDone(k){return OPEN||k<0||k<plc()||lvReq(k).every(Boolean)}
+function lvDone(k){return OPEN||k<0||k<plc()||!!(S.skip&&S.skip[k]&&S.skip[k].ok)||lvReq(k).every(Boolean)}
+// Skip exam («أعرف هذا المستوى، اختبرني»): a learner who already knows level k can open the next level without
+// finishing it. It is the end-of-level exam (exQs) with SKN questions and a pass from SKP%; after a fail, a day's wait.
+var SKN=30,SKP=85;
+function skQs(k){var q=exQs(k),seen={};q.forEach(function(x){seen[x.fa||x.au||x.p]=1});for(var t=0;t<6&&q.length<SKN;t++)exQs(k).forEach(function(x){var key=x.fa||x.au||x.p;if(q.length<SKN&&x.t==='mc'&&!seen[key]){seen[key]=1;q.push(x)}});return sh(q)}
+function skWait(k){var e=S.skip&&S.skip[k];return e&&!e.ok&&e.at&&Date.now()-e.at<DAY?Math.ceil((e.at+DAY-Date.now())/36e5):0}
+function skStart(k){if(webLite()){freeGate('اختبار تخطّي المستوى');return}var w=skWait(k);if(w){toast('يمكنك إعادة اختبار التخطّي بعد '+w+' ساعة');return}if(!confirm('اختبار تخطّي المستوى '+(k+1)+': '+SKN+' سؤالاً من كلماته وقواعده واستماعه وقراءته وكتابته ونطقه. تحتاج '+SKP+'٪ لتنجح ويُفتح لك المستوى '+(k+2)+'. هل تبدأ؟'))return;EX={k:k,skip:true,qs:skQs(k),i:0,a:null,sc:{},res:null};render();scrollTo(0,0)}
 function lvGate(G,i){var k=lvOf(i,G);return i!==LVL[k][G][0]||lvDone(k-1)}
-function seqOpen(G,i){if(OPEN)return true;var d=(G==='L'?S.pass:G==='G'?S.gp:S.dp)||{};if(d[i]||i===0||i<=LVL[plc()][G][0])return true;return!!d[i-1]&&lvGate(G,i)}
+function seqOpen(G,i){if(OPEN)return true;var d=(G==='L'?S.pass:G==='G'?S.gp:S.dp)||{};if(d[i]||i===0||i<=LVL[plc()][G][0])return true;var k=lvOf(i,G);return i===LVL[k][G][0]?lvDone(k-1):!!d[i-1]}
 function lvLockMsg(G,i){var d=(G==='L'?S.pass:G==='G'?S.gp:S.dp)||{},k=lvOf(i,G);return d[i-1]&&k>0&&!lvDone(k-1)?'🔒 أكمل دروس المستوى '+k+' «'+LVL[k-1].n+'» وقواعده ومحادثاته أولاً ('+lvReqPct(k-1)+'٪ حتى الآن)':''}
 function unlocked(i){return seqOpen('L',i)}
 function toast(m){try{var o=document.querySelector('.tst');if(o&&o.remove)o.remove()}catch(e){}var d=document.createElement('div');d.className='tst';d.textContent=m;d.style.cssText='position:fixed;left:16px;right:16px;bottom:90px;max-width:480px;margin:auto;background:var(--tx);color:var(--bg);padding:12px 16px;border-radius:12px;text-align:center;z-index:9';document.body.appendChild(d);setTimeout(function(){d.remove()},2600)}
@@ -1793,7 +1801,7 @@ function trip(i){S.trip=S.trip||{};return S.trip[i]||{done:[]}}
 // The next chapter the learner can play now, or null.
 function tripNext(){for(var i=0;i<TRIP.length;i++)if(!tripDone(i))return tripLock(i)?null:i;return null}
 function tripDone(i){return!!trip(i).stars}
-function tripLock(i){if(OPEN)return'';if(webLite()&&i>0)return'⭐ للمشتركين';if(i>0&&!tripDone(i-1)&&i>LVL[plc()].T[0])return'🔒 أنهِ الفصل السابق';if(!tripDone(i)&&i>LVL[plc()].T[0]&&!lvGate('T',i)){var tk=lvOf(i,'T');return'🔒 أكمل دروس المستوى '+tk+' «'+LVL[tk-1].n+'» وقواعده ومحادثاته أولاً ('+lvReqPct(tk-1)+'٪ حتى الآن)'}var r=TRIP[i].req;if(r>=0&&!(S.pass&&S.pass[r])&&r>=LVL[plc()].L[0])return'🔒 أنهِ درس «'+LES[r].t+'» أولاً';return''}
+function tripLock(i){if(OPEN)return'';if(webLite()&&i>0)return'⭐ للمشتركين';if(i>0&&!tripDone(i-1)&&i>LVL[plc()].T[0]&&i!==LVL[lvOf(i,'T')].T[0])return'🔒 أنهِ الفصل السابق';if(!tripDone(i)&&i>LVL[plc()].T[0]&&!lvGate('T',i)){var tk=lvOf(i,'T');return'🔒 أكمل دروس المستوى '+tk+' «'+LVL[tk-1].n+'» وقواعده ومحادثاته أولاً ('+lvReqPct(tk-1)+'٪ حتى الآن)'}var r=TRIP[i].req;if(r>=0&&!(S.pass&&S.pass[r])&&r>=LVL[plc()].L[0])return'🔒 أنهِ درس «'+LES[r].t+'» أولاً';return''}
 function tripLevel(){var n=cnt(S.pass);return n<4?0:n<10?1:2}
 function tripStars(n){return'⭐'.repeat(n)+'☆'.repeat(3-n)}
 // The chapter conversation is kept on this device for the day, so leaving and coming back continues it.

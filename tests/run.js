@@ -214,6 +214,24 @@ async function levels(b, url) {
   if (r.rule.some(Boolean)) fail('levels', 'level 2 opens with a level 1 rule not passed: ' + JSON.stringify(r.rule));
   if (!/المستوى 1/.test(r.msg)) fail('levels', 'the lock message does not name level 1: ' + r.msg);
   if (!r.inside) fail('levels', 'lesson 2 does not open after lesson 1');
+  // Skip exam: 30 questions from level 1; 85% opens level 2 without finishing level 1. Placement: up to level 5.
+  const sk = await p.evaluate(() => {
+    S.pass = {}; S.gp = {}; S.dp = {}; S.skip = {}; S.exam = {}; window.confirm = () => true;
+    const before = unlocked(LVL[1].L[0]); skStart(0); const n = EX.qs.length;
+    EX.qs.forEach((q) => { q.ok = true; }); EX.qs.slice(0, 5).forEach((q) => { q.ok = false; }); EX.i = EX.qs.length - 1; exNext();
+    const failed = unlocked(LVL[1].L[0]), wait = skWait(0) > 0; EX = null; S.skip = {};
+    skStart(0); EX.qs.forEach((q) => { q.ok = true; }); EX.i = EX.qs.length - 1; exNext();
+    const passed = [unlocked(LVL[1].L[0]), gOpen(LVL[1].G[0]), dOpen(LVL[1].D[0])], lv3 = unlocked(LVL[2].L[0]); EX = null;
+    PC = null; pcStart(); let guard = 0; while (PC.res == null && guard++ < 100) { pcAns(PC.qs[PC.i].a); pcNext(); }
+    const place = [PC.res, PC.qs.length]; PC = null;
+    return { before, n, failed, wait, passed, lv3, place, opened5: unlocked(LVL[4].L[0]) };
+  });
+  if (sk.before) fail('levels', 'level 2 is open before the skip exam');
+  if (sk.n < 30) fail('levels', 'the skip exam has only ' + sk.n + ' questions');
+  if (sk.failed || !sk.wait) fail('levels', 'a skip exam under 85% opened level 2 or allowed a retry at once');
+  if (!sk.passed.every(Boolean)) fail('levels', 'a passed skip exam did not open level 2: ' + JSON.stringify(sk.passed));
+  if (sk.lv3) fail('levels', 'a skip exam of level 1 opened level 3');
+  if (sk.place[0] !== 4 || sk.place[1] !== 8 || !sk.opened5) fail('levels', 'the placement test with every answer right should place in level 5 with 8 questions per level: ' + JSON.stringify(sk));
   p.errs.forEach((e) => fail('levels', 'JS error ' + e));
   await p.close();
 }
