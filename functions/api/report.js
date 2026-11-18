@@ -2,7 +2,7 @@
 // - type "err": a JavaScript error a learner's app hit (message and screen only, nothing personal), kept as
 //   "err:<hash of message>" = {m, w, n, first, last}; the same error only counts once a minute, so a loop
 //   cannot use up the KV free plan's daily writes.
-// - type "fb": a learner's note from «🐞 وجدت خطأ؟», kept as "fb:<time>:<random>" = {t, w, e, at} with the
+// - type "fb": a learner's note from «💬 لديك ملاحظة؟», kept as "fb:<time>:<random>" = {t, w, e, at} with the
 //   sign-in email, at most 10 a day per learner.
 import { accessEmail } from '../../lib/trial.js';
 

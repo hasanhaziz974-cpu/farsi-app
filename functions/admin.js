@@ -214,7 +214,7 @@ async function view(kv, msg) {
 <p style="margin:6px 0;white-space:pre-wrap">${esc(x.t)}</p><div class="mu">في: ${esc(x.w || '-')}</div><div class="row">${del(x.key)}</div></div>`).join('')
     || '<p class="mu">لا ملاحظات بعد.</p>';
   const clearBtn = (n, action, label) => (n ? `<form method="post" class="row"><button name="action" value="${action}" class="no" onclick="return confirm('${label}؟')">${label}</button></form>` : '');
-  const reportSection = `<h2>💬 ملاحظات المتعلّمين (${notes.length})</h2><p class="mu">ما أرسله المتعلّمون من زر «🐞 وجدت خطأ؟» في التطبيق.</p>${noteRows}${clearBtn(notes.length, 'clear-fb', 'مسح كل الملاحظات')}
+  const reportSection = `<h2>💬 ملاحظات المتعلّمين (${notes.length})</h2><p class="mu">ما أرسله المتعلّمون من زر «💬 لديك ملاحظة؟» في التطبيق.</p>${noteRows}${clearBtn(notes.length, 'clear-fb', 'مسح كل الملاحظات')}
 <h2>🐞 أخطاء التطبيق (${errs.length})</h2><p class="mu">أخطاء برمجية ظهرت في أجهزة المتعلّمين، الأحدث أولاً، بلا بيانات شخصية. أرسل نصّ الخطأ لمن يطوّر التطبيق ليصلحه.</p>${errRows}${clearBtn(errs.length, 'clear-err', 'مسح كل الأخطاء')}`;
   return page(`<h1>إدارة المشتركين</h1><p class="mu">التغييرات تعمل خلال دقيقة تقريباً. · <a href="/logout">خروج</a></p>
 ${msg ? `<div class="msg">${esc(msg)}</div>` : ''}
