@@ -244,6 +244,16 @@ async function games(b, url) {
   }
   const ord = await p.evaluate(() => { go('games'); startLG('ord'); if (LG.qs.length < 3) return 'only ' + LG.qs.length + ' sentences'; for (const q of LG.qs) { q.cs.forEach((c) => { const x = q.t.find((y) => y.c === c && q.p.indexOf(y) < 0); spTap(x.i); }); if (!q.done || q.p.map((x) => x.c).join(' ') !== q.w.fa) return 'sentence not built: ' + q.w.fa; lgNext(); } return LG.fin && LG.sc === LG.qs.length ? '' : 'no result'; });
   if (ord) fail('games', 'sentence order: ' + ord);
+  // Role-play by voice: what the learner says is matched against the three choices (the server's text is simulated).
+  const rp = await p.evaluate(() => {
+    go('talk'); D = 0; S.prem = 1; startRP('A'); RP.v = true; const L = DLG[0].l; render();
+    const view = document.querySelector('#main').textContent.indexOf('قل ردّك') >= 0;
+    const wrong = RP.o.find((o) => o !== L[0]); rpHeard(wrong[0]); const afterWrong = RP.i;
+    rpHeard('چیزی نامفهوم'); const afterNoise = RP.i;
+    rpHeard(L[0][0]); const afterRight = RP.i;
+    RP = null; return { view, afterWrong, afterNoise, afterRight };
+  });
+  if (!rp.view || rp.afterWrong !== 0 || rp.afterNoise !== 0 || rp.afterRight !== 1) fail('games', 'role-play by voice: ' + JSON.stringify(rp));
   const tm = await p.evaluate(async () => { go('games'); gmStart('tm'); const q = GM.qs[0]; gmPick(q.o.indexOf(q.a)); await new Promise((r) => setTimeout(r, 400)); GM.end = Date.now() - 1; await new Promise((r) => setTimeout(r, 500)); return GM.fin && GM.sc === 1 && S.gmb >= 1; });
   if (!tm) fail('games', 'the one-minute race did not end with its score');
   p.errs.forEach((e) => fail('games', 'JS error ' + e));

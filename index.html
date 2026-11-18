@@ -1165,9 +1165,13 @@ return '<div class="det" style="text-align:start;margin-top:8px"><span class="mu
 var RP=null;
 function rpMine(i){return RP.role==='A'?i%2===0:i%2===1}
 function bub(l,mine){return'<div class="bub'+(mine?' b':'')+'"><div style="flex:1"><div class="fa" style="font-size:22px">'+l[0]+'</div><div class="tr" style="font-size:14px">'+l[1]+'</div><div class="mu">'+l[2]+'</div></div><button class="spk" aria-label="استمع" onclick="say(\''+esc(l[0])+'\')">🔊</button></div>'}
-function rpChoose(){sheet('<h2 style="margin-top:0">🎭 تمثيل الأدوار</h2><p>اختر دورك في الحوار، وسيتكلم التطبيق بدور الطرف الآخر وتردّ أنت.</p><div class="btns" style="flex-direction:column"><button class="btn" onclick="startRP(\'A\')">أبدأ أنا (الطرف الأول)</button><button class="btn alt" onclick="startRP(\'B\')">أرد أنا (الطرف الثاني)</button></div><div class="btns"><button class="btn alt" style="border-color:var(--bd);color:var(--mu)" onclick="closeSheet()">إلغاء</button></div>')}
-function startRP(role){closeSheet();RP={d:D,role:role,i:0,sc:0,n:0,fin:false,o:null,bad:{},hint:false,mis:0};rpEnter();render();if(!rpMine(0))say(DLG[RP.d].l[0][0])}
-function rpEnter(){var L=DLG[RP.d].l;RP.hint=false;RP.mis=0;RP.bad={};if(RP.i<L.length&&rpMine(RP.i)){var ln=L[RP.i],all=[];DLG.forEach(function(x,di){if(di!==RP.d)x.l.forEach(function(l){all.push(l)})});
+// By voice (RP.v): the learner reads the three choices and SAYS the right one; the recording is turned into text on
+// the server (/api/chat?rp=1, subscribers) and scored with exScore. Without a microphone, or in the free version,
+// they tap the right line as before; «اختر بالضغط» switches to tapping for the rest of the conversation.
+function rpVoice(){return!webLite()&&micOk()&&webApp()}
+function rpChoose(){sheet('<h2 style="margin-top:0">🎭 تمثيل الأدوار</h2><p>اختر دورك في الحوار، وسيتكلم التطبيق بدور الطرف الآخر'+(rpVoice()?' وتردّ أنت <b>بصوتك</b> 🎤: اختر الجملة المناسبة من الثلاث وقلها.':' وتردّ أنت.')+'</p><div class="btns" style="flex-direction:column"><button class="btn" onclick="startRP(\'A\')">أبدأ أنا (الطرف الأول)</button><button class="btn alt" onclick="startRP(\'B\')">أرد أنا (الطرف الثاني)</button></div><div class="btns"><button class="btn alt" style="border-color:var(--bd);color:var(--mu)" onclick="closeSheet()">إلغاء</button></div>')}
+function startRP(role){closeSheet();RP={d:D,role:role,i:0,sc:0,n:0,fin:false,o:null,bad:{},hint:false,mis:0,v:rpVoice(),said:''};rpEnter();render();if(!rpMine(0))say(DLG[RP.d].l[0][0])}
+function rpEnter(){var L=DLG[RP.d].l;RP.hint=false;RP.mis=0;RP.bad={};RP.said='';if(RP.i<L.length&&rpMine(RP.i)){var ln=L[RP.i],all=[];DLG.forEach(function(x,di){if(di!==RP.d)x.l.forEach(function(l){all.push(l)})});
 RP.o=sh([ln].concat(sh(all.filter(function(l){return l[2]!==ln[2]&&l[0]!==ln[0]})).slice(0,2)))}}
 function rpEnd(){var L=DLG[RP.d].l;if(RP.i>=L.length&&!RP.fin){RP.fin=true;S.rpn=(S.rpn||0)+1;S.rpd=S.rpd||{};S.rpd[RP.d]=true;gain(RP.sc*10+10)}}
 // Role-play keeps the page where it is and brings the newest line into view instead of jumping to the top.
@@ -1179,14 +1183,30 @@ if(RP.o[k]===ln){snd(true);if(!RP.mis&&!RP.hint)RP.sc++;RP.n++;var c=CHEER[Math.
 function go2(){if(RP!==rp||!RP.wait)return;RP.wait=false;rpShow();say(L[RP.i][0])}
 if(nx)setTimeout(go2,8000);say(ln[0],function(){if(nx)setTimeout(go2,Math.max(700,1500-(Date.now()-t0)))})}
 else{RP.mis++;snd(false);RP.bad[k]=true;STK=0;toast('ليس هذا هو الردّ المناسب، جرّب غيره 💪');stay()}}
-function rpView(){var L=DLG[RP.d].l,h='<button class="back" onclick="RP=null;render()">› إنهاء التمثيل</button><h2>🎭 '+DLG[RP.d].t+'</h2><p class="mu">دورك: '+(RP.role==='A'?'الطرف الأول':'الطرف الثاني')+' · اختر الردّ المناسب في كل دور.</p>',j;
+function rpMic(){if(RP.busy)return;if(REC.on){try{REC.mr.stop()}catch(e){}return}
+navigator.mediaDevices.getUserMedia({audio:true}).then(function(st){var ty=['audio/webm;codecs=opus','audio/webm','audio/mp4'].filter(function(x){try{return MediaRecorder.isTypeSupported(x)}catch(e){return false}})[0];
+var mr=new MediaRecorder(st,ty?{mimeType:ty}:undefined),ch=[],rp=RP;REC={on:true,mr:mr};mr.ondataavailable=function(e){if(e.data&&e.data.size)ch.push(e.data)};
+mr.onstop=function(){st.getTracks().forEach(function(x){x.stop()});clearTimeout(REC.t);REC={on:false};if(RP!==rp){return}var b=new Blob(ch,{type:(mr.mimeType||ty||'audio/webm').split(';')[0]});if(b.size<1200){toast('التسجيل قصير جداً. اضغط 🎤 وقل الجملة كاملة.');stay();return}
+RP.busy=true;stay();fetch('/api/chat?rp=1',{method:'POST',headers:{'Content-Type':b.type||'audio/webm','X-Hint':encodeURIComponent(RP.o.map(function(o){return o[0]}).join(' ').slice(0,300))},credentials:'same-origin',body:b})
+.then(function(r){return r.json().catch(function(){return{}})}).then(function(j){if(RP!==rp)return;RP.busy=false;
+if(!j.text){if(j.error==='free'||j.error==='limit'){RP.v=false;toast(j.msg||'أكمل بالضغط على الجمل');stay();return}toast(j.msg||'لم أفهم التسجيل. أعد المحاولة.');stay();return}
+rpHeard(j.text)}).catch(function(){if(RP!==rp)return;RP.busy=false;toast('تعذّر الاتصال. أعد المحاولة، أو اختر بالضغط.');stay()})};
+mr.start();REC.t=setTimeout(function(){if(REC.on)try{mr.stop()}catch(e){}},12000);stay()}).catch(function(){toast('اسمح للموقع باستعمال الميكروفون من إعدادات المتصفح، أو اختر بالضغط');})}
+// What the learner said is matched against the three choices: the right line from 60% of its words; another choice
+// heard more clearly counts as the wrong reply; otherwise they say it again.
+function rpHeard(t){var L=DLG[RP.d].l,ln=L[RP.i],sc=RP.o.map(function(o){return exScore(t,o[0])}),k=RP.o.indexOf(ln),best=0;sc.forEach(function(x,i){if(x>sc[best])best=i});RP.said=t;
+if(sc[k]>=.6&&sc[k]>=sc[best]){pickRP(k);return}
+if(best!==k&&sc[best]>=.6){pickRP(best);return}
+RP.mis++;snd(false);STK=0;toast('لم تكن الجملة واضحة، قلها مرة أخرى 🎤');stay()}
+function rpView(){var L=DLG[RP.d].l,h='<button class="back" onclick="RP=null;render()">› إنهاء التمثيل</button><h2>🎭 '+DLG[RP.d].t+'</h2><p class="mu">دورك: '+(RP.role==='A'?'الطرف الأول':'الطرف الثاني')+' · '+(RP.v?'قل الردّ المناسب بصوتك في كل دور.':'اختر الردّ المناسب في كل دور.')+'</p>',j;
 for(j=0;j<RP.i&&j<L.length;j++)h+=bub(L[j],rpMine(j));
 if(RP.i>=L.length)return h+'<div class="det" style="margin-top:12px"><div class="big">'+RP.sc+' من '+RP.n+'</div><p>أحسنت! أتممت الحوار بدورك.</p><p class="mu">حصلت على '+cw((RP.sc*10+10),'نقاط','نقطة')+'</p></div><div class="btns"><button class="btn alt" onclick="RP=null;render()">للمحادثة</button><button class="btn" onclick="startRP(\''+(RP.role==='A'?'B':'A')+'\')">بدّل الدور</button></div>';
 if(RP.wait)return h+'<div class="bub"><div class="mu">يكتب الردّ… ✍️</div></div>';
 if(!rpMine(RP.i))return h+bub(L[RP.i],false)+'<div class="btns"><button class="btn" onclick="rpNext()">متابعة ▶</button></div>';
 var ln=L[RP.i];
-h+='<div class="det" style="margin-top:12px"><p class="mu">دورك الآن</p><div style="font-weight:700;font-size:18px">ماذا ستردّ؟ 💬</div>'+(RP.hint?'<div class="mu" style="margin-top:6px">💡 المعنى المطلوب: «'+ln[2]+'»</div>':'<button class="back" style="color:#fff;font-size:14px" onclick="RP.hint=true;stay()">💡 تلميح</button>')+'</div>';
-RP.o.forEach(function(o,k){var b=RP.bad[k];h+='<button class="opt'+(b?' bad':'')+'" '+(b?'disabled':'')+' onclick="pickRP('+k+')"><span class="fa" style="font-size:20px">'+o[0]+'</span><br><span style="font-size:13px;opacity:.85;direction:ltr;display:inline-block">'+o[1]+'</span></button>'});
+h+='<div class="det" style="margin-top:12px"><p class="mu">دورك الآن</p><div style="font-weight:700;font-size:18px">'+(RP.v?'اختر الردّ المناسب وقله بصوتك 🎤':'ماذا ستردّ؟ 💬')+'</div>'+(RP.hint?'<div class="mu" style="margin-top:6px">💡 المعنى المطلوب: «'+ln[2]+'»</div>':'<button class="back" style="color:#fff;font-size:14px" onclick="RP.hint=true;stay()">💡 تلميح</button>')+'</div>';
+RP.o.forEach(function(o,k){var b=RP.bad[k];h+='<button class="opt'+(b?' bad':'')+'" '+(b?'disabled':'')+(RP.v?' style="cursor:default" onclick="say(\''+esc(o[0])+'\')"':' onclick="pickRP('+k+')"')+'><span class="fa" style="font-size:20px">'+o[0]+'</span><br><span style="font-size:13px;opacity:.85;direction:ltr;display:inline-block">'+o[1]+'</span>'+(RP.v?' <span class="mu" style="font-size:12px">🔊</span>':'')+'</button>'});
+if(RP.v)h+=(RP.said?'<p class="mu" style="text-align:center">سمعت: <span class="fa" style="font-size:18px">'+hesc(RP.said)+'</span></p>':'')+'<div class="btns"><button class="btn" style="font-size:20px" '+(RP.busy?'disabled':'')+' onclick="rpMic()">'+(RP.busy?'⏳ أستمع…':REC.on?'⏹ أنهيت، أرسل':'🎤 اضغط وقل ردّك')+'</button></div><p style="text-align:center"><button class="lnk-no" style="color:var(--mu);font-size:13px" onclick="RP.v=false;stay()">لا أستطيع الكلام الآن؟ اختر بالضغط</button></p>';
 return h}
 /* ===== games menu ===== */
 var MG=null,LG=null;
