@@ -253,7 +253,7 @@ var HX={};
 function lvOf(i,G){G=G||'L';for(var k=0;k<LVL.length;k++)if(i>=LVL[k][G][0]&&i<LVL[k][G][1])return k;return LVL.length-1}
 function lvEnd(i,G){return i===(G==='G'?GR:G==='D'?DLG:LES).length-1||lvOf(i+1,G)!==lvOf(i,G)}
 function lvHead(i,G){G=G||'L';var k=lvOf(i,G),x=LVL[k],R=x[G],key=G+k,P=G==='G'?S.gp:G==='D'?S.dp:S.pass;if(i!==R[0])return'';var n=R[1]-R[0],d=0;for(var j=R[0];j<R[1];j++)if(P&&P[j])d++;var open=HX[key]!=null?HX[key]:d<n;
-return'<button class="lvh" aria-expanded="'+open+'" onclick="lvTog(\''+key+'\',this)" style="display:flex;width:100%;align-items:center;gap:8px;margin:14px 0 6px;padding:10px 12px;border:0;border-radius:12px;background:var(--sf);color:var(--tx);font:inherit;font-weight:700;cursor:pointer"><span>'+x.e+' المستوى '+(k+1)+': '+x.n+'</span><span class="mu" style="margin-inline-start:auto;font-weight:400">'+(d===n?'✅ ':'')+d+' من '+n+'</span><span class="mu">'+(open?'▾':'◂')+'</span></button><div'+(open?'':' style="display:none"')+'>'+(!OPEN&&k>0&&!(P&&P[R[0]])&&!lvDone(k-1)?'<div class="mu" style="padding:2px 12px 8px">🔒 يُفتح بعد إكمال المستوى '+k+' كاملاً: الدروس والقواعد والمحادثات والقصص ورحلة پارسا ('+lvlPct(k-1)+'٪ حتى الآن)</div>':'')}
+return'<button class="lvh" aria-expanded="'+open+'" onclick="lvTog(\''+key+'\',this)" style="display:flex;width:100%;align-items:center;gap:8px;margin:14px 0 6px;padding:10px 12px;border:0;border-radius:12px;background:var(--sf);color:var(--tx);font:inherit;font-weight:700;cursor:pointer"><span>'+x.e+' المستوى '+(k+1)+': '+x.n+'</span><span class="mu" style="margin-inline-start:auto;font-weight:400">'+(d===n?'✅ ':'')+d+' من '+n+'</span><span class="mu">'+(open?'▾':'◂')+'</span></button><div'+(open?'':' style="display:none"')+'>'+(!OPEN&&k>0&&!(P&&P[R[0]])&&!lvDone(k-1)?'<div class="mu" style="padding:2px 12px 8px">🔒 يُفتح بعد إكمال دروس المستوى '+k+' وقواعده ومحادثاته ('+lvReqPct(k-1)+'٪ حتى الآن). القصص ورحلة پارسا اختيارية.</div>':'')}
 function lvTog(k,b){var d=b.nextElementSibling,open=d.style.display==='none';d.style.display=open?'':'none';HX[k]=open;b.setAttribute('aria-expanded',open);var a=b.lastElementChild;if(a)a.textContent=open?'▾':'◂'}
 function helpTiles(){var t=[['🔤','الحروف الفارسية',"go('letters')"]];['col','ar','soc','mis','poem'].forEach(function(s){t.push([SEC[s].ic,SEC[s].t,"CS='"+s+"';CFROM='home';go('col')"])});
 t.push(['🔎','القاموس',"DQ='';go('dict')"],['🎮','ألعاب وتحديات',"go('games')"]);if(webApp()&&S.xp)t.push(['🎁','ادعُ صديقاً',"go('me')"]);
@@ -855,12 +855,14 @@ h+=EX.a===null?'<div class="btns"><button class="btn'+(REC.on?' alt':'')+'"'+(EX
 '<div class="det" style="text-align:start"><div class="mu">سمعتُ:</div><div class="fa" style="font-size:20px">🎤 '+hesc(EX.a)+'</div><div class="fbk '+(q.ok?'ok':'no')+'" style="margin-top:6px">'+(q.ok?'✅ نطق واضح':'❌ لم تُفهم الجملة جيداً')+'</div></div>'}
 if(EX.a!==null)h+='<div class="btns"><button class="btn" onclick="exNext()">'+(EX.i+1<EX.qs.length?'التالي':'النتيجة')+'</button></div>';return h}
 // Inside a level, lessons, rules and conversations open one after another. The first one of a level opens only
-// once everything in the level before is finished (lvlParts: lessons, rules, trip chapters, conversations,
-// stories), unless the placement test put the learner further. Whatever was already finished stays open.
-function lvDone(k){return OPEN||k<0||k<plc()||lvlParts(k).every(Boolean)}
+// once the lessons, rules and conversations of the level before are all finished (lvReq; stories and trip chapters
+// are optional), unless the placement test put the learner further. Whatever was already finished stays open.
+function lvReq(k){var x=LVL[k],a=[],i,lt=webLite();for(i=x.L[0];i<x.L[1];i++)a.push(!!(S.pass&&S.pass[i]));for(i=x.G[0];i<x.G[1];i++)a.push(!!(S.gp&&S.gp[i]));for(i=x.D[0];i<x.D[1];i++)if(!lt||allowed('D',i))a.push(!!(S.dp&&S.dp[i]));return a}
+function lvReqPct(k){var a=lvReq(k);return Math.round(a.filter(Boolean).length/a.length*100)}
+function lvDone(k){return OPEN||k<0||k<plc()||lvReq(k).every(Boolean)}
 function lvGate(G,i){var k=lvOf(i,G);return i!==LVL[k][G][0]||lvDone(k-1)}
 function seqOpen(G,i){if(OPEN)return true;var d=(G==='L'?S.pass:G==='G'?S.gp:S.dp)||{};if(d[i]||i===0||i<=LVL[plc()][G][0])return true;return!!d[i-1]&&lvGate(G,i)}
-function lvLockMsg(G,i){var d=(G==='L'?S.pass:G==='G'?S.gp:S.dp)||{},k=lvOf(i,G);return d[i-1]&&k>0&&!lvDone(k-1)?'🔒 أكمل كل ما في المستوى '+k+' «'+LVL[k-1].n+'» أولاً: الدروس والقواعد والمحادثات والقصص ورحلة پارسا ('+lvlPct(k-1)+'٪ حتى الآن)':''}
+function lvLockMsg(G,i){var d=(G==='L'?S.pass:G==='G'?S.gp:S.dp)||{},k=lvOf(i,G);return d[i-1]&&k>0&&!lvDone(k-1)?'🔒 أكمل دروس المستوى '+k+' «'+LVL[k-1].n+'» وقواعده ومحادثاته أولاً ('+lvReqPct(k-1)+'٪ حتى الآن)':''}
 function unlocked(i){return seqOpen('L',i)}
 function toast(m){try{var o=document.querySelector('.tst');if(o&&o.remove)o.remove()}catch(e){}var d=document.createElement('div');d.className='tst';d.textContent=m;d.style.cssText='position:fixed;left:16px;right:16px;bottom:90px;max-width:480px;margin:auto;background:var(--tx);color:var(--bg);padding:12px 16px;border-radius:12px;text-align:center;z-index:9';document.body.appendChild(d);setTimeout(function(){d.remove()},2600)}
 function locked(i){toast(lvLockMsg('L',i).replace('🔒 ','')||'أنهِ مراحل الدرس السابق أولاً')}
@@ -1791,7 +1793,7 @@ function trip(i){S.trip=S.trip||{};return S.trip[i]||{done:[]}}
 // The next chapter the learner can play now, or null.
 function tripNext(){for(var i=0;i<TRIP.length;i++)if(!tripDone(i))return tripLock(i)?null:i;return null}
 function tripDone(i){return!!trip(i).stars}
-function tripLock(i){if(OPEN)return'';if(webLite()&&i>0)return'⭐ للمشتركين';if(i>0&&!tripDone(i-1)&&i>LVL[plc()].T[0])return'🔒 أنهِ الفصل السابق';if(!tripDone(i)&&i>LVL[plc()].T[0]&&!lvGate('T',i)){var tk=lvOf(i,'T');return'🔒 أكمل كل ما في المستوى '+tk+' «'+LVL[tk-1].n+'» أولاً ('+lvlPct(tk-1)+'٪ حتى الآن)'}var r=TRIP[i].req;if(r>=0&&!(S.pass&&S.pass[r])&&r>=LVL[plc()].L[0])return'🔒 أنهِ درس «'+LES[r].t+'» أولاً';return''}
+function tripLock(i){if(OPEN)return'';if(webLite()&&i>0)return'⭐ للمشتركين';if(i>0&&!tripDone(i-1)&&i>LVL[plc()].T[0])return'🔒 أنهِ الفصل السابق';if(!tripDone(i)&&i>LVL[plc()].T[0]&&!lvGate('T',i)){var tk=lvOf(i,'T');return'🔒 أكمل دروس المستوى '+tk+' «'+LVL[tk-1].n+'» وقواعده ومحادثاته أولاً ('+lvReqPct(tk-1)+'٪ حتى الآن)'}var r=TRIP[i].req;if(r>=0&&!(S.pass&&S.pass[r])&&r>=LVL[plc()].L[0])return'🔒 أنهِ درس «'+LES[r].t+'» أولاً';return''}
 function tripLevel(){var n=cnt(S.pass);return n<4?0:n<10?1:2}
 function tripStars(n){return'⭐'.repeat(n)+'☆'.repeat(3-n)}
 // The chapter conversation is kept on this device for the day, so leaving and coming back continues it.
