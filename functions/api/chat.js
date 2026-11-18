@@ -24,6 +24,7 @@ export const MODELS = [
 ];
 const TASTE = 12; // messages in the free version's one taste of Parsa (trip chapter 1)
 const LIMIT = { list: 100, member: 20, trial: 15, free: 3 }; // free: after the trial or subscription ended
+const RP_VOICE = 120; // role-play recordings a subscriber can check a day (their own counter, not Parsa's messages)
 const VOICE_BYTES = 1024 * 1024; // about a minute of compressed speech; recordings stop at 15 seconds
 const CHECK_MODELS = ['@cf/openai/gpt-oss-120b', '@cf/meta/llama-3.3-70b-instruct-fp8-fast']; // checking trip replies
 const MAX_TURNS = 12, MAX_CHARS = 300;
@@ -424,6 +425,33 @@ const asText = (m) => (m.r === 'a' ? `FA: ${m.t}` : m.t);
 const json = (body, status = 200, headers = {}) =>
   Response.json(body, { status, headers: { 'Cache-Control': 'no-store', ...headers } });
 
+// Turns the learner's recording into Persian text with Whisper. {text} or {res: the error response}.
+async function transcribe(request, env, admin) {
+  const audio = new Uint8Array(await request.arrayBuffer());
+  if (!audio.length || audio.length > VOICE_BYTES) return { res: json({ error: 'audio', msg: 'التسجيل طويل أو فارغ. سجّل جملة قصيرة.' }, 400) };
+  let text = '', fail = '';
+  try {
+    let b64 = '';
+    for (let i = 0; i < audio.length; i += 0x8000) b64 += String.fromCharCode.apply(null, audio.subarray(i, i + 0x8000));
+    // The character's last line and the task's phrases (or the role-play's choices), sent by the app, help Whisper.
+    let hint = '';
+    try { hint = decodeURIComponent(request.headers.get('X-Hint') || ''); } catch (e) { hint = ''; }
+    hint = hint.replace(/[^\u0600-\u06FF\u200c\s.,،؟?!]/g, '').slice(0, 300).trim();
+    const r = await env.AI.run('@cf/openai/whisper-large-v3-turbo', { audio: btoa(b64), language: 'fa', vad_filter: true, ...(hint ? { initial_prompt: hint } : {}) });
+    text = String((r && r.text) || '').trim();
+  } catch (e) {
+    fail = String(e && e.message).slice(0, 120);
+    try { // the older model takes the bytes as a list of numbers
+      const r = await env.AI.run('@cf/openai/whisper', { audio: [...audio] });
+      text = String((r && r.text) || '').trim();
+    } catch (e2) { fail += ' | ' + String(e2 && e2.message).slice(0, 120); }
+  }
+  text = text.replace(FOREIGN, ' ').replace(/[A-Za-z]+[?!.]?/g, ' ').replace(/\s{2,}/g, ' ').trim().slice(0, MAX_CHARS);
+  if (!text) return { res: json({ error: 'voice', msg: 'لم أفهم التسجيل. تكلّم بوضوح وقرّب الهاتف ثم أعد المحاولة.', model: admin ? fail : undefined }, 422) };
+  if (repeats(text)) return { res: json({ error: 'voice', msg: 'لم أفهم التسجيل جيداً. قل جملة واحدة بوضوح، ثم أعد المحاولة.', model: admin ? 'repeated: ' + text : undefined }, 422) };
+  return { text };
+}
+
 async function counter(request, kv, email) {
   const m = (request.headers.get('Cookie') || '').match(/(?:^|;\s*)pc=([A-Za-z0-9_.-]+)/);
   const v = m ? await readSigned(kv, m[1]) : null;
@@ -451,6 +479,21 @@ export async function onRequest({ request, env }) {
     return json({ ...obj, left: Math.max(0, limit - n) }, 200, { 'Set-Cookie': cookie });
   };
 
+  // Role-play by voice (?rp=1): a subscriber says their line of a conversation; only the text comes back, the app
+  // checks it. It has its own daily allowance (RP_VOICE, in the signed cookie "rv") and does not use Parsa's messages.
+  if (request.method === 'POST' && new URL(request.url).searchParams.get('rp') === '1') {
+    if (!/^audio\//.test(request.headers.get('Content-Type') || '')) return json({ error: 'body' }, 400);
+    if (!st.ok && !admin) return json({ error: 'free', msg: 'تمثيل الأدوار بالصوت للمشتركين.' }, 403);
+    const m = (request.headers.get('Cookie') || '').match(/(?:^|;\s*)rv=([A-Za-z0-9_.-]+)/);
+    const rv = m ? await readSigned(kv, m[1]) : null;
+    const n = rv && rv.e === email && rv.d === today() ? rv.n : 0;
+    if (n >= RP_VOICE && !admin) return json({ error: 'limit', msg: 'وصلت إلى حدّ التسجيلات لليوم. أكمل بالضغط على الجمل، وعُد غداً.' }, 429);
+    const v = await transcribe(request, env, admin);
+    if (!v.text) return v.res;
+    const cookie = `rv=${await signValue(kv, { e: email, d: today(), n: n + 1 })}; Path=/api/chat; Max-Age=172800; HttpOnly; Secure; SameSite=Lax`;
+    return json({ text: v.text }, 200, { 'Set-Cookie': cookie });
+  }
+
   // Talking with Parsa is for subscribers. The free version gets one taste: trip chapter 1 (c=0, text or voice),
   // TASTE messages in all, once per person (counted in KV as "taste:<email>").
   if (request.method === 'POST' && (st.kind === 'trial' || !st.ok) && !admin) {
@@ -471,29 +514,8 @@ export async function onRequest({ request, env }) {
   // Without a subscription it works only in the free taste of chapter 1 (?c=0, checked above). It counts as one message.
   if (/^audio\//.test(request.headers.get('Content-Type') || '')) {
     if (used >= limit) return json({ error: 'limit', left: 0, free: !st.ok, msg: 'وصلت إلى حدّ اليوم. عُد غداً!' }, 429);
-    const audio = new Uint8Array(await request.arrayBuffer());
-    if (!audio.length || audio.length > VOICE_BYTES) return json({ error: 'audio', msg: 'التسجيل طويل أو فارغ. سجّل جملة قصيرة.' }, 400);
-    let text = '', fail = '';
-    try {
-      let b64 = '';
-      for (let i = 0; i < audio.length; i += 0x8000) b64 += String.fromCharCode.apply(null, audio.subarray(i, i + 0x8000));
-      // The character's last line and the task's phrases, sent by the app, help Whisper with the expected words.
-      let hint = '';
-      try { hint = decodeURIComponent(request.headers.get('X-Hint') || ''); } catch (e) { hint = ''; }
-      hint = hint.replace(/[^\u0600-\u06FF\u200c\s.,،؟?!]/g, '').slice(0, 300).trim();
-      const r = await env.AI.run('@cf/openai/whisper-large-v3-turbo', { audio: btoa(b64), language: 'fa', vad_filter: true, ...(hint ? { initial_prompt: hint } : {}) });
-      text = String((r && r.text) || '').trim();
-    } catch (e) {
-      fail = String(e && e.message).slice(0, 120);
-      try { // the older model takes the bytes as a list of numbers
-        const r = await env.AI.run('@cf/openai/whisper', { audio: [...audio] });
-        text = String((r && r.text) || '').trim();
-      } catch (e2) { fail += ' | ' + String(e2 && e2.message).slice(0, 120); }
-    }
-    text = text.replace(FOREIGN, ' ').replace(/[A-Za-z]+[?!.]?/g, ' ').replace(/\s{2,}/g, ' ').trim().slice(0, MAX_CHARS);
-    if (!text) return json({ error: 'voice', msg: 'لم أفهم التسجيل. تكلّم بوضوح وقرّب الهاتف ثم أعد المحاولة.', model: admin ? fail : undefined }, 422);
-    if (repeats(text)) return json({ error: 'voice', msg: 'لم أفهم التسجيل جيداً. قل جملة واحدة بوضوح، ثم أعد المحاولة.', model: admin ? 'repeated: ' + text : undefined }, 422);
-    return counted({ text });
+    const v = await transcribe(request, env, admin);
+    return v.text ? counted({ text: v.text }) : v.res;
   }
 
   let body;
