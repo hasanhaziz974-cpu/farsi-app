@@ -147,6 +147,10 @@ async function links(b, url) {
     Object.keys(SEC).forEach((k) => SEC[k].d.forEach((c, i) => { if (!Object.values(SECL.les).some((a) => a.some((x) => x[0] === k && x[1] === i))) bad.push(SEC[k].t + ' «' + c.t + '» is shown on no lesson (SECL.les)'); }));
     // Culture texts (c) link the lessons of their topic, whatever the level; stories only lessons up to their level.
     STORY.forEach((s, i) => s.c || storyLes(i).forEach((l) => { if (lvOf(l) + 1 > s.lv) bad.push('story «' + s.ta + '» links lesson ' + (l + 1) + ' of a later level'); }));
+    // Every rule and conversation is reachable from a lesson of its own level or an earlier one, and every lesson has a conversation.
+    GR.forEach((g, i) => { if (!lesFor('g', i).some((l) => lvOf(l) <= lvOf(i, 'G'))) bad.push('rule «' + g.t + '» is linked only from lessons of later levels'); });
+    DLG.forEach((d, i) => { if (!lesFor('d', i).some((l) => lvOf(l) <= lvOf(i, 'D'))) bad.push('conversation «' + d.t + '» is linked only from lessons of later levels'); });
+    LINK.forEach((k, l) => { if (!k[1].length) bad.push('lesson «' + LES[l].t + '» links no conversation'); });
     return bad;
   });
   r.forEach((x) => fail('links', x));
