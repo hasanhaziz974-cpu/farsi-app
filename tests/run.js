@@ -268,6 +268,9 @@ async function games(b, url) {
   // Daily review: at most RVCAP cards a day, then a message and 10 more on request.
   const cap = await p.evaluate(() => { const keep = [S.srs, S.pass, S.sg, S.rvd]; S.pass = {}; S.sg = {}; S.srs = {}; ALL.slice(0, 120).forEach((w) => { S.sg[w.l] = 1; S.srs[w.id] = { b: 1, d: 0 }; }); S.rvd = null; const a = queue().q.length; for (let i = 0; i < RVCAP; i++) rvCount(); const b = queue().q.length, all = queue().all; go('review'); RC = null; render(); const msg = document.querySelector('#main').textContent.indexOf('أنهيت مراجعة اليوم') >= 0; const r = rvToday(); r.x = 10; S.rvd = r; const c = queue().q.length; [S.srs, S.pass, S.sg, S.rvd] = keep; RC = null; return [a, b, all, msg, c]; });
   if (cap[0] !== 30 || cap[1] !== 0 || cap[2] !== 120 || !cap[3] || cap[4] !== 10) fail('games', 'daily review limit: ' + JSON.stringify(cap));
+  // Ranks: as many names as thresholds, rising, and the top one far beyond a beginner's points.
+  const ranks = await p.evaluate(() => [LV.length === LT.length, LV.every((x, i) => !i || x > LV[i - 1]), LV[LV.length - 1] >= 40000, lvl(0), lvl(2500) < LV.length - 1]);
+  if (!ranks.every((x, i) => (i === 3 ? x === 0 : x))) fail('games', 'ranks table: ' + JSON.stringify(ranks));
   // Role-play by voice: what the learner says is matched against the three choices (the server's text is simulated).
   const rp = await p.evaluate(() => {
     go('talk'); D = 0; S.prem = 1; startRP('A'); RP.v = true; const L = DLG[0].l; render();
