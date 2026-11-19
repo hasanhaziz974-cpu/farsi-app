@@ -11,6 +11,9 @@
  * 4. links     lesson, rule, conversation, story and trip links point at things that exist; every rule,
  *              lesson and special-section lesson is linked
  *    levels    a level opens only when the lessons, rules and conversations of the level before are finished
+ *    gradation no text uses a grammar form before the level of its rule
+ *    learner   a learner from the first day: the order things open, the review, the ranks
+ *    crawl     every lesson, rule, conversation, story, section lesson, chapter and exam page opens cleanly
  * 5. progress  a saved state from every older version (v2-v15) lands on the same rules and conversations,
  *              in the app (migrateV3-V5) and on the server (lib/progress.js)
  * 6. games     each mini-game runs to its result; today's dictation is graded by level, easiest first
@@ -68,6 +71,13 @@ async function content(b, url) {
     TRIP.forEach((t, i) => { if (t.tasks.length !== 4 || t.say.length !== 4 || t.ln.length !== 5) add('trip chapter shape', i + 1); t.ln.forEach((l, j) => { fa('chapter ' + (i + 1) + '.' + j, l[0]); tr('chapter ' + (i + 1) + '.' + j, l[1]); }); t.say.forEach((ps, k) => ps.forEach((x, m) => fa('chapter ' + (i + 1) + ' phrase ' + k + '.' + m, x[0]))); });
     Object.keys(SEC).forEach((s) => SEC[s].d.forEach((c, i) => { if (!c.t || !c.n || !c.e || c.e.length < 3) add('section lesson shape', s + i); c.e.forEach((e, j) => { fa(s + ' ' + (i + 1) + '.' + j, e[1]); tr(s + ' ' + (i + 1) + '.' + j, e[2]); ar(s + ' ' + (i + 1) + '.' + j, e[3]); }); }));
     ['L', 'G', 'T', 'D'].forEach((k) => { const total = { L: LES.length, G: GR.length, T: TRIP.length, D: DLG.length }[k]; let at = 0; LVL.forEach((x, n) => { if (x[k][0] !== at) add('level ranges', k + ' of level ' + (n + 1) + ' starts at ' + x[k][0] + ', expected ' + at); at = x[k][1]; }); if (at !== total) add('level ranges', k + ' ends at ' + at + ' of ' + total); });
+    V.forEach((v, i) => { if (!Array.isArray(v) || v.length < 8) return add('verb shape', i + 1); fa('verb ' + (i + 1), v[0]); tr('verb ' + (i + 1), v[1]); ar('verb ' + (i + 1), v[2]); if (!v[3] || !v[5]) add('verb without stems', v[0]); });
+    const dupT = (k, arr, f) => { const s = {}; arr.forEach((x) => { const t = f(x); if (s[t]) add('two ' + k + ' with one title', t); s[t] = 1; }); };
+    dupT('stories', STORY, (x) => x.t); dupT('conversations', DLG, (x) => x.t); dupT('lessons', LES, (x) => x.t); dupT('rules', GR, (x) => x.t); dupT('chapters', TRIP, (x) => x.t);
+    PRV.forEach((x, i) => { fa('proverb ' + (i + 1), x[0]); ar('proverb ' + (i + 1), x[2]); });
+    ANT.forEach((x, i) => { if (x.length !== 6) add('antonym shape', i + 1); fa('antonym ' + (i + 1), x[0]); fa('antonym ' + (i + 1), x[3]); });
+    RID.forEach((x, i) => { if (x.length !== 5) add('riddle shape', i + 1); fa('riddle ' + (i + 1), x[0]); fa('riddle answer ' + (i + 1), x[3]); });
+    LES.forEach((l) => { if (l.w.length < 6) add('lesson with fewer than 6 items', l.t); });
     const seen = {}, homographs = ['نه', 'در'];
     ALL.forEach((w) => { if (seen[w.fa] !== undefined && seen[w.fa] !== w.l && homographs.indexOf(w.fa) < 0) add('word in two lessons', w.fa); else seen[w.fa] = w.l; });
     return out;
@@ -172,15 +182,15 @@ async function progress(b, url) {
     { v: 4, gp: { 9: 1, 10: 1, 16: 1, 28: 1 }, dp: { 46: 1 }, rules: ['حروف الجر', 'المستقبل', 'الماضي القريب (النقلي)', 'الماضي الالتزامي'], convs: ['في المخبز'] },
     { v: 5, gp: {}, dp: {}, rules: [], convs: [], pass: { 15: 1, 16: 1, 25: 1, 48: 1, 63: 1 }, srs: { '16-2': { b: 2, d: 1 } }, lessons: ['البيت والأشياء', 'الأرقام 11 إلى 1000', 'المطبخ والطبخ', 'الفن والسينما والموسيقى', 'العلاقات والمشاعر الدقيقة'], word: 'الأرقام 11 إلى 1000' },
     { v: 6, gp: {}, dp: { 6: 1, 7: 1, 20: 1, 63: 1 }, rules: [], convs: ['في المطار', 'في التاكسي', 'تهنئة العيد', 'نقاش عن تغيّر المناخ'] },
-    { v: 7, gp: {}, dp: {}, rules: [], convs: [], trip: { 5: { done: [0] }, 6: { done: [0, 1] }, 12: { stars: 2 }, 30: { stars: 3 }, 65: { stars: 1 } }, chapters: ["غداء مع عائلة پارسا", "في مترو طهران", "البحث عن شقة", "حقيبة لم تصل", "وداع پارسا"] },
+    { v: 7, gp: {}, dp: {}, rules: [], convs: [], trip: { 5: { done: [0] }, 6: { done: [0, 1] }, 12: { stars: 2 }, 30: { stars: 3 }, 65: { stars: 1 } }, chapters: ["غداء مع عائلة پارسا", "في مترو طهران", "البحث عن شقة", "حقيبة لم تصل", "وداع پارسا في بغداد"] },
     { v: 8, gp: { 4: 1, 5: 1, 8: 1 }, dp: {}, rules: ['الإضافة والصفة', 'المضارع', 'أدوات السؤال'], convs: [], pass: { 26: 1, 27: 1, 44: 1, 45: 1, 68: 1 }, srs: { '45-3': { b: 2, d: 1 } }, lessons: ['الفواكه والخضروات', 'المطبخ والطبخ', 'الدين والمناسبات الدينية', 'في المستشفى والعلاج', 'العلاقات والمشاعر الدقيقة'], word: 'في المستشفى والعلاج' },
     { v: 9, gp: {}, dp: { 15: 1, 16: 1, 31: 1, 32: 1, 49: 1, 50: 1, 67: 1 }, rules: [], convs: ['في محطة الحافلات', 'الوقت والموعد', 'عند الطبيب البيطري', 'في الملعب', 'تصليح الهاتف', 'في المخبز', 'نقاش عن تغيّر المناخ'] },
-    { v: 10, gp: { 33: 1, 34: 1, 42: 1, 43: 1, 51: 1 }, dp: {}, rules: ['الفعل المتعدّي بـ«ـاندن»', 'الماضي الالتزامي', 'قبل أن وبعد أن: قبل از این‌که، بعد از این‌که', 'اسم الفاعل واسم المفعول', 'حروف الجر المركّبة'], convs: [], trip: { 38: { stars: 1 }, 39: { stars: 2 }, 45: { stars: 3 }, 62: { stars: 1 }, 63: { stars: 2 }, 69: { stars: 3 } }, chapters: ['في ملعب آزادي', 'عشاء الوداع', 'عند حافظ في شيراز', 'طلبية خاطئة', 'حفل التخرّج', 'وداع پارسا'] },
+    { v: 10, gp: { 33: 1, 34: 1, 42: 1, 43: 1, 51: 1 }, dp: {}, rules: ['الفعل المتعدّي بـ«ـاندن»', 'الماضي الالتزامي', 'قبل أن وبعد أن: قبل از این‌که، بعد از این‌که', 'اسم الفاعل واسم المفعول', 'حروف الجر المركّبة'], convs: [], trip: { 38: { stars: 1 }, 39: { stars: 2 }, 45: { stars: 3 }, 62: { stars: 1 }, 63: { stars: 2 }, 69: { stars: 3 } }, chapters: ['في ملعب آزادي', 'عشاء الوداع', 'عند حافظ في شيراز', 'طلبية خاطئة', 'حفل التخرّج', 'وداع پارسا في بغداد'] },
     { v: 11, gp: {}, dp: { 24: 1, 25: 1, 41: 1, 42: 1, 71: 1 }, rules: [], convs: ['عند الخياط', 'دعوة إلى عرس', 'زيارة مريض', 'عند الطبيب الاختصاصي', 'نقاش عن الأطفال والهاتف'], pass: { 36: 1, 37: 1, 55: 1, 56: 1, 71: 1 }, srs: { '56-2': { b: 2, d: 1 } }, lessons: ['أعمال البيت', 'الأخبار والإعلام', 'التاريخ والحضارة', 'السياحة والآثار', 'الطب التقليدي والأعشاب'], word: 'السياحة والآثار' },
-    { v: 12, gp: { 19: 1, 20: 1, 26: 1, 27: 1 }, dp: {}, rules: ['«ـی» للتنكير: کتابی، روزی', 'الماضي القريب (النقلي)', 'الجمل الزمنية: وقتی، هر وقت، تا وقتی', 'الجمل الموصولة: که'], convs: [], trip: { 20: { stars: 1 }, 21: { stars: 2 }, 27: { stars: 3 }, 28: { stars: 1 }, 72: { stars: 2 } }, chapters: ['في حديقة الحيوان', 'في حرم الإمام الرضا', 'تنظيف البيت قبل النوروز', 'في السوبرماركت', 'وداع پارسا'] },
+    { v: 12, gp: { 19: 1, 20: 1, 26: 1, 27: 1 }, dp: {}, rules: ['«ـی» للتنكير: کتابی، روزی', 'الماضي القريب (النقلي)', 'الجمل الزمنية: وقتی، هر وقت، تا وقتی', 'الجمل الموصولة: که'], convs: [], trip: { 20: { stars: 1 }, 21: { stars: 2 }, 27: { stars: 3 }, 28: { stars: 1 }, 72: { stars: 2 } }, chapters: ['في حديقة الحيوان', 'في حرم الإمام الرضا', 'تنظيف البيت قبل النوروز', 'في السوبرماركت', 'وداع پارسا في بغداد'] },
     { v: 13, gp: {}, dp: { 16: 1, 17: 1, 54: 1, 55: 1, 73: 1 }, rules: [], convs: ['في محل الصرافة', 'الوقت والموعد', 'في مركز الشرطة بعد حادث', 'في المخبز', 'نقاش عن الأطفال والهاتف'], pass: { 27: 1, 28: 1, 47: 1, 48: 1, 74: 1 }, srs: { '48-3': { b: 2, d: 1 } }, lessons: ['المطار والطيران', 'المطبخ والطبخ', 'الحاسوب والبرمجة', 'في المستشفى والعلاج', 'العمارة الإسلامية'], word: 'في المستشفى والعلاج' },
     { v: 14, gp: { 12: 1, 13: 1, 46: 1, 47: 1 }, dp: { 35: 1, 36: 1, 75: 1 }, rules: ['العدد والمعدود: «تا» و«نفر»', 'المستقبل', '«در حالی که»: بينما، في حين أنّ', 'اسم الفاعل واسم المفعول'], convs: ['شراء تذكرة قطار', 'في الملعب', 'نقاش عن الأطفال والهاتف'], pass: { 16: 1, 17: 1, 38: 1, 39: 1, 76: 1 }, srs: { '39-1': { b: 2, d: 1 } }, lessons: ['الأقارب', 'الأرقام 11 إلى 1000', 'وسائل التواصل الاجتماعي', 'الأخبار والإعلام', 'العمارة الإسلامية'], word: 'الأخبار والإعلام' },
-    { v: 14, gp: {}, dp: {}, rules: [], convs: [], trip: { 11: { stars: 1 }, 12: { stars: 2 }, 48: { stars: 3 }, 49: { stars: 1 }, 74: { stars: 2 } }, chapters: ['في ساحة نقش جهان', 'وداع پارسا', 'الامتحان الشفهي', 'عند حافظ في شيراز', 'وداع پارسا'] },
+    { v: 14, gp: {}, dp: {}, rules: [], convs: [], trip: { 11: { stars: 1 }, 12: { stars: 2 }, 48: { stars: 3 }, 49: { stars: 1 }, 74: { stars: 2 } }, chapters: ['في ساحة نقش جهان', 'وداع پارسا', 'الامتحان الشفهي', 'عند حافظ في شيراز', 'وداع پارسا في بغداد'] },
     { v: 15, gp: { 13: 1, 14: 1, 29: 1, 30: 1, 31: 1 }, dp: {}, rules: ['ظروف التكرار: همیشه، معمولاً، گاهی، هرگز', 'المستقبل', 'أفعال بحرف جر ثابت: فکر کردن به، منتظر بودن', 'الجمل الموصولة: که', 'الأعداد الترتيبية'], convs: [] },
   ];
   const { upgrade } = await import(path.join(ROOT, 'lib/progress.js'));
@@ -243,6 +253,96 @@ async function levels(b, url) {
   if (sk.lv3) fail('levels', 'a skip exam of level 1 opened level 3');
   if (sk.place[0] !== 4 || sk.place[1] !== 8 || !sk.opened5) fail('levels', 'the placement test with every answer right should place in level 5 with 8 questions per level: ' + JSON.stringify(sk));
   p.errs.forEach((e) => fail('levels', 'JS error ' + e));
+  await p.close();
+}
+
+// Gradation: a text does not use a grammar form before the level of the rule that teaches it (lessons, conversations,
+// stories and trip chapters). Set phrases a learner hears before the rule are listed in GRAD_OK.
+const GRAD_OK = ['ممنون که آمدید', 'خوشحالم که'];
+async function gradation(b, url) {
+  const p = await page(b, url);
+  const r = await p.evaluate((ok) => {
+    const E = '(?=[\\s.،؛؟?!:»]|$)', B = '(?:^|(?<=[\\s«]))';
+    const F = [
+      ['present perfect', B + '(?!خانواد|آماده|ساده|پیاده|زیاده)\\S+(ده|ته|یده|اده)‌(ام|ای|ایم|اید|اند)' + E + '|' + B + '(?!خانواد|آماده|ساده|پیاده|زیاده)\\S+(ده|ته|یده|اده) است' + E, 'الماضي القريب (النقلي)'],
+      ['past perfect', B + '(?!خانواد|آماده|ساده|پیاده|زیاده)\\S+(ده|ته|یده|اده) (بود|بودم|بودی|بودیم|بودید|بودند)' + E, 'الماضي البعيد'],
+      ['subjunctive', B + '(باید|نباید|می‌خواهم|می‌خواهی|می‌خواهد|می‌توانم|می‌توانی|می‌تواند) ب\\S+', 'المضارع الالتزامي'],
+      ['future', B + 'خواه(م|ی|د|یم|ید|ند) ', 'المستقبل'],
+      ['conditional', B + 'اگر' + E, 'الشرط: اگر'],
+      ['که', ' که ', 'الجمل الموصولة: که'],
+      ['کاش', B + 'کاش' + E, 'التمنّي: کاش'],
+    ].map(([n, re, t]) => [n, new RegExp(re), GR.findIndex((g) => g.t === t)]);
+    const bad = [];
+    F.forEach(([n, , gi]) => { if (gi < 0) bad.push('rule for ' + n + ' not found'); });
+    const chk = (where, k, txt) => { if (ok.some((o) => txt.indexOf(o) >= 0)) return; F.forEach(([n, re, gi]) => { if (gi >= 0 && k < lvOf(gi, 'G') && re.test(txt)) bad.push(`${n} in ${where} (level ${k + 1}, rule in level ${lvOf(gi, 'G') + 1}): ${txt.slice(0, 50)}`); }); };
+    LES.forEach((l, i) => l.w.forEach((w) => chk('lesson «' + l.t + '»', lvOf(i), w[0])));
+    DLG.forEach((d, i) => d.l.forEach((l) => chk('conversation «' + d.t + '»', lvOf(i, 'D'), l[0])));
+    STORY.forEach((s) => { if (!s.c) s.s.forEach((l) => chk('story «' + s.ta + '»', s.lv - 1, l[0])); });
+    TRIP.forEach((c, i) => c.ln.forEach((l) => chk('chapter «' + c.t + '»', lvOf(i, 'T'), l[0])));
+    return bad;
+  }, GRAD_OK);
+  r.forEach((x) => fail('gradation', x));
+  p.errs.forEach((e) => fail('gradation', 'JS error ' + e));
+  await p.close();
+}
+
+// A learner from the first day: every level's lessons, rules and conversations open one by one, the next level only
+// after them; the review holds only words of started lessons, at most RVCAP a day, with choices of the card's shape;
+// the rank follows the points.
+async function learner(b, url) {
+  const p = await page(b, url, { state: { xp: 0, st: 0, last: '', srs: {}, v: 16, prem: 1, plSkip: true } });
+  const r = await p.evaluate(() => {
+    const bad = [];
+    S.pass = {}; S.gp = {}; S.dp = {}; S.sg = {}; S.srs = {}; S.trip = {}; S.story = {}; S.skip = {}; S.exam = {}; S.place = 0; S.rvd = null;
+    const tracks = [['L', 'pass', unlocked], ['G', 'gp', gOpen], ['D', 'dp', dOpen]];
+    for (let k = 0; k < LVL.length; k++) {
+      const x = LVL[k];
+      for (const [G, key, open] of tracks) for (let i = x[G][0]; i < x[G][1]; i++) {
+        if (!open(i)) { bad.push(`level ${k + 1}: ${G}${i} closed when its turn came`); break; }
+        if (i + 1 < x[G][1] && open(i + 1) && !S[key][i + 1]) { bad.push(`level ${k + 1}: ${G}${i + 1} open before ${G}${i}`); break; }
+        S[key][i] = 1;
+        if (G === 'L') { S.sg[i] = 5; LES[i].w.forEach((w, j) => { S.srs[i + '-' + j] = { b: 1, d: 0 }; }); }
+        if (k + 1 < LVL.length && i === x[G][1] - 1 && G !== 'D') {
+          const nx = LVL[k + 1], first = [unlocked(nx.L[0]), gOpen(nx.G[0]), dOpen(nx.D[0])];
+          if (first.some(Boolean)) bad.push(`level ${k + 2} opens before level ${k + 1} is finished: ` + JSON.stringify(first));
+        }
+      }
+      if (k + 1 < LVL.length) { const nx = LVL[k + 1]; if (!unlocked(nx.L[0]) || !gOpen(nx.G[0]) || !dOpen(nx.D[0])) bad.push(`level ${k + 2} stays closed after level ${k + 1}`); }
+      if (k === 0) {
+        const q = queue();
+        if (q.q.length !== Math.min(RVCAP, LVL[0].L[1] * 10) && q.q.length !== RVCAP) bad.push('review after level 1 holds ' + q.q.length + ' cards');
+        if (q.q.some((w) => w.l >= LVL[0].L[1])) bad.push('review shows a word of a lesson not started');
+        q.q.slice(0, 10).forEach((w) => makeRC({ w, retry: false }).o.forEach((o) => { if (isSen(o) !== isSen(w)) bad.push('review choices mix words and sentences: ' + w.fa); }));
+      }
+    }
+    if (lvl(0) !== 0 || lvl(LV[LV.length - 1]) !== LV.length - 1 || lvl(1000) >= LV.length / 2) bad.push('ranks do not follow the points');
+    return bad;
+  });
+  r.forEach((x) => fail('learner', x));
+  p.errs.forEach((e) => fail('learner', 'JS error ' + e));
+  await p.close();
+}
+
+// Every page of the content opens without "undefined", "NaN" or text wider than a phone.
+async function crawl(b, url) {
+  const p = await page(b, url, { state: { xp: 10, st: 1, last: '', srs: {}, v: 16, prem: 1, plSkip: true } });
+  const r = await p.evaluate(() => {
+    OPEN = true;
+    const out = [], chk = (n) => { const m = document.getElementById('main'), t = m ? m.innerText : ''; const x = /undefined|NaN|\[object/.exec(t); if (x) out.push(n + ': …' + t.slice(Math.max(0, x.index - 25), x.index + 20) + '…'); if (document.documentElement.scrollWidth > innerWidth + 2) out.push(n + ': wider than the screen (' + document.documentElement.scrollWidth + ')'); };
+    const run = (n, f) => { try { f(); chk(n); } catch (e) { out.push(n + ': ' + e.message); } };
+    LES.forEach((l, i) => run('lesson ' + (i + 1), () => { go('home'); sub = i; render(); }));
+    GR.forEach((g, i) => run('rule ' + (i + 1), () => { go('gram'); G = i; render(); }));
+    DLG.forEach((d, i) => { run('conversation ' + (i + 1), () => { go('talk'); RV = false; D = i; render(); }); run('reading ' + (i + 1), () => { RV = true; render(); }); RV = false; });
+    STORY.forEach((s, i) => run('story ' + (i + 1), () => { go('talk'); stOpen(i); }));
+    Object.keys(SEC).forEach((s) => SEC[s].d.forEach((c, i) => run(s + ' ' + (i + 1), () => { CS = s; CL = i; go('col'); })));
+    TRIP.forEach((c, i) => run('chapter ' + (i + 1), () => { go('talk'); aiOpen(); aiChapter(i); }));
+    V.forEach((v, i) => { if (i % 5 === 0) run('verb ' + (i + 1), () => { go('verbs'); CV = i; render(); }); });
+    for (let k = 0; k < LVL.length; k++) run('level exam ' + (k + 1), () => { go('me'); EX = { k, qs: exQs(k), i: 0, a: null, sc: {}, res: null }; render(); });
+    return out;
+  });
+  r.slice(0, 20).forEach((x) => fail('crawl', x));
+  if (r.length > 20) fail('crawl', (r.length - 20) + ' more');
+  p.errs.forEach((e) => fail('crawl', 'JS error ' + e));
   await p.close();
 }
 
@@ -368,7 +468,7 @@ function audio() {
 (async () => {
   // "localhost" counts as the site for webApp(), like https://, so the signed-in features and the free version run.
   const srv = await serve(), url = 'http://localhost:' + srv.address().port, b = await chromium.launch();
-  const steps = [['content', content], ['screens', screens], ['free', free], ['links', links], ['levels', levels], ['progress', progress], ['games', games], ['dictation', dictation], ['server', server], ['audio', audio]];
+  const steps = [['content', content], ['screens', screens], ['free', free], ['links', links], ['levels', levels], ['gradation', gradation], ['learner', learner], ['crawl', crawl], ['progress', progress], ['games', games], ['dictation', dictation], ['server', server], ['audio', audio]];
   for (const [name, fn] of steps) {
     const n = fails.length, t = Date.now();
     try { await fn(b, url); } catch (e) { fail(name, 'crashed: ' + (e && e.stack ? e.stack.split('\n').slice(0, 3).join(' ') : e)); }
