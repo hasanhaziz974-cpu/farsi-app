@@ -2,6 +2,7 @@
 import { accessEmail, accessStatus, TRIAL_DAYS, CONTACT, payConfig } from '../../lib/trial.js';
 import { readSession, needsRenewal, makeSession, sessionCookie } from '../../lib/auth.js';
 import { isGift } from '../../lib/invite.js';
+import { zcReady } from '../../lib/zaincash.js';
 
 export async function onRequest({ request, env }) {
   const email = await accessEmail(request, env);
@@ -12,5 +13,5 @@ export async function onRequest({ request, env }) {
   const own = await readSession(request, env.TRIALS);
   if (own && needsRenewal(own)) headers.append('Set-Cookie', sessionCookie(await makeSession(env.TRIALS, email)));
   const gift = st.kind === 'member' && (await isGift(env.TRIALS, email, await env.TRIALS.get('allow:' + email)));
-  return Response.json({ email, trialDays: TRIAL_DAYS, contact: CONTACT, ...st, ...(gift ? { gift } : {}), pay: await payConfig(env.TRIALS) }, { headers });
+  return Response.json({ email, trialDays: TRIAL_DAYS, contact: CONTACT, ...st, ...(gift ? { gift } : {}), pay: await payConfig(env.TRIALS, zcReady(env)) }, { headers });
 }
