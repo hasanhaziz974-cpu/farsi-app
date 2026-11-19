@@ -337,7 +337,8 @@ else h+='<p class="mu">اضغط على أي حرف لترى نطقه.</p>';
 h+='<div class="grid">';LET.forEach(function(l,i){h+='<button class="lt'+(i===selL?" sel":"")+'" onclick="selL='+i+';render()"><div class="fa">'+l[0]+'</div><div class="mu">'+l[1]+'</div></button>'});
 return h+'</div><p class="mu" style="margin-top:14px">ملاحظة: الحروف ث ص ض ط ظ ذ ح ع ق تأتي في الكلمات المأخوذة من العربية.</p>'}
 function queue(){var n=Date.now(),due=ALL.filter(function(w){return S.srs[w.id]&&S.srs[w.id].d<=n}).concat(Object.keys(S.ssr||{}).filter(function(id){return S.ssr[id].d<=n&&senById(id)}).map(senById)).sort(function(a,b){return srsOf(a.id).d-srsOf(b.id).d});
-var nw=ALL.filter(function(w){return!S.srs[w.id]&&unlocked(w.l)&&allowed('L',w.l)}).slice(0,5);return{due:due,nw:nw,q:due.concat(due.length?[]:nw)}}
+// Only words the learner has met in a lesson (and their ⭐ sentences): new words are learnt in the lessons, not here.
+return{due:due,q:due}}
 var RC=null,RSQ=[],RN=0;
 function pickNext(){var r=queue(),i;
 for(i=0;i<RSQ.length;i++){if(RSQ[i].at<=RN||!r.q.length){var id=RSQ.splice(i,1)[0].id;return{w:itemById(id),retry:true}}}

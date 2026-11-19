@@ -252,6 +252,9 @@ async function games(b, url) {
   // Daily review: the wrong choices of a word card are words, of a sentence card sentences.
   const mixed = await p.evaluate(() => { const bad = []; ALL.forEach((w, i) => { if (i % 7) return; const r = makeRC({ w, retry: false }); r.o.forEach((o) => { if (isSen(o) !== isSen(w)) bad.push(w.fa + ' / ' + o.fa); }); }); return bad.slice(0, 3); });
   if (mixed.length) fail('games', 'review choices mix words and sentences: ' + mixed.join(' | '));
+  // Daily review shows only words met in a lesson, never new ones.
+  const fresh = await p.evaluate(() => { const keep = S.srs; S.srs = {}; const n = queue().q.length; S.srs = keep; return n; });
+  if (fresh) fail('games', 'the daily review offers ' + fresh + ' new words with nothing studied');
   // Role-play by voice: what the learner says is matched against the three choices (the server's text is simulated).
   const rp = await p.evaluate(() => {
     go('talk'); D = 0; S.prem = 1; startRP('A'); RP.v = true; const L = DLG[0].l; render();
