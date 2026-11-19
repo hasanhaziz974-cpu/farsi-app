@@ -336,7 +336,10 @@ if(selL!==null){var L=LET[selL];h+='<div class="det"><div class="fa" style="font
 else h+='<p class="mu">اضغط على أي حرف لترى نطقه.</p>';
 h+='<div class="grid">';LET.forEach(function(l,i){h+='<button class="lt'+(i===selL?" sel":"")+'" onclick="selL='+i+';render()"><div class="fa">'+l[0]+'</div><div class="mu">'+l[1]+'</div></button>'});
 return h+'</div><p class="mu" style="margin-top:14px">ملاحظة: الحروف ث ص ض ط ظ ذ ح ع ق تأتي في الكلمات المأخوذة من العربية.</p>'}
-function queue(){var n=Date.now(),due=ALL.filter(function(w){return S.srs[w.id]&&S.srs[w.id].d<=n}).concat(Object.keys(S.ssr||{}).filter(function(id){return S.ssr[id].d<=n&&senById(id)}).map(senById)).sort(function(a,b){return srsOf(a.id).d-srsOf(b.id).d});
+// A word is reviewed only once its lesson was started (a stage done or the lesson passed). Words can be in S.srs from
+// elsewhere (a trip chapter, the daily challenge, or the review's former new words) before the learner meets them.
+function lesStarted(l){return!!((S.pass&&S.pass[l])||(S.sg&&S.sg[l]))}
+function queue(){var n=Date.now(),due=ALL.filter(function(w){return S.srs[w.id]&&S.srs[w.id].d<=n&&lesStarted(w.l)}).concat(Object.keys(S.ssr||{}).filter(function(id){return S.ssr[id].d<=n&&senById(id)}).map(senById)).sort(function(a,b){return srsOf(a.id).d-srsOf(b.id).d});
 // Only words the learner has met in a lesson (and their ⭐ sentences): new words are learnt in the lessons, not here.
 return{due:due,q:due}}
 var RC=null,RSQ=[],RN=0;

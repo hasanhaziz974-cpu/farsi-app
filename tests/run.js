@@ -255,6 +255,8 @@ async function games(b, url) {
   // Daily review shows only words met in a lesson, never new ones.
   const fresh = await p.evaluate(() => { const keep = S.srs; S.srs = {}; const n = queue().q.length; S.srs = keep; return n; });
   if (fresh) fail('games', 'the daily review offers ' + fresh + ' new words with nothing studied');
+  const unseen = await p.evaluate(() => { const keep = [S.srs, S.pass, S.sg]; S.pass = { 0: 1 }; S.sg = { 0: 5 }; S.srs = { [LES[0].w.length ? '0-0' : 'x']: { b: 1, d: 0 }, '5-0': { b: 1, d: 0 } }; const ids = queue().q.map((w) => w.id); [S.srs, S.pass, S.sg] = keep; return ids; });
+  if (unseen.join() !== '0-0') fail('games', 'the daily review shows words of a lesson not started: ' + unseen.join());
   // Role-play by voice: what the learner says is matched against the three choices (the server's text is simulated).
   const rp = await p.evaluate(() => {
     go('talk'); D = 0; S.prem = 1; startRP('A'); RP.v = true; const L = DLG[0].l; render();
