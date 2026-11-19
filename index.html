@@ -342,8 +342,10 @@ var RC=null,RSQ=[],RN=0;
 function pickNext(){var r=queue(),i;
 for(i=0;i<RSQ.length;i++){if(RSQ[i].at<=RN||!r.q.length){var id=RSQ.splice(i,1)[0].id;return{w:itemById(id),retry:true}}}
 return r.q.length?{w:r.q[0],retry:false}:null}
+// The wrong choices have the same shape as the card: words for a word, sentences for a lesson's sentence.
+function isSen(x){var f=String(x.fa||'').trim();return/[.؟?!]$/.test(f)||f.split(/\s+/).length>3}
 function makeRC(p){var w=p.w,c=srsOf(w.id),b=c?c.b:0,ms=!c?['flip']:b<=1?['rec']:b===2?['aud','rev']:b===3?['rev','aud','rec']:['rec','aud','rev','flip'];
-var mode=ms[Math.floor(Math.random()*ms.length)],src=w.sent?senAll():ALL,key=w.sent?'src':'l',pool=src.filter(function(x){return x[key]===w[key]&&x.ar!==w.ar&&x.fa!==w.fa}),oth=src.filter(function(x){return x[key]!==w[key]&&x.ar!==w.ar&&x.fa!==w.fa});
+var mode=ms[Math.floor(Math.random()*ms.length)],src=w.sent?senAll():ALL,key=w.sent?'src':'l',ws=isSen(w),pool=src.filter(function(x){return x[key]===w[key]&&x.ar!==w.ar&&x.fa!==w.fa&&isSen(x)===ws}),oth=src.filter(function(x){return x[key]!==w[key]&&x.ar!==w.ar&&x.fa!==w.fa&&isSen(x)===ws});
 var d=(b>=3?sh(pool).concat(sh(oth)):sh(oth).concat(sh(pool))).slice(0,3);
 return{id:w.id,w:w,b:b,isNew:!c,retry:p.retry,mode:mode,tr:b<=2,o:sh([w].concat(d)),a:null}}
 function srsRate(id,ok,retry){planReviewed();var c=srsOf(id),b=c?c.b:0;
