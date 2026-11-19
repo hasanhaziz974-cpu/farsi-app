@@ -11,7 +11,7 @@
  * 4. links     lesson, rule, conversation, story and trip links point at things that exist; every rule,
  *              lesson and special-section lesson is linked
  *    levels    a level opens only when the lessons, rules and conversations of the level before are finished
- * 5. progress  a saved state from every older version (v2-v12) lands on the same rules and conversations,
+ * 5. progress  a saved state from every older version (v2-v13) lands on the same rules and conversations,
  *              in the app (migrateV3-V5) and on the server (lib/progress.js)
  * 6. games     each mini-game runs to its result; today's dictation is graded by level, easiest first
  * 7. server    the server modules load; internal repository files are not served; ZainCash payments settle once
@@ -94,7 +94,7 @@ const SCREENS = [
 
 async function screens(b, url) {
   for (const [fs_, label] of [[0, 'normal text'], [2, 'largest text']]) {
-    const p = await page(b, url, { state: { xp: 400, st: 3, last: '', srs: {}, v: 13, fs: fs_, prem: 1, pass: all(75), gp: all(57), dp: all(74), story: all(120), mist: { 'w:3-1': { k: 'w', x: '3-1', at: Date.now() - 864e5, b: 0, d: 0 } } } });
+    const p = await page(b, url, { state: { xp: 400, st: 3, last: '', srs: {}, v: 14, fs: fs_, prem: 1, pass: all(77), gp: all(57), dp: all(76), story: all(120), mist: { 'w:3-1': { k: 'w', x: '3-1', at: Date.now() - 864e5, b: 0, d: 0 } } } });
     for (const [name, code] of SCREENS) {
       p.errs = [];
       try { await p.evaluate((c) => eval(c), code); } catch (e) { fail('screens', `${name} (${label}): ${e.message.split('\n')[0]}`); continue; }
@@ -115,7 +115,7 @@ async function screens(b, url) {
 }
 
 async function free(b, url) {
-  const st = { xp: 50, st: 1, last: '', srs: {}, v: 13 };
+  const st = { xp: 50, st: 1, last: '', srs: {}, v: 14 };
   const p = await page(b, url, { state: st, me: { email: 'f@example.com', kind: 'member', ok: false } });
   const r = await p.evaluate(() => ({ lite: webLite(), L: [7, 8].map((i) => allowed('L', i)), G: [6, 7].map((i) => allowed('G', i)), D: [4, 5].map((i) => allowed('D', i)), stories: STORY.filter((s, i) => !stLock(i)).length, col: [0, 1].map((i) => !colLock(i)), trip: [0, 1].map((i) => !tripLock(i) || tripLock(i).indexOf('⭐') < 0) }));
   const want = { lite: true, L: [true, false], G: [true, false], D: [true, false], stories: 4, col: [true, false], trip: [true, false] };
@@ -174,6 +174,7 @@ async function progress(b, url) {
     { v: 10, gp: { 33: 1, 34: 1, 42: 1, 43: 1, 51: 1 }, dp: {}, rules: ['الفعل المتعدّي بـ«ـاندن»', 'الماضي الالتزامي', 'قبل أن وبعد أن: قبل از این‌که، بعد از این‌که', 'اسم الفاعل واسم المفعول', 'حروف الجر المركّبة'], convs: [], trip: { 38: { stars: 1 }, 39: { stars: 2 }, 45: { stars: 3 }, 62: { stars: 1 }, 63: { stars: 2 }, 69: { stars: 3 } }, chapters: ['في ملعب آزادي', 'عشاء الوداع', 'عند حافظ في شيراز', 'طلبية خاطئة', 'حفل التخرّج', 'وداع پارسا'] },
     { v: 11, gp: {}, dp: { 24: 1, 25: 1, 41: 1, 42: 1, 71: 1 }, rules: [], convs: ['عند الخياط', 'دعوة إلى عرس', 'زيارة مريض', 'عند الطبيب الاختصاصي', 'نقاش عن الأطفال والهاتف'], pass: { 36: 1, 37: 1, 55: 1, 56: 1, 71: 1 }, srs: { '56-2': { b: 2, d: 1 } }, lessons: ['أعمال البيت', 'الأخبار والإعلام', 'التاريخ والحضارة', 'السياحة والآثار', 'الطب التقليدي والأعشاب'], word: 'السياحة والآثار' },
     { v: 12, gp: { 19: 1, 20: 1, 26: 1, 27: 1 }, dp: {}, rules: ['«ـی» للتنكير: کتابی، روزی', 'الماضي القريب (النقلي)', 'الجمل الزمنية: وقتی، هر وقت، تا وقتی', 'الجمل الموصولة: که'], convs: [], trip: { 20: { stars: 1 }, 21: { stars: 2 }, 27: { stars: 3 }, 28: { stars: 1 }, 72: { stars: 2 } }, chapters: ['في حديقة الحيوان', 'في حرم الإمام الرضا', 'تنظيف البيت قبل النوروز', 'في السوبرماركت', 'وداع پارسا'] },
+    { v: 13, gp: {}, dp: { 16: 1, 17: 1, 54: 1, 55: 1, 73: 1 }, rules: [], convs: ['في محل الصرافة', 'الوقت والموعد', 'في مركز الشرطة بعد حادث', 'في المخبز', 'نقاش عن الأطفال والهاتف'], pass: { 27: 1, 28: 1, 47: 1, 48: 1, 74: 1 }, srs: { '48-3': { b: 2, d: 1 } }, lessons: ['المطار والطيران', 'المطبخ والطبخ', 'الحاسوب والبرمجة', 'في المستشفى والعلاج', 'العمارة الإسلامية'], word: 'في المستشفى والعلاج' },
   ];
   const { upgrade } = await import(path.join(ROOT, 'lib/progress.js'));
   const same = (a, b2) => JSON.stringify([...a].sort()) === JSON.stringify([...b2].sort());
@@ -187,10 +188,10 @@ async function progress(b, url) {
     if (c.word && r.word !== c.word) fail('progress', `v${c.v} word review lands in lesson «${r.word}»`);
     const serverRules = await p.evaluate((g) => Object.keys(g).map((k) => GR[k] && GR[k].t), sv.gp);
     const serverConvs = await p.evaluate((d) => Object.keys(d).map((k) => DLG[k] && DLG[k].t), sv.dp);
-    if (r.v !== 13) fail('progress', `v${c.v} state ends at v${r.v} in the app`);
+    if (r.v !== 14) fail('progress', `v${c.v} state ends at v${r.v} in the app`);
     if (!same(r.rules, c.rules)) fail('progress', `v${c.v} rules in the app: ${r.rules.join(', ')}`);
     if (!same(r.convs, c.convs)) fail('progress', `v${c.v} conversations in the app: ${r.convs.join(', ')}`);
-    if (sv.v !== 13 || !same(serverRules, c.rules) || !same(serverConvs, c.convs)) fail('progress', `v${c.v} on the server: v${sv.v}, ${serverRules.join(', ')} / ${serverConvs.join(', ')}`);
+    if (sv.v !== 14 || !same(serverRules, c.rules) || !same(serverConvs, c.convs)) fail('progress', `v${c.v} on the server: v${sv.v}, ${serverRules.join(', ')} / ${serverConvs.join(', ')}`);
     p.errs.forEach((e) => fail('progress', 'JS error ' + e));
     await p.close();
   }
@@ -199,7 +200,7 @@ async function progress(b, url) {
 // A level opens only when the lessons, rules and conversations of the one before are finished; stories and trip
 // chapters are optional.
 async function levels(b, url) {
-  const p = await page(b, url, { state: { xp: 10, st: 1, last: '', srs: {}, v: 13, prem: 1 } });
+  const p = await page(b, url, { state: { xp: 10, st: 1, last: '', srs: {}, v: 14, prem: 1 } });
   const r = await p.evaluate(() => {
     const x = LVL[0], fill = (o, a) => { for (let i = a[0]; i < a[1]; i++) o[i] = 1; return o; };
     S.pass = fill({}, x.L); S.gp = fill({}, x.G); S.dp = fill({}, x.D); S.trip = {}; for (let i = x.T[0]; i < x.T[1]; i++) S.trip[i] = { stars: 3 };
@@ -239,7 +240,7 @@ async function levels(b, url) {
 }
 
 async function games(b, url) {
-  const p = await page(b, url, { state: { xp: 10, st: 1, last: '', srs: {}, v: 13, pass: all(20) } });
+  const p = await page(b, url, { state: { xp: 10, st: 1, last: '', srs: {}, v: 14, pass: all(20) } });
   for (const m of ['prv', 'ant', 'lis', 'tf', 'rid']) {
     const ok = await p.evaluate((m) => { go('games'); gmStart(m); for (let i = 0; i < 40 && !GM.fin; i++) { const q = GM.qs[GM.i]; gmPick(q.o.indexOf(q.a)); gmNext(); } return GM.fin && GM.sc === GM.qs.length; }, m);
     if (!ok) fail('games', m + ' did not finish with every answer right');
@@ -265,7 +266,7 @@ async function games(b, url) {
 // Today's dictation is graded: within the learner's level and length, easiest first.
 async function dictation(b, url) {
   for (const [name, st, maxLv, maxWords] of [['beginner', { pass: all(2) }, 0, 4], ['level 7', { pass: all(71), gp: all(52), dp: all(67) }, 6, 9]]) {
-    const p = await page(b, url, { state: Object.assign({ xp: 10, st: 1, last: '', srs: {}, v: 13, prem: 1 }, st) });
+    const p = await page(b, url, { state: Object.assign({ xp: 10, st: 1, last: '', srs: {}, v: 14, prem: 1 }, st) });
     const r = await p.evaluate(() => dtPick(5).map((q) => [q.lv, dtN(q.fa).length]));
     if (r.length !== 5) fail('dictation', `${name}: ${r.length} sentences`);
     if (r.some(([lv, n]) => lv > maxLv || n > maxWords)) fail('dictation', `${name}: sentence above the level or too long ${JSON.stringify(r)}`);
