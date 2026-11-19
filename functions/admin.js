@@ -4,6 +4,7 @@
 // the same ones the trial check in _middleware.js reads.
 import { DAY, accessEmail, lastDay, today, PLAN_IDS, PAY_METHODS } from '../lib/trial.js';
 import { invitedCount, isGift } from '../lib/invite.js';
+import { zcReady, amountOf, UAT } from '../lib/zaincash.js';
 
 const PERIODS = { week: ['أسبوع', 7], month: ['شهر', 30], quarter: ['3 أشهر', 90], half: ['6 أشهر', 180], year: ['سنة', 365], forever: ['دائم', 0] };
 const FOREVER = 'دائم';
@@ -57,21 +58,28 @@ async function savePay(kv, form) {
   for (const [id] of PAY_METHODS) { const v = clip(form.get('pay_' + id), 80); if (v) methods[id] = v; }
   const whatsapp = clip(form.get('whatsapp'), 20).replace(/[^0-9]/g, '').replace(/^00/, '').replace(/^0(7\d{9})$/, '964$1');
   if (form.get('whatsapp') && !/^\d{10,15}$/.test(whatsapp)) return 'رقم الواتساب غير صحيح. اكتبه مثل 07701234567 أو 9647701234567.';
-  await kv.put('paycfg', JSON.stringify({ prices, methods, whatsapp, note: clip(form.get('note'), 300) }));
-  return Object.keys(prices).length && Object.keys(methods).length && whatsapp
+  const zc = form.get('zc') === '1';
+  await kv.put('paycfg', JSON.stringify({ prices, methods, whatsapp, note: clip(form.get('note'), 300), zc }));
+  if (zc && !Object.values(prices).some((v) => amountOf(v) >= 250)) return 'حُفظت. لكن الدفع بزين كاش يحتاج سعراً فيه رقم (مثل 5000) لباقة واحدة على الأقل.';
+  return Object.keys(prices).length && ((Object.keys(methods).length && whatsapp) || zc)
     ? 'حُفظت إعدادات الاشتراك، وصارت صفحة «اشترك» تظهر للمشتركين.'
-    : 'حُفظت. لتظهر صفحة «اشترك» للمشتركين يلزم سعر واحد على الأقل، وطريقة دفع، ورقم واتساب.';
+    : 'حُفظت. لتظهر صفحة «اشترك» للمشتركين يلزم سعر واحد على الأقل، وطريقة دفع ورقم واتساب، أو الدفع الإلكتروني بزين كاش.';
 }
 
-function payForm(c) {
+function payForm(c, env, paid) {
   const p = c.prices || {}, m = c.methods || {};
+  const ready = zcReady(env), test = ready && !env.ZC_BASE;
+  const zcBox = `<b style="display:block;margin-top:12px">الدفع الإلكتروني بزين كاش</b><div class="row"><label><input type="checkbox" name="zc" value="1"${c.zc ? ' checked' : ''}> يدفع المشترك من داخل التطبيق ويُفعَّل اشتراكه تلقائياً</label></div>
+<p class="mu">${ready ? (test ? '🧪 المفاتيح موجودة، وهي لبيئة الاختبار (' + esc(UAT) + '): الدفع تجريبي بمحافظ الاختبار. للتشغيل الحقيقي أضف في Cloudflare المتغيّر ZC_BASE بعنوان الإنتاج الذي يعطيك إياه زين كاش، ومفاتيح الإنتاج.' : '✅ المفاتيح موجودة، والدفع حقيقي.') : '⚠️ لم تُضف مفاتيح زين كاش بعد: أضف في Cloudflare Pages (Settings ← Variables and Secrets) السرّين ZC_CLIENT_ID و ZC_CLIENT_SECRET. لا ترسلهما لأحد.'}</p>`;
+  const paidRows = paid.length ? `<details><summary>آخر المدفوعات بزين كاش (${paid.length})</summary>${paid.map((x) => `<div class="p"><span class="e">${esc(x.email)}</span><span>${esc(x.plan)} · ${esc(String(x.amount))} د.ع · <span class="mu">${ltr(new Date(x.paidAt).toISOString().slice(0, 16).replace('T', ' '))}</span></span></div>`).join('')}</details>` : '';
   return `<h2>💳 إعدادات الاشتراك</h2><form method="post" class="card"><input type="hidden" name="action" value="paycfg">
 <p class="mu" style="margin-top:0">تظهر في صفحة «اشترك» داخل التطبيق وفي صفحة انتهاء التجربة. اترك الخانة فارغة لإخفائها.</p>
 <b>الأسعار</b>${PLAN_IDS.map(([id, label]) => `<div class="row"><span style="min-width:70px">${label}</span><input name="price_${id}" value="${esc(p[id] || '')}" placeholder="مثل: 5,000 دينار" style="flex:1"></div>`).join('')}
 <b style="display:block;margin-top:12px">طرق الدفع (الرقم أو الحساب)</b>${PAY_METHODS.map(([id, label]) => `<div class="row"><span style="min-width:70px">${label}</span><input name="pay_${id}" value="${esc(m[id] || '')}" placeholder="${id === 'other' ? 'الاسم والرقم' : 'الرقم'}" style="flex:1;direction:ltr"></div>`).join('')}
 <b style="display:block;margin-top:12px">واتساب لاستقبال الإيصالات</b><div class="row"><input name="whatsapp" value="${esc(c.whatsapp || '')}" placeholder="07701234567" style="flex:1;direction:ltr"></div>
 <b style="display:block;margin-top:12px">ملاحظة (اختيارية)</b><div class="row"><input name="note" value="${esc(c.note || '')}" placeholder="مثل: يُفعَّل الاشتراك خلال ساعات" style="flex:1"></div>
-<div class="row"><button>حفظ</button></div></form>`;
+${zcBox}
+<div class="row"><button>حفظ</button></div>${paidRows}</form>`;
 }
 
 // App error reports and learner notes (functions/api/report.js): delete one, or clear them all.
@@ -155,7 +163,7 @@ function learnLine(l) {
   return `<div class="mu">📘 ${l.lessons} ${l.lessons >= 3 && l.lessons <= 10 ? 'دروس' : 'درس'} · 📚 ${l.words} كلمة · ⭐ ${l.xp}${when ? ` · <span class="${ago <= 2 ? 'ok' : ''}">آخر نشاط ${when}</span>` : ''}</div>`;
 }
 
-async function view(kv, msg) {
+async function view(kv, msg, env) {
   const now = today();
   const allowed = (await entries(kv, 'allow:')).sort((a, b) => a.email.localeCompare(b.email));
   const allowedSet = new Set(allowed.map((a) => a.email));
@@ -193,6 +201,9 @@ async function view(kv, msg) {
     + (quiet.length ? `<details><summary>لم يتعلّموا منذ شهر (${quiet.length}) · يمكنك مراسلتهم</summary>${quiet.map(trialCard).join('')}</details>` : '');
 
   const pay = (await kv.get('paycfg', 'json')) || {};
+  const paid = [];
+  { let cursor; do { const res = await kv.list({ prefix: 'zco:', cursor }); for (const k of res.keys) { const v = await kv.get(k.name, 'json'); if (v && v.st === 'paid') paid.push(v); } cursor = res.list_complete ? null : res.cursor; } while (cursor); }
+  paid.sort((a, b) => b.paidAt - a.paidAt).splice(30);
   const reports = async (prefix) => {
     const out = [];
     let cursor;
@@ -227,7 +238,7 @@ ${allowed.length + trials.length > 8 ? '<input type="search" id="q" placeholder=
 <h2>المشتركون (${allowed.length})</h2>${people}
 <h2>المستخدمون المجانيون (${trials.length})</h2>${trialRows}
 ${reportSection}
-${payForm(pay)}
+${payForm(pay, env, paid)}
 <script>function flt(q){q=q.trim().toLowerCase();document.querySelectorAll('.card').forEach(function(c){var e=c.querySelector('.e');if(e)c.style.display=!q||e.textContent.toLowerCase().indexOf(q)>=0?'':'none'});document.querySelectorAll('details').forEach(function(d){if(q)d.open=true})}</script>`);
 }
 
@@ -248,5 +259,5 @@ export async function onRequest({ request, env }) {
     const msg = await act(kv, await request.formData());
     return Response.redirect(`${url.origin}/admin?msg=${encodeURIComponent(msg)}`, 303);
   }
-  return view(kv, url.searchParams.get('msg'));
+  return view(kv, url.searchParams.get('msg'), env);
 }

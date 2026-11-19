@@ -15,7 +15,8 @@ const PAGES = new Set(['/', '/index', '/index.html']);
 // <html> tag; anything else (the app, or the app served as a fallback for an unknown path) is refused.
 // This also covers hosts Access does not cover, like a deployment's own *.pages.dev address.
 // /audio/ is public: the Android app (no sign-in) streams the recorded pronunciation and downloads it as a pack.
-const PUBLIC = ['/welcome', '/fonts/', '/pwa/', '/audio/', '/login', '/api/auth/', '/logout'];
+// /api/pay/return/ is where ZainCash sends a learner back after paying; it checks the payment with the gateway itself.
+const PUBLIC = ['/welcome', '/fonts/', '/pwa/', '/audio/', '/login', '/api/auth/', '/logout', '/api/pay/return/'];
 const WELCOME = new Set(['/welcome', '/welcome/', '/welcome/index.html', '/login', '/login/', '/login/index.html']);
 
 async function publicOnly(request, next) {

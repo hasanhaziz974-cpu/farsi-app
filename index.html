@@ -1638,13 +1638,27 @@ function meBanner(){if(!meSoon()||ME.kind==='trial')return'';if(ME.gift)return'<
 return'<div class="det" style="text-align:start;border-color:var(--ac)"><b>⏳ '+(t?'المتبقّي من فترتك التجريبية: ':'المتبقّي من اشتراكك: ')+meDays(ME.left)+'</b><div class="mu" style="margin-top:4px">'+(progLine()?progLine()+' ':'')+(t?'اشترك لتتابع كل الدروس بعد انتهائها. تقدّمك يبقى محفوظاً.':'جدّد اشتراكك لتتابع دون انقطاع.')+'</div>'+(ME.pay?'<button class="btn" style="width:100%;margin-top:10px" onclick="subOpen()">💳 '+(t?'اشترك الآن':'جدّد اشتراكك')+'</button>':'<a class="btn" style="display:block;text-align:center;text-decoration:none;margin-top:10px" href="'+meMail()+'">✉️ '+(t?'راسلنا للاشتراك':'راسلنا للتجديد')+'</a>')+'</div>'}
 // "Subscribe": the prices and payment numbers set on the admin page, and a WhatsApp message with the
 // learner's email and chosen plan, so the owner can add them on the admin page.
-function subOpen(plan){if(!ME||!ME.pay){location.href=meMail();return}var p=ME.pay,sel=plan||'',h='<h2 style="margin-top:0">💳 اشترك في «الفارسية من الصفر»</h2><p class="mu">اختر باقة، وحوّل مبلغها بإحدى الطرق، ثم أرسل لنا صورة الإيصال على واتساب. يُفعَّل اشتراكك على بريدك نفسه، ويبقى تقدّمك كما هو.</p>';
+function subOpen(plan){if(!ME||!ME.pay){location.href=meMail();return}var p=ME.pay,sel=plan||'',man=p.methods&&p.methods.length&&p.whatsapp,h='<h2 style="margin-top:0">💳 اشترك في «الفارسية من الصفر»</h2><p class="mu">'+(p.zc?'اختر باقة وادفع بزين كاش، فيُفعَّل اشتراكك فوراً على بريدك نفسه، ويبقى تقدّمك كما هو.':'اختر باقة، وحوّل مبلغها بإحدى الطرق، ثم أرسل لنا صورة الإيصال على واتساب. يُفعَّل اشتراكك على بريدك نفسه، ويبقى تقدّمك كما هو.')+'</p>';
 h+='<b>1. اختر الباقة</b>';p.plans.forEach(function(x){h+='<button class="row" style="'+(x.id===sel?'border-color:var(--pr);border-width:2px':'')+'" onclick="subOpen(\''+x.id+'\')"><span>'+(x.id===sel?'✅ ':'')+hesc(x.label)+'</span><b>'+hesc(x.price)+'</b></button>'});
-h+='<b style="display:block;margin-top:10px">2. حوّل المبلغ</b>';p.methods.forEach(function(m,i){h+='<div class="row" style="cursor:default"><span>'+hesc(m.label)+'</span><span style="display:flex;gap:6px;align-items:center"><b dir="ltr">'+hesc(m.value)+'</b><button class="btn alt" style="flex:none;padding:4px 10px;font-size:13px" onclick="subCopy('+i+')">نسخ</button></span></div>'});
+if(p.zc)h+='<b style="display:block;margin-top:10px">2. ادفع</b><div class="btns"><button class="btn" style="background:#1B1B1B;border-color:#1B1B1B;min-height:50px'+(sel?'':';opacity:.5')+'" '+(sel&&!ZCB?'':'disabled')+' onclick="zcPay(\''+sel+'\')">'+(ZCB?'⏳ نفتح صفحة الدفع…':'ادفع بـ ZainCash')+'</button></div>'+(sel?'<p class="mu" style="text-align:center">تُفتح صفحة زين كاش، تدخل رقم محفظتك ورمز التحقق، ثم تعود إلى التطبيق.</p>':'<p class="mu" style="text-align:center">اختر باقة أولاً</p>');
+if(man){h+=p.zc?'<details style="margin-top:10px"><summary class="mu" style="cursor:pointer">أو حوّل يدوياً وأرسل الإيصال</summary>':'';h+='<b style="display:block;margin-top:10px">'+(p.zc?'':'2. ')+'حوّل المبلغ</b>';p.methods.forEach(function(m,i){h+='<div class="row" style="cursor:default"><span>'+hesc(m.label)+'</span><span style="display:flex;gap:6px;align-items:center"><b dir="ltr">'+hesc(m.value)+'</b><button class="btn alt" style="flex:none;padding:4px 10px;font-size:13px" onclick="subCopy('+i+')">نسخ</button></span></div>'});
 if(p.note)h+='<p class="mu">'+hesc(p.note)+'</p>';
 var pl=p.plans.filter(function(x){return x.id===sel})[0],msg='مرحباً، أريد الاشتراك في «الفارسية من الصفر».\nبريدي: '+ME.email+'\nالباقة: '+(pl?pl.label+' ('+pl.price+')':'')+'\nأرسلت المبلغ عبر: \n(أرفقت صورة الإيصال)';
-h+='<b style="display:block;margin-top:10px">3. أرسل الإيصال</b><div class="btns"><a class="btn" style="text-align:center;text-decoration:none'+(pl?'':';opacity:.5;pointer-events:none')+'" href="https://wa.me/'+encodeURIComponent(p.whatsapp)+'?text='+encodeURIComponent(msg)+'" target="_blank" rel="noopener">💬 أرسلت المبلغ: واتساب</a></div>'+(pl?'':'<p class="mu" style="text-align:center">اختر باقة أولاً</p>');
+h+='<b style="display:block;margin-top:10px">'+(p.zc?'':'3. ')+'أرسل الإيصال</b><div class="btns"><a class="btn" style="text-align:center;text-decoration:none'+(pl?'':';opacity:.5;pointer-events:none')+'" href="https://wa.me/'+encodeURIComponent(p.whatsapp)+'?text='+encodeURIComponent(msg)+'" target="_blank" rel="noopener">💬 أرسلت المبلغ: واتساب</a></div>'+(pl||p.zc?'':'<p class="mu" style="text-align:center">اختر باقة أولاً</p>')+(p.zc?'</details>':'')}
 h+='<div class="btns"><button class="btn alt" style="border-color:var(--bd);color:var(--mu)" onclick="closeSheet()">إغلاق</button></div>';sheet(h)}
+// ZainCash (functions/api/pay.js): the server creates the payment and the learner goes to the gateway's page. They come
+// back through /api/pay/return/<ref>, which settles it and opens /?pay=ok|fail|wait; the reference is also kept
+// here, so a payment is checked again on the next visit if they never came back that way.
+var ZCB=false;
+function zcPay(plan){if(ZCB||!plan)return;ZCB=true;subOpen(plan);fetch('/api/pay',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({plan:plan})})
+.then(function(r){return r.json().catch(function(){return{}})}).then(function(j){if(j.url){try{localStorage.setItem('zcref',JSON.stringify({r:j.ref,t:Date.now()}))}catch(e){}location.href=j.url;return}ZCB=false;subOpen(plan);toast(j.msg||'تعذّر فتح صفحة الدفع. حاول بعد قليل.')})
+.catch(function(){ZCB=false;subOpen(plan);toast('تعذّر الاتصال. تأكد من الإنترنت ثم حاول.')})}
+function zcDone(){try{localStorage.removeItem('zcref')}catch(e){}}
+function zcPaid(){zcDone();meLoad();celebrate(['🎉 تمّ الدفع وفُعّل اشتراكك! شكراً لك'])}
+function zcReturn(){var m=/[?&]pay=(ok|fail|wait|err)\b/.exec(location.search);if(m){try{history.replaceState(null,'',location.pathname)}catch(e){}
+if(m[1]==='ok'){setTimeout(zcPaid,600);return}if(m[1]==='fail'){zcDone();toast('لم يكتمل الدفع، ولم يُخصم شيء. يمكنك المحاولة مرة أخرى.');return}}
+var k=null;try{k=JSON.parse(localStorage.getItem('zcref')||'null')}catch(e){}if(!k||!k.r)return;if(Date.now()-k.t>3*DAY){zcDone();return}
+fetch('/api/pay?check='+encodeURIComponent(k.r),{credentials:'same-origin'}).then(function(r){return r.json().catch(function(){return{}})}).then(function(j){if(j.st==='paid')zcPaid();else if(j.st==='failed'||j.st==='unknown')zcDone();else if(m)toast('⏳ دفعتك قيد المعالجة، سنفعّل اشتراكك حين تكتمل.')}).catch(function(){})}
 function subCopy(i){var v=ME.pay.methods[i].value;try{navigator.clipboard.writeText(v).then(function(){toast('نُسخ: '+v)},function(){toast(v)})}catch(e){toast(v)}}
 // What the learner has built, shown where they decide whether to subscribe.
 function progLine(){var w=cnt(S.srs),l=cnt(S.pass),d=cnt(S.dp),p=[];if(w)p.push('<b>'+cw(w,'كلمات','كلمة')+'</b>');if(l)p.push('<b>'+cw(l,'دروس','درس','درسين')+'</b>');if(d)p.push('<b>'+cw(d,'محادثات','محادثة','محادثتين')+'</b>');if(S.st>1)p.push('سلسلة <b>'+cw(S.st,'أيام','يوماً','يومين')+'</b> 🔥');return p.length?'تعلّمت حتى الآن '+p.join(' و')+'.':''}
@@ -2044,7 +2058,7 @@ if(S.srs){var n={};Object.keys(S.srs).forEach(function(id){var a=id.split('-');n
 if(S.sv){var m={};Object.keys(S.sv).forEach(function(k){var a=/^(\d+)-(\d)$/.exec(k);if(a){if(+a[1]<8)m[k]=S.sv[k]}else m[k]=S.sv[k]});S.sv=m}
 if(S.unl){var u={};Object.keys(S.unl).forEach(function(k){var a=/^L(\d+)$/.exec(k);u[a?'L'+up(+a[1]):k]=S.unl[k]});S.unl=u}}
 if(!S.cov){S.cov={};covNew()}snapTake();
-fsApply();render();meLoad();openInit();updCheck();
+fsApply();render();meLoad();openInit();updCheck();if(webApp())try{zcReturn()}catch(e){}
 </script>
 </body>
 </html>

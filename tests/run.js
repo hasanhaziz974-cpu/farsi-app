@@ -14,7 +14,7 @@
  * 5. progress  a saved state from every older version (v2-v10) lands on the same rules and conversations,
  *              in the app (migrateV3-V5) and on the server (lib/progress.js)
  * 6. games     each mini-game runs to its result; today's dictation is graded by level, easiest first
- * 7. server    the server modules load; internal repository files are not served
+ * 7. server    the server modules load; internal repository files are not served; ZainCash payments settle once
  * 8. audio     every Persian text has its audio file (a warning only: the audio is generated after a push)
  * Exits with 1 when a check fails, so GitHub shows a red ❌ before merging.
  */
@@ -283,6 +283,48 @@ async function server() {
     const r = await onRequest({ request: new Request('https://example.dev' + p), env: {}, next });
     if (r.status !== want) fail('server', `${p} answers ${r.status}, expected ${want}`);
   }
+  await zaincash();
+}
+
+// ZainCash online payment against a simulated gateway and KV: a paid order extends the subscription once; a wrong
+// amount, another learner's reference or a failed payment does not.
+async function zaincash() {
+  const store = new Map(), kv = { get: async (k, ty) => { const v = store.has(k) ? store.get(k) : null; return v !== null && ty === 'json' ? JSON.parse(v) : v; }, put: async (k, v) => { store.set(k, String(v)); }, delete: async (k) => { store.delete(k); }, list: async ({ prefix }) => ({ keys: [...store.keys()].filter((k) => k.startsWith(prefix)).map((name) => ({ name })), list_complete: true }) };
+  const env = { TRIALS: kv, ZC_CLIENT_ID: 'id', ZC_CLIENT_SECRET: 'secret' };
+  let status = 'SUCCESS', paidValue = 5000; const calls = [];
+  const realFetch = global.fetch;
+  global.fetch = async (u, o = {}) => {
+    calls.push(String(u));
+    if (String(u).endsWith('/oauth2/token')) return Response.json({ access_token: 'tok', expires_in: 86399 });
+    if (String(u).endsWith('/transaction/init')) { const b = JSON.parse(o.body); return Response.json({ status: 'SUCCESS', transactionDetails: { transactionId: 'tx-' + b.externalReferenceId, externalReferenceId: b.externalReferenceId }, redirectUrl: 'https://pg-api-uat.zaincash.iq/transaction/pay?id=1' }); }
+    const m = /inquiry\/tx-(.+)$/.exec(String(u));
+    if (m) return Response.json({ status, transactionDetails: { transactionId: 'tx-' + m[1], externalReferenceId: m[1], amount: { value: paidValue, currency: 'IQD' } } });
+    return new Response('no', { status: 404 });
+  };
+  try {
+    const { createPayment, settle, amountOf } = await import(path.join(ROOT, 'lib/zaincash.js'));
+    if (amountOf('5,000 دينار') !== 5000 || amountOf('٢٥٠٠٠ د.ع') !== 25000) fail('server', 'ZainCash: prices are not read as amounts');
+    const a = await createPayment(env, kv, { email: 'a@x.iq', plan: 'month', amount: 5000, origin: 'https://site.dev' });
+    if (!a.url || !a.ref) fail('server', 'ZainCash: no payment page');
+    const r1 = await settle(env, kv, a.ref), until1 = store.get('allow:a@x.iq'), r2 = await settle(env, kv, a.ref), until2 = store.get('allow:a@x.iq');
+    if (r1 !== 'paid' || !until1 || until1 !== until2) fail('server', `ZainCash: a paid month gave ${r1} ${until1} then ${until2}`);
+    paidValue = 1;
+    const b = await createPayment(env, kv, { email: 'b@x.iq', plan: 'month', amount: 5000, origin: 'https://site.dev' });
+    if ((await settle(env, kv, b.ref)) === 'paid' || store.has('allow:b@x.iq')) fail('server', 'ZainCash: a payment of another amount opened a subscription');
+    status = 'FAILED'; paidValue = 5000;
+    const c = await createPayment(env, kv, { email: 'c@x.iq', plan: 'year', amount: 5000, origin: 'https://site.dev' });
+    if ((await settle(env, kv, c.ref)) !== 'failed' || store.has('allow:c@x.iq')) fail('server', 'ZainCash: a failed payment opened a subscription');
+    if ((await settle(env, kv, 'not-a-ref')) !== 'unknown') fail('server', 'ZainCash: a made-up reference was not refused');
+    if (calls.filter((u) => u.endsWith('/oauth2/token')).length !== 1) fail('server', 'ZainCash: the access token was not reused');
+    const ret = await import(path.join(ROOT, 'functions/api/pay/return/[ref].js'));
+    status = 'SUCCESS';
+    const d = await createPayment(env, kv, { email: 'd@x.iq', plan: 'month', amount: 5000, origin: 'https://site.dev' });
+    const res = await ret.onRequest({ request: new Request('https://site.dev/api/pay/return/' + d.ref + '?token=x'), env, params: { ref: d.ref } });
+    if (!/\/\?pay=ok$/.test(res.headers.get('Location') || '') || !store.has('allow:d@x.iq')) fail('server', 'ZainCash: the return address did not settle the payment: ' + res.headers.get('Location'));
+    const { onRequest: mw } = await import(path.join(ROOT, 'functions/_middleware.js'));
+    const pub = await mw({ request: new Request('https://site.dev/api/pay/return/' + d.ref), env: {}, next: async () => new Response(null, { status: 303, headers: { Location: '/?pay=ok' } }) });
+    if (pub.status !== 303) fail('server', 'ZainCash: the return address needs a sign-in (' + pub.status + ')');
+  } finally { global.fetch = realFetch; }
 }
 
 function audio() {
