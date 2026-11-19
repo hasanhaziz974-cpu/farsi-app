@@ -4,7 +4,7 @@
 // the same ones the trial check in _middleware.js reads.
 import { DAY, accessEmail, lastDay, today, PLAN_IDS, PAY_METHODS } from '../lib/trial.js';
 import { invitedCount, isGift } from '../lib/invite.js';
-import { zcReady, amountOf, UAT } from '../lib/zaincash.js';
+import { zcReady, amountOf, UAT, testConnection } from '../lib/zaincash.js';
 
 const PERIODS = { week: ['أسبوع', 7], month: ['شهر', 30], quarter: ['3 أشهر', 90], half: ['6 أشهر', 180], year: ['سنة', 365], forever: ['دائم', 0] };
 const FOREVER = 'دائم';
@@ -79,7 +79,8 @@ function payForm(c, env, paid) {
 <b style="display:block;margin-top:12px">واتساب لاستقبال الإيصالات</b><div class="row"><input name="whatsapp" value="${esc(c.whatsapp || '')}" placeholder="07701234567" style="flex:1;direction:ltr"></div>
 <b style="display:block;margin-top:12px">ملاحظة (اختيارية)</b><div class="row"><input name="note" value="${esc(c.note || '')}" placeholder="مثل: يُفعَّل الاشتراك خلال ساعات" style="flex:1"></div>
 ${zcBox}
-<div class="row"><button>حفظ</button></div>${paidRows}</form>`;
+<div class="row"><button>حفظ</button></div>${paidRows}</form>
+<form method="post" class="row"><button name="action" value="zc-test" class="alt">🔍 افحص الاتصال بزين كاش</button><span class="mu">يتأكد من المفتاحين بلا أي دفع.</span></form>`;
 }
 
 // App error reports and learner notes (functions/api/report.js): delete one, or clear them all.
@@ -93,8 +94,14 @@ async function clearPrefix(kv, prefix) {
   return n;
 }
 
-async function act(kv, form) {
+async function act(kv, form, env) {
   if (form.get('action') === 'paycfg') return savePay(kv, form);
+  if (form.get('action') === 'zc-test') {
+    if (!zcReady(env)) return 'مفاتيح زين كاش غير موجودة بعد. أضف ZC_CLIENT_ID و ZC_CLIENT_SECRET في Cloudflare، ثم انشر الموقع من جديد.';
+    const t = await testConnection(env, kv);
+    const where = env.ZC_BASE ? 'الإنتاج (دفع حقيقي)' : 'بيئة الاختبار';
+    return t.ok ? `✅ الاتصال بزين كاش يعمل، والمفتاحان صحيحان (${where}).` : `❌ زين كاش رفض المفتاحين (${t.status}). تأكد أن القيمتين منسوختان كاملتين بلا مسافات، وأن الاسمين ZC_CLIENT_ID و ZC_CLIENT_SECRET.`;
+  }
   const key0 = String(form.get('key') || '');
   if (form.get('action') === 'del-report' && /^(err|fb):[\w:.-]+$/.test(key0)) {
     await kv.delete(key0);
@@ -256,7 +263,7 @@ export async function onRequest({ request, env }) {
   const url = new URL(request.url);
   if (request.method === 'POST') {
     if (request.headers.get('Origin') !== url.origin) return page('<h1>طلب مرفوض</h1>', 403);
-    const msg = await act(kv, await request.formData());
+    const msg = await act(kv, await request.formData(), env);
     return Response.redirect(`${url.origin}/admin?msg=${encodeURIComponent(msg)}`, 303);
   }
   return view(kv, url.searchParams.get('msg'), env);

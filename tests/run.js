@@ -295,6 +295,7 @@ async function zaincash() {
   const realFetch = global.fetch;
   global.fetch = async (u, o = {}) => {
     calls.push(String(u));
+    if (String(u).startsWith('https://bad.example')) return Response.json({ error: 'invalid_client' }, { status: 401 });
     if (String(u).endsWith('/oauth2/token')) return Response.json({ access_token: 'tok', expires_in: 86399 });
     if (String(u).endsWith('/transaction/init')) { const b = JSON.parse(o.body); return Response.json({ status: 'SUCCESS', transactionDetails: { transactionId: 'tx-' + b.externalReferenceId, externalReferenceId: b.externalReferenceId }, redirectUrl: 'https://pg-api-uat.zaincash.iq/transaction/pay?id=1' }); }
     const m = /inquiry\/tx-(.+)$/.exec(String(u));
@@ -302,7 +303,7 @@ async function zaincash() {
     return new Response('no', { status: 404 });
   };
   try {
-    const { createPayment, settle, amountOf } = await import(path.join(ROOT, 'lib/zaincash.js'));
+    const { createPayment, settle, amountOf, testConnection } = await import(path.join(ROOT, 'lib/zaincash.js'));
     if (amountOf('5,000 دينار') !== 5000 || amountOf('٢٥٠٠٠ د.ع') !== 25000) fail('server', 'ZainCash: prices are not read as amounts');
     const a = await createPayment(env, kv, { email: 'a@x.iq', plan: 'month', amount: 5000, origin: 'https://site.dev' });
     if (!a.url || !a.ref) fail('server', 'ZainCash: no payment page');
@@ -315,7 +316,10 @@ async function zaincash() {
     const c = await createPayment(env, kv, { email: 'c@x.iq', plan: 'year', amount: 5000, origin: 'https://site.dev' });
     if ((await settle(env, kv, c.ref)) !== 'failed' || store.has('allow:c@x.iq')) fail('server', 'ZainCash: a failed payment opened a subscription');
     if ((await settle(env, kv, 'not-a-ref')) !== 'unknown') fail('server', 'ZainCash: a made-up reference was not refused');
-    if (calls.filter((u) => u.endsWith('/oauth2/token')).length !== 1) fail('server', 'ZainCash: the access token was not reused');
+    if (!(await testConnection(env, kv)).ok) fail('server', 'ZainCash: the connection check failed with good keys');
+    const bad = await testConnection({ ...env, ZC_BASE: 'https://bad.example' }, kv);
+    if (bad.ok || bad.status !== '401') fail('server', 'ZainCash: the connection check did not report refused keys: ' + JSON.stringify(bad));
+    if (calls.filter((u) => u.endsWith('/oauth2/token')).length !== 3) fail('server', 'ZainCash: the access token was not reused');
     const ret = await import(path.join(ROOT, 'functions/api/pay/return/[ref].js'));
     status = 'SUCCESS';
     const d = await createPayment(env, kv, { email: 'd@x.iq', plan: 'month', amount: 5000, origin: 'https://site.dev' });
