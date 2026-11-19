@@ -262,6 +262,12 @@ async function games(b, url) {
   if (fresh) fail('games', 'the daily review offers ' + fresh + ' new words with nothing studied');
   const unseen = await p.evaluate(() => { const keep = [S.srs, S.pass, S.sg]; S.pass = { 0: 1 }; S.sg = { 0: 5 }; S.srs = { [LES[0].w.length ? '0-0' : 'x']: { b: 1, d: 0 }, '5-0': { b: 1, d: 0 } }; const ids = queue().q.map((w) => w.id); [S.srs, S.pass, S.sg] = keep; return ids; });
   if (unseen.join() !== '0-0') fail('games', 'the daily review shows words of a lesson not started: ' + unseen.join());
+  // Lesson stages and the daily challenge: wrong choices of the card's shape too.
+  const stageMix = await p.evaluate(() => { const bad = []; for (let l = 0; l < 20; l++) for (const g of [0, 2, 4]) { startStage(l, g, true); Q.qs.forEach((q) => q.o.forEach((o) => { if (isSen(o) !== isSen(q.w)) bad.push(LES[l].t + ': ' + q.w.fa + ' / ' + o.fa); })); } Q = null; return bad.slice(0, 3); });
+  if (stageMix.length) fail('games', 'lesson choices mix words and sentences: ' + stageMix.join(' | '));
+  // Daily review: at most RVCAP cards a day, then a message and 10 more on request.
+  const cap = await p.evaluate(() => { const keep = [S.srs, S.pass, S.sg, S.rvd]; S.pass = {}; S.sg = {}; S.srs = {}; ALL.slice(0, 120).forEach((w) => { S.sg[w.l] = 1; S.srs[w.id] = { b: 1, d: 0 }; }); S.rvd = null; const a = queue().q.length; for (let i = 0; i < RVCAP; i++) rvCount(); const b = queue().q.length, all = queue().all; go('review'); RC = null; render(); const msg = document.querySelector('#main').textContent.indexOf('أنهيت مراجعة اليوم') >= 0; const r = rvToday(); r.x = 10; S.rvd = r; const c = queue().q.length; [S.srs, S.pass, S.sg, S.rvd] = keep; RC = null; return [a, b, all, msg, c]; });
+  if (cap[0] !== 30 || cap[1] !== 0 || cap[2] !== 120 || !cap[3] || cap[4] !== 10) fail('games', 'daily review limit: ' + JSON.stringify(cap));
   // Role-play by voice: what the learner says is matched against the three choices (the server's text is simulated).
   const rp = await p.evaluate(() => {
     go('talk'); D = 0; S.prem = 1; startRP('A'); RP.v = true; const L = DLG[0].l; render();
