@@ -235,6 +235,7 @@ async function view(kv, msg, env) {
   const reportSection = `<h2>💬 ملاحظات المتعلّمين (${notes.length})</h2><p class="mu">ما أرسله المتعلّمون من زر «💬 لديك ملاحظة؟» في التطبيق.</p>${noteRows}${clearBtn(notes.length, 'clear-fb', 'مسح كل الملاحظات')}
 <h2>🐞 أخطاء التطبيق (${errs.length})</h2><p class="mu">أخطاء برمجية ظهرت في أجهزة المتعلّمين، الأحدث أولاً، بلا بيانات شخصية. أرسل نصّ الخطأ لمن يطوّر التطبيق ليصلحه.</p>${errRows}${clearBtn(errs.length, 'clear-err', 'مسح كل الأخطاء')}`;
   return page(`<h1>إدارة المشتركين</h1><p class="mu">التغييرات تعمل خلال دقيقة تقريباً. · <a href="/logout">خروج</a></p>
+<div class="row"><a href="/?open=all"><button type="button">🔓 افتح التطبيق بكل المحتوى</button></a><a href="/?open=off"><button type="button" class="alt">🔒 أعد القفل</button></a></div>
 ${msg ? `<div class="msg">${esc(msg)}</div>` : ''}
 <div class="stats"><div><b>${activeMembers}</b><span>مشترك</span></div><div><b>${trials.length}</b><span>مجانيون</span></div><div><b>${week}</b><span>تعلّموا هذا الأسبوع</span></div><div><b>${reminders}</b><span>فعّلوا التذكير</span></div></div>
 ${usage(mailsToday, Object.values(learn).filter((l) => l && l.saved >= Date.parse(new Date().toISOString().slice(0, 10))).length)}

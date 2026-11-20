@@ -12,6 +12,7 @@ export async function onRequest({ request, env }) {
   // Renew the app's own session when it is close to expiring, so active learners stay signed in.
   const own = await readSession(request, env.TRIALS);
   if (own && needsRenewal(own)) headers.append('Set-Cookie', sessionCookie(await makeSession(env.TRIALS, email)));
+  const admin = ((await env.TRIALS.get('admins', 'json')) || []).includes(email);
   const gift = st.kind === 'member' && (await isGift(env.TRIALS, email, await env.TRIALS.get('allow:' + email)));
-  return Response.json({ email, trialDays: TRIAL_DAYS, contact: CONTACT, ...st, ...(gift ? { gift } : {}), pay: await payConfig(env.TRIALS, zcReady(env)) }, { headers });
+  return Response.json({ email, trialDays: TRIAL_DAYS, contact: CONTACT, ...st, ...(gift ? { gift } : {}), pay: await payConfig(env.TRIALS, zcReady(env)), ...(admin ? { admin: true } : {}) }, { headers });
 }
