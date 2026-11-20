@@ -393,7 +393,9 @@ function me(){if(SETV)return setView();var k=Object.keys(S.srs).length,m=Object.
 function tile(ic,v,t){return '<div class="tile"><div class="tv">'+ic+' '+v+'</div><div class="mu">'+t+'</div></div>'}
 return '<h2>تقدّمي</h2><div class="stats">'+tile('🔥',live?S.st:0,'أيام متتالية'+(S.frz?' · 🛡️'+S.frz:''))+tile('📚',k+' من '+ALL.length,'كلمات بدأتها')+tile('🧠',m,'كلمات ثبتت في ذاكرتك')+tile('🏆',S.dgn||0,'أهداف يومية حققتها')+'</div>'
 +lvlBox()+inviteBox()+weekSum()+weekBox()+badgeBox()+premBox()
-+'<h2>الحساب والإعدادات</h2>'+meCard()+'<button class="row" onclick="SETV=true;render()"><div><div style="font-weight:600">⚙️ الإعدادات</div><div class="mu">التذكير اليومي، والنسخة الاحتياطية، والأصوات، وتثبيت التطبيق</div></div><span class="mu">‹</span></button>'}
++adminBox()+'<h2>الحساب والإعدادات</h2>'+meCard()+'<button class="row" onclick="SETV=true;render()"><div><div style="font-weight:600">⚙️ الإعدادات</div><div class="mu">التذكير اليومي، والنسخة الاحتياطية، والأصوات، وتثبيت التطبيق</div></div><span class="mu">‹</span></button>'}
+// 🔓 For the admin only (ME.admin from /api/me): open every lock in this browser, or put them back, without the links.
+function adminBox(){if(!ME||!ME.admin)return'';return'<div class="det" style="text-align:start;border-color:var(--ac)"><b>🛠️ للمدير</b><div class="mu" style="margin:4px 0 8px">'+(OPEN?'كل المحتوى مفتوح الآن في هذا المتصفح.':'المحتوى مقفل بالترتيب كما يراه المتعلّم.')+' الفتح للعرض فقط ولا يغيّر تقدّمك.</div><div class="btns">'+(OPEN?'<button class="btn alt" onclick="location.href=\'/?open=off\'">🔒 أعد القفل كما يراه المتعلّم</button>':'<button class="btn" onclick="location.href=\'/?open=all\'">🔓 افتح كل المحتوى</button>')+'</div></div>'}
 var SETV=false;
 function setView(){return'<button class="back" onclick="SETV=false;render()">› رجوع لتقدّمي</button><h2>⚙️ الإعدادات</h2>'+reminderBox()+backupBox()+settingsBox()+installBox(true)+packBox()
 +'<div style="text-align:center;margin:4px 0 8px"><button class="lnk-no" onclick="resetAll()">إعادة تعيين التقدّم</button></div>'}

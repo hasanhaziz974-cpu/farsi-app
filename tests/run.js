@@ -373,6 +373,9 @@ async function games(b, url) {
   // Ranks: as many names as thresholds, rising, and the top one far beyond a beginner's points.
   const ranks = await p.evaluate(() => [LV.length === LT.length, LV.every((x, i) => !i || x > LV[i - 1]), LV[LV.length - 1] >= 40000, lvl(0), lvl(2500) < LV.length - 1]);
   if (!ranks.every((x, i) => (i === 3 ? x === 0 : x))) fail('games', 'ranks table: ' + JSON.stringify(ranks));
+  // The admin's lock button appears only for the admin.
+  const adm = await p.evaluate(() => { const keep = ME; ME = { kind: 'member', ok: true, email: 'a@b.c' }; const a = adminBox(); ME = { kind: 'member', ok: true, email: 'a@b.c', admin: true }; const b = adminBox(); ME = keep; return [a === '', b.indexOf('open=all') >= 0]; });
+  if (!adm[0] || !adm[1]) fail('games', 'admin lock button: ' + JSON.stringify(adm));
   // Role-play by voice: what the learner says is matched against the three choices (the server's text is simulated).
   const rp = await p.evaluate(() => {
     go('talk'); D = 0; S.prem = 1; startRP('A'); RP.v = true; const L = DLG[0].l; render();
