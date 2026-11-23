@@ -104,7 +104,7 @@ const SCREENS = [
 
 async function screens(b, url) {
   for (const [fs_, label] of [[0, 'normal text'], [2, 'largest text']]) {
-    const p = await page(b, url, { state: { xp: 400, st: 3, last: '', srs: {}, v: 27, fs: fs_, prem: 1, pass: all(97), gp: all(82), dp: all(102), story: all(120), mist: { 'w:3-1': { k: 'w', x: '3-1', at: Date.now() - 864e5, b: 0, d: 0 } } } });
+    const p = await page(b, url, { state: { xp: 400, st: 3, last: '', srs: {}, v: 28, fs: fs_, prem: 1, pass: all(98), gp: all(84), dp: all(104), story: all(120), mist: { 'w:3-1': { k: 'w', x: '3-1', at: Date.now() - 864e5, b: 0, d: 0 } } } });
     for (const [name, code] of SCREENS) {
       p.errs = [];
       try { await p.evaluate((c) => eval(c), code); } catch (e) { fail('screens', `${name} (${label}): ${e.message.split('\n')[0]}`); continue; }
@@ -125,7 +125,7 @@ async function screens(b, url) {
 }
 
 async function free(b, url) {
-  const st = { xp: 50, st: 1, last: '', srs: {}, v: 27 };
+  const st = { xp: 50, st: 1, last: '', srs: {}, v: 28 };
   const p = await page(b, url, { state: st, me: { email: 'f@example.com', kind: 'member', ok: false } });
   const r = await p.evaluate(() => ({ lite: webLite(), L: [7, 8].map((i) => allowed('L', i)), G: [6, 7].map((i) => allowed('G', i)), D: [4, 5].map((i) => allowed('D', i)), stories: STORY.filter((s, i) => !stLock(i)).length, col: [0, 1].map((i) => !colLock(i)), trip: [0, 1].map((i) => !tripLock(i) || tripLock(i).indexOf('⭐') < 0) }));
   const want = { lite: true, L: [true, false], G: [true, false], D: [true, false], stories: 4, col: [true, false], trip: [true, false] };
@@ -216,6 +216,8 @@ async function progress(b, url) {
     { v: 25, gp: {}, dp: {}, rules: [], convs: [], trip: { 17: { stars: 1 }, 18: { stars: 2 }, 41: { stars: 3 }, 42: { stars: 1 } }, chapters: ['في المقهى التقليدي', 'البحث عن شقة', 'تسليم الشقة', 'في السوبرماركت'] },
     { v: 26, gp: { 30: 1, 31: 1, 54: 1, 55: 1 }, dp: { 35: 1, 36: 1, 63: 1, 64: 1 }, rules: ['«شدن» للتحوّل: خسته شدم، سرد شد', 'الماضي البعيد', '«به‌جای» و«به‌جز»: بدلاً من، ما عدا', 'الماضي الالتزامي'], convs: ['في محل غسيل السيارات', 'دعوة إلى عرس', 'زيارة مولود جديد', 'عند الطبيب الاختصاصي'], pass: { 20: 1, 21: 1 }, srs: { '21-1': { b: 2, d: 1 } }, lessons: ['العطلة ونهاية الأسبوع', 'الأرقام 11 إلى 1000'], word: 'الأرقام 11 إلى 1000' },
     { v: 26, gp: {}, dp: {}, rules: [], convs: [], trip: { 18: { stars: 1 }, 19: { stars: 2 }, 30: { stars: 3 }, 31: { stars: 1 } }, chapters: ['علبة گز للعائلة', 'البحث عن شقة', 'في السينما مع سينا', 'في حرم الإمام الرضا'] },
+    { v: 27, gp: { 31: 1, 32: 1, 43: 1, 44: 1 }, dp: { 21: 1, 22: 1, 50: 1, 51: 1 }, rules: ['«پیش» و«بعد» مع المدّة: دو روز پیش، یک هفته بعد', 'الماضي البعيد', 'الطلب المهذّب: «ممکن است…؟»، «می‌شود…؟»', 'الأعداد الترتيبية'], convs: ['حجز طاولة بالهاتف', 'الوقت والموعد', 'في متجر الحيوانات الأليفة', 'في الملعب'], pass: { 77: 1, 78: 1 }, srs: { '78-1': { b: 2, d: 1 } }, lessons: ['الفضاء وعلم الفلك', 'السياحة والآثار'], word: 'السياحة والآثار' },
+    { v: 27, gp: {}, dp: {}, rules: [], convs: [], trip: { 45: { stars: 1 }, 46: { stars: 2 }, 73: { stars: 3 }, 74: { stars: 1 } }, chapters: ['بيع الأثاث المستعمل', 'في السوبرماركت', 'ليلة في المرصد', 'على شاطئ بحر قزوين'] },
   ];
   const { upgrade } = await import(path.join(ROOT, 'lib/progress.js'));
   const same = (a, b2) => JSON.stringify([...a].sort()) === JSON.stringify([...b2].sort());
@@ -229,10 +231,10 @@ async function progress(b, url) {
     if (c.word && r.word !== c.word) fail('progress', `v${c.v} word review lands in lesson «${r.word}»`);
     const serverRules = await p.evaluate((g) => Object.keys(g).map((k) => GR[k] && GR[k].t), sv.gp);
     const serverConvs = await p.evaluate((d) => Object.keys(d).map((k) => DLG[k] && DLG[k].t), sv.dp);
-    if (r.v !== 27) fail('progress', `v${c.v} state ends at v${r.v} in the app`);
+    if (r.v !== 28) fail('progress', `v${c.v} state ends at v${r.v} in the app`);
     if (!same(r.rules, c.rules)) fail('progress', `v${c.v} rules in the app: ${r.rules.join(', ')}`);
     if (!same(r.convs, c.convs)) fail('progress', `v${c.v} conversations in the app: ${r.convs.join(', ')}`);
-    if (sv.v !== 27 || !same(serverRules, c.rules) || !same(serverConvs, c.convs)) fail('progress', `v${c.v} on the server: v${sv.v}, ${serverRules.join(', ')} / ${serverConvs.join(', ')}`);
+    if (sv.v !== 28 || !same(serverRules, c.rules) || !same(serverConvs, c.convs)) fail('progress', `v${c.v} on the server: v${sv.v}, ${serverRules.join(', ')} / ${serverConvs.join(', ')}`);
     p.errs.forEach((e) => fail('progress', 'JS error ' + e));
     await p.close();
   }
@@ -241,7 +243,7 @@ async function progress(b, url) {
 // A level opens only when the lessons, rules and conversations of the one before are finished; stories and trip
 // chapters are optional.
 async function levels(b, url) {
-  const p = await page(b, url, { state: { xp: 10, st: 1, last: '', srs: {}, v: 27, prem: 1 } });
+  const p = await page(b, url, { state: { xp: 10, st: 1, last: '', srs: {}, v: 28, prem: 1 } });
   const r = await p.evaluate(() => {
     const x = LVL[0], fill = (o, a) => { for (let i = a[0]; i < a[1]; i++) o[i] = 1; return o; };
     S.pass = fill({}, x.L); S.gp = fill({}, x.G); S.dp = fill({}, x.D); S.trip = {}; for (let i = x.T[0]; i < x.T[1]; i++) S.trip[i] = { stars: 3 };
@@ -327,7 +329,7 @@ async function gradation(b, url) {
 // after them; the review holds only words of started lessons, at most RVCAP a day, with choices of the card's shape;
 // the rank follows the points.
 async function learner(b, url) {
-  const p = await page(b, url, { state: { xp: 0, st: 0, last: '', srs: {}, v: 27, prem: 1, plSkip: true } });
+  const p = await page(b, url, { state: { xp: 0, st: 0, last: '', srs: {}, v: 28, prem: 1, plSkip: true } });
   const r = await p.evaluate(() => {
     const bad = [];
     S.pass = {}; S.gp = {}; S.dp = {}; S.sg = {}; S.srs = {}; S.trip = {}; S.story = {}; S.skip = {}; S.exam = {}; S.place = 0; S.rvd = null;
@@ -362,7 +364,7 @@ async function learner(b, url) {
 
 // Every page of the content opens without "undefined", "NaN" or text wider than a phone.
 async function crawl(b, url) {
-  const p = await page(b, url, { state: { xp: 10, st: 1, last: '', srs: {}, v: 27, prem: 1, plSkip: true } });
+  const p = await page(b, url, { state: { xp: 10, st: 1, last: '', srs: {}, v: 28, prem: 1, plSkip: true } });
   const r = await p.evaluate(() => {
     OPEN = true;
     const out = [], chk = (n) => { const m = document.getElementById('main'), t = m ? m.innerText : ''; const x = /undefined|NaN|\[object/.exec(t); if (x) out.push(n + ': …' + t.slice(Math.max(0, x.index - 25), x.index + 20) + '…'); if (document.documentElement.scrollWidth > innerWidth + 2) out.push(n + ': wider than the screen (' + document.documentElement.scrollWidth + ')'); };
@@ -384,7 +386,7 @@ async function crawl(b, url) {
 }
 
 async function games(b, url) {
-  const p = await page(b, url, { state: { xp: 10, st: 1, last: '', srs: {}, v: 27, pass: all(20) } });
+  const p = await page(b, url, { state: { xp: 10, st: 1, last: '', srs: {}, v: 28, pass: all(20) } });
   for (const m of ['prv', 'ant', 'lis', 'tf', 'rid']) {
     const ok = await p.evaluate((m) => { go('games'); gmStart(m); for (let i = 0; i < 40 && !GM.fin; i++) { const q = GM.qs[GM.i]; gmPick(q.o.indexOf(q.a)); gmNext(); } return GM.fin && GM.sc === GM.qs.length; }, m);
     if (!ok) fail('games', m + ' did not finish with every answer right');
@@ -436,7 +438,7 @@ async function games(b, url) {
 // Today's dictation is graded: within the learner's level and length, easiest first.
 async function dictation(b, url) {
   for (const [name, st, maxLv, maxWords] of [['beginner', { pass: all(2) }, 0, 4], ['level 7', { pass: all(71), gp: all(52), dp: all(67) }, 6, 9]]) {
-    const p = await page(b, url, { state: Object.assign({ xp: 10, st: 1, last: '', srs: {}, v: 27, prem: 1 }, st) });
+    const p = await page(b, url, { state: Object.assign({ xp: 10, st: 1, last: '', srs: {}, v: 28, prem: 1 }, st) });
     const r = await p.evaluate(() => dtPick(5).map((q) => [q.lv, dtN(q.fa).length]));
     if (r.length !== 5) fail('dictation', `${name}: ${r.length} sentences`);
     if (r.some(([lv, n]) => lv > maxLv || n > maxWords)) fail('dictation', `${name}: sentence above the level or too long ${JSON.stringify(r)}`);
