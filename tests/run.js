@@ -413,6 +413,14 @@ async function games(b, url) {
     for (let r = 0; r < 5; r++) { gmStart('prv'); GM.qs.forEach((q) => { if (PRVLV[q.fa] > 2) bad.push('level ' + PRVLV[q.fa] + ' proverb: ' + q.fa); }); gmStart('rid'); GM.qs.forEach((q) => { if (RIDLV[q.a] > 2) bad.push('level ' + RIDLV[q.a] + ' riddle: ' + q.a); }); }
     [S.pass, S.gp, S.dp, S.skip] = keep; GM = null; return [...new Set(bad)].slice(0, 5); });
   if (fit.length) fail('games', 'proverbs and riddles by level: ' + fit.join(' | '));
+  // Phase 2 (levels with ph:2): one locked heading and no titles until level 7 is done, then its content shows.
+  const ph2 = await p.evaluate(() => {
+    const k = ph2K(), first = LES[LVL[k].L[0]].t, seen = () => [...document.querySelectorAll('button')].some((b) => b.offsetParent && b.innerText.includes(first));
+    const keep = [S.pass, S.gp, S.dp]; go('home'); const lockedOk = !ph2Open() && document.body.innerText.includes('المرحلة الثانية') && !seen() && !tripMap().includes(TRIP[TRIP10].t);
+    const all = (n) => Object.fromEntries([...Array(n).keys()].map((i) => [i, 1])); S.pass = all(LVL[k - 1].L[1]); S.gp = all(LVL[k - 1].G[1]); S.dp = all(LVL[k - 1].D[1]);
+    go('home'); const openOk = ph2Open() && seen() && tripMap().includes(TRIP[TRIP10].t);
+    [S.pass, S.gp, S.dp] = keep; go('home'); return [lockedOk, openOk]; });
+  if (!ph2[0] || !ph2[1]) fail('games', 'phase 2 lock: ' + JSON.stringify(ph2));
   // Ranks: as many names as thresholds, rising, and the top one far beyond a beginner's points.
   const ranks = await p.evaluate(() => [LV.length === LT.length, LV.every((x, i) => !i || x > LV[i - 1]), LV[LV.length - 1] >= 40000, lvl(0), lvl(2500) < LV.length - 1]);
   if (!ranks.every((x, i) => (i === 3 ? x === 0 : x))) fail('games', 'ranks table: ' + JSON.stringify(ranks));

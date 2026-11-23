@@ -259,6 +259,16 @@ export const CHAPTERS = [
     tasks: ["ask what hurts", "ask what you ate yesterday", "advise you to drink water and rest", "say they will bring medicine from the pharmacy"] },
   { role: "Parsa, at Baghdad airport at the end of his visit, saying goodbye to the learner",
     tasks: ["say they will miss you", "give you a gift and say what it is", "invite you to come again with your family", "say goodbye and wish you a good trip"] },
+  { role: "Haj Agha Rezaei, the leader of an Iranian pilgrim group from Isfahan arriving at a hotel in Karbala; the learner works at reception",
+    tasks: ["welcome the group", "explain the rooms are not all ready", "tell him the breakfast times", "offer further help"] },
+  { role: "Khanom Ahmadi, an elderly Iranian pilgrim on her first visit to Karbala asking the learner, a volunteer guide, for directions and the rules of the shrine",
+    tasks: ["show her the way to the shrine", "explain where to leave shoes", "explain the women's entrance", "wish her an accepted pilgrimage"] },
+  { role: "Khanom Karimi, an Iranian pilgrim shopping for souvenirs in a shop near the shrine in Karbala; she bargains hard but kindly; the learner is the shopkeeper",
+    tasks: ["welcome her and show your goods", "tell her the price", "explain why your goods are good quality", "agree on a final price"] },
+  { role: "a family of Iranian pilgrims at Najaf airport who need a van to Karbala; the learner is the driver",
+    tasks: ["offer your van", "say the price", "explain the road and checkpoints", "agree to stop for prayer"] },
+  { role: "the angry son of an Iranian pilgrim who complains at the hotel reception in Karbala at night: there is no hot water and his elderly father feels unwell; the learner works at reception",
+    tasks: ["apologise sincerely", "promise to fix the water", "offer help for the sick father", "offer compensation"] },
 ];
 
 
