@@ -435,6 +435,9 @@ async function dictation(b, url) {
     if (r.length !== 5) fail('dictation', `${name}: ${r.length} sentences`);
     if (r.some(([lv, n]) => lv > maxLv || n > maxWords)) fail('dictation', `${name}: sentence above the level or too long ${JSON.stringify(r)}`);
     if (r.some((x, i) => i && x[1] < r[i - 1][1])) fail('dictation', `${name}: not from easiest to hardest ${JSON.stringify(r)}`);
+    // A plain space where the half-space belongs is not a mistake (می گویند, کتاب ها, بزرگ تر).
+    const sp = await p.evaluate(() => [['به فارسی چه می‌گویند؟', 'به فارسی چه می گویند'], ['کتاب‌ها را نمی‌خواهم', 'کتاب ها را نمی خواهم'], ['این بزرگ‌ترین شهر است', 'این بزرگ ترین شهر است']].map(([e, g]) => dtMark(e, g).st.every(Boolean)));
+    if (!sp.every(Boolean)) fail('dictation', `${name}: a space instead of the half-space counted as wrong ${JSON.stringify(sp)}`);
     p.errs.forEach((e) => fail('dictation', 'JS error ' + e));
     await p.close();
   }

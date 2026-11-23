@@ -526,7 +526,9 @@ var DLV=false;
 // wrong or missing. «إملاء اليوم» in the review tab takes 5 sentences from what the learner has opened
 // (conversations, rules passed, stories of their levels); each conversation has its own. S.dct = day done.
 var DT=null;
-function dtN(s){return String(s||'').replace(/ائ/g,'ای').replace(/[ً-ٰٟـ]/g,'').replace(/[يى]/g,'ی').replace(/ك/g,'ک').replace(/ة/g,'ه').replace(/[أإٱ]/g,'ا').replace(/ؤ/g,'و').replace(/[٠-٩]/g,function(d){return String(d.charCodeAt(0)-0x660)}).replace(/[۰-۹]/g,function(d){return String(d.charCodeAt(0)-0x6f0)}).replace(/‌/g,'').replace(/[.,،؛؟?!:«»"()\-]/g,' ').trim().split(/\s+/).filter(Boolean)}
+function dtN(s){return String(s||'').replace(/ائ/g,'ای').replace(/[ً-ٰٟـ]/g,'').replace(/[يى]/g,'ی').replace(/ك/g,'ک').replace(/ة/g,'ه').replace(/[أإٱ]/g,'ا').replace(/ؤ/g,'و').replace(/[٠-٩]/g,function(d){return String(d.charCodeAt(0)-0x660)}).replace(/[۰-۹]/g,function(d){return String(d.charCodeAt(0)-0x6f0)}).replace(/‌/g,'').replace(/[.,،؛؟?!:«»"()\-]/g,' ').trim().split(/\s+/).filter(Boolean).reduce(function(o,w){var p=o[o.length-1];if(p&&(p==='می'||p==='نمی'||/^(ها|های|هایی|هایم|هایت|هایش|هایمان|هایتان|هایشان|تر|ترین)$/.test(w)))o[o.length-1]=p+w;else o.push(w);return o},[])}
+// A learner who types a plain space where the half-space belongs (می گویند, کتاب ها, بزرگ تر) wrote the same word: the
+// prefix «می/نمی» and the suffixes «ها، تر، ترین» are joined to their word before the comparison.
 // ✍️ Today's dictation is graded: sentences from the learner's level and the one before (lessons passed, conversations
 // and rules finished, stories read), as long as that level allows (DTLEN), lengthened or shortened by recent results
 // (S.dtx, -2..+2: up after a near-perfect dictation, down after a weak one), and given from the easiest to the hardest.
