@@ -374,6 +374,12 @@ async function games(b, url) {
   // Daily review: at most RVCAP cards a day, then a message and 10 more on request.
   const cap = await p.evaluate(() => { const keep = [S.srs, S.pass, S.sg, S.rvd]; S.pass = {}; S.sg = {}; S.srs = {}; ALL.slice(0, 120).forEach((w) => { S.sg[w.l] = 1; S.srs[w.id] = { b: 1, d: 0 }; }); S.rvd = null; const a = queue().q.length; for (let i = 0; i < RVCAP; i++) rvCount(); const b = queue().q.length, all = queue().all; go('review'); RC = null; render(); const msg = document.querySelector('#main').textContent.indexOf('أنهيت مراجعة اليوم') >= 0; const r = rvToday(); r.x = 10; S.rvd = r; const c = queue().q.length; [S.srs, S.pass, S.sg, S.rvd] = keep; RC = null; return [a, b, all, msg, c]; });
   if (cap[0] !== 30 || cap[1] !== 0 || cap[2] !== 120 || !cap[3] || cap[4] !== 10) fail('games', 'daily review limit: ' + JSON.stringify(cap));
+  // «أكمل المثل» and «چیستان»: every item has a level, and a learner in level 2 meets none above it.
+  const fit = await p.evaluate(() => { const bad = []; prvPool().forEach((x) => { if (!PRVLV[x.fa]) bad.push('no level: ' + x.fa); }); RID.forEach((x) => { if (!RIDLV[x[3]]) bad.push('no level: ' + x[3]); });
+    const keep = [S.pass, S.gp, S.dp, S.skip]; S.skip = { 0: { ok: 1 } }; const m = gmLv(); if (m !== 2) bad.push('open level ' + m);
+    for (let r = 0; r < 5; r++) { gmStart('prv'); GM.qs.forEach((q) => { if (PRVLV[q.fa] > 2) bad.push('level ' + PRVLV[q.fa] + ' proverb: ' + q.fa); }); gmStart('rid'); GM.qs.forEach((q) => { if (RIDLV[q.a] > 2) bad.push('level ' + RIDLV[q.a] + ' riddle: ' + q.a); }); }
+    [S.pass, S.gp, S.dp, S.skip] = keep; GM = null; return [...new Set(bad)].slice(0, 5); });
+  if (fit.length) fail('games', 'proverbs and riddles by level: ' + fit.join(' | '));
   // Ranks: as many names as thresholds, rising, and the top one far beyond a beginner's points.
   const ranks = await p.evaluate(() => [LV.length === LT.length, LV.every((x, i) => !i || x > LV[i - 1]), LV[LV.length - 1] >= 40000, lvl(0), lvl(2500) < LV.length - 1]);
   if (!ranks.every((x, i) => (i === 3 ? x === 0 : x))) fail('games', 'ranks table: ' + JSON.stringify(ranks));
