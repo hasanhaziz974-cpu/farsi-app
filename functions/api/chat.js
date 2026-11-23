@@ -279,6 +279,16 @@ export const CHAPTERS = [
     tasks: ["greet her formally", "ask about the late shipment", "explain the delay in your payment", "agree on next steps"] },
   { role: "Mr. Kamali, now the learner's Iranian business partner, at a celebratory business dinner in Tehran after a successful first year; he talks about the past year and future plans",
     tasks: ["thank him for the partnership", "talk about the results of the year", "propose a new idea for next year", "invite him to Iraq"] },
+  { role: "Ms. Hosseini, a coordinator at the international patients office of a hospital in Mashhad; the learner has brought their father from Baghdad for heart surgery",
+    tasks: ["explain why you came", "give the medical documents", "ask about an interpreter", "ask where the companion can stay"] },
+  { role: "Dr. Rahimi, a heart surgeon in Mashhad, explaining an upcoming operation to the learner, who accompanies their father",
+    tasks: ["ask about the risks", "ask how long he must stay in hospital", "ask about his medicines", "ask when you can travel home"] },
+  { role: "a night nurse in the cardiac ward of a hospital in Mashhad; the learner's father has pain after surgery and the learner calls her",
+    tasks: ["describe where it hurts", "describe what the pain feels like", "say since when", "ask what to do if it gets worse"] },
+  { role: "Dr. Ahmadi, a dentist in a clinic in Tehran popular with Iraqi patients, discussing implants and the price with the learner",
+    tasks: ["explain your problem", "ask the price", "ask how many visits are needed", "ask what to do after the treatment"] },
+  { role: "a clerk at the hospital billing and discharge office in Mashhad; the learner is taking their father home after surgery",
+    tasks: ["say you are here for discharge", "ask about the deposit", "ask how to pay", "ask for a summary for the Iraqi doctor"] },
 ];
 
 
