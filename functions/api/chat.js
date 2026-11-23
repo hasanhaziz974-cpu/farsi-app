@@ -269,6 +269,16 @@ export const CHAPTERS = [
     tasks: ["offer your van", "say the price", "explain the road and checkpoints", "agree to stop for prayer"] },
   { role: "the angry son of an Iranian pilgrim who complains at the hotel reception in Karbala at night: there is no hot water and his elderly father feels unwell; the learner works at reception",
     tasks: ["apologise sincerely", "promise to fix the water", "offer help for the sick father", "offer compensation"] },
+  { role: "Mr. Kamali, sales manager of an Iranian home-appliance factory at his booth at the Tehran International Fair; the learner is an Iraqi importer",
+    tasks: ["introduce yourself and your business", "ask about a product", "ask whether they have an agent in Iraq", "arrange a meeting"] },
+  { role: "Haj Agha Tabrizi, the owner of a carpet and leather-shoe factory in Tabriz, showing the learner, an Iraqi buyer, around his factory and negotiating a first order",
+    tasks: ["ask about production capacity", "ask for a sample", "negotiate the price", "agree on payment terms"] },
+  { role: "a customs officer at the Shalamcheh border crossing between Iran and Iraq inspecting the learner's shipment of Iranian goods",
+    tasks: ["present your documents", "explain the goods in the truck", "answer a question about the value", "ask how long clearance will take"] },
+  { role: "Ms. Moradi, the export manager of an Iranian food company, on a video call with the learner about a late shipment and an unpaid invoice",
+    tasks: ["greet her formally", "ask about the late shipment", "explain the delay in your payment", "agree on next steps"] },
+  { role: "Mr. Kamali, now the learner's Iranian business partner, at a celebratory business dinner in Tehran after a successful first year; he talks about the past year and future plans",
+    tasks: ["thank him for the partnership", "talk about the results of the year", "propose a new idea for next year", "invite him to Iraq"] },
 ];
 
 
