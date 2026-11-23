@@ -161,6 +161,8 @@ async function links(b, url) {
     GR.forEach((g, i) => { if (!lesFor('g', i).some((l) => lvOf(l) <= lvOf(i, 'G'))) bad.push('rule «' + g.t + '» is linked only from lessons of later levels'); });
     DLG.forEach((d, i) => { if (!lesFor('d', i).some((l) => lvOf(l) <= lvOf(i, 'D'))) bad.push('conversation «' + d.t + '» is linked only from lessons of later levels'); });
     LINK.forEach((k, l) => { if (!k[1].length) bad.push('lesson «' + LES[l].t + '» links no conversation'); });
+    // Each lesson page shows a rule and a conversation of its own level or an earlier one.
+    LES.forEach((l, i) => { if (!lg(i).some((g) => lvOf(g, 'G') <= lvOf(i))) bad.push('lesson «' + l.t + '» shows no rule of its level'); if (!LINK[i][1].some((d) => lvOf(d, 'D') <= lvOf(i))) bad.push('lesson «' + l.t + '» shows no conversation of its level'); });
     return bad;
   });
   r.forEach((x) => fail('links', x));
@@ -281,6 +283,17 @@ async function gradation(b, url) {
       ['conditional', B + 'اگر' + E, 'الشرط: اگر'],
       ['که', ' که ', 'الجمل الموصولة: که'],
       ['کاش', B + 'کاش' + E, 'التمنّي: کاش'],
+      ['imperative', B + '(بیا|برو|بگو|بخور|بنشین|ببین|بکن|بگیر|بده|نکن|نرو|نگو|بیایید|بروید|بگویید|بنشینید|ببینید|بگیرید|بدهید|نکنید)' + E, 'الأمر والنهي'],
+      ['comparative', B + '(\\S+‌تر|\\S+‌ترین|بهتر|بیشتر|کمتر|بهترین|بیشترین|کمترین)' + E, 'المقارنة والتفضيل'],
+      ['passive', B + '(?!خسته|آماده|ساده|زنده|خانواده|پیاده|بسته |برنده)\\S+(ده|ته) (شد|شدم|شدی|شدیم|شدید|شدند|شده|می‌شود|می‌شوند|نمی‌شود)' + E, 'المبني للمجهول'],
+      ['subjunctive', B + '(شاید|نباید|نمی‌توانم|نمی‌توانی|نمی‌تواند|می‌توانیم|می‌توانید|می‌توانند|می‌خواهیم|می‌خواهید|می‌خواهند|نمی‌خواهم|بهتر است|لازم است) ب\\S+', 'المضارع الالتزامي'],
+      ['«داشتن» progressive', B + '(داشت|داشتم|داشتی|داشتیم|داشتید|داشتند|دارم|داری|دارد|داریم|دارید|دارند) می‌', '«داشتن» للحدث الجاري'],
+      ['«باید می‌»', B + 'باید می‌', '«باید می‌رفتم»: كان يجب، لا بدّ أنّه'],
+      ['«با این‌که»', B + 'با این‌که', '«با این‌که»: رغم أنّ'],
+      ['«در حالی که»', 'در حالی که', '«در حالی که»: بينما، في حين أنّ'],
+      ['«آن‌قدر… که»', B + 'آن‌قدر', '«آن‌قدر… که»: لدرجة أنّ'],
+      ['«مگر»', B + 'مگر' + E, '«مگر»: هل حقاً؟ وإلّا إذا'],
+      ['«قبل از این‌که»', '(قبل|بعد) از این‌که', 'قبل أن وبعد أن: قبل از این‌که، بعد از این‌که'],
     ].map(([n, re, t]) => [n, new RegExp(re), GR.findIndex((g) => g.t === t)]);
     const bad = [];
     F.forEach(([n, , gi]) => { if (gi < 0) bad.push('rule for ' + n + ' not found'); });
@@ -289,6 +302,8 @@ async function gradation(b, url) {
     DLG.forEach((d, i) => d.l.forEach((l) => chk('conversation «' + d.t + '»', lvOf(i, 'D'), l[0])));
     STORY.forEach((s) => { if (!s.c) s.s.forEach((l) => chk('story «' + s.ta + '»', s.lv - 1, l[0])); });
     TRIP.forEach((c, i) => c.ln.forEach((l) => chk('chapter «' + c.t + '»', lvOf(i, 'T'), l[0])));
+    TRIP.forEach((c, i) => c.say.forEach((t) => t.forEach((x) => chk('learner phrases of «' + c.t + '»', lvOf(i, 'T'), x[0]))));
+    RD.forEach((r, i) => r.s.forEach((l) => chk('reading of «' + DLG[i].t + '»', lvOf(i, 'D'), l[0])));
     return bad;
   }, GRAD_OK);
   r.forEach((x) => fail('gradation', x));
