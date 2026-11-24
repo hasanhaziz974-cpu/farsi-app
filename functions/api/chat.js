@@ -349,6 +349,16 @@ export const CHAPTERS = [
     tasks: ["explain your problem", "describe exactly where you are", "say you have no spare tyre", "ask how long help will take"] },
   { role: "a customer service agent at the Alborz transport company answering the learner, an Iraqi fruit trader whose refrigerated shipment of oranges is late",
     tasks: ["complain about the delay", "give your tracking code", "ask who is responsible if the fruit spoils", "ask about the new delivery time"] },
+  { role: "Sara, the team lead of a Tehran software company, welcoming the learner (a new Iraqi developer working remotely from Baghdad) in his first video meeting",
+    tasks: ["greet the team and check your audio", "introduce yourself", "ask about the meeting time and time difference", "confirm what you understood"] },
+  { role: "Reza, the technical manager, reporting to the learner (a developer) a bug found by testers two days before release",
+    tasks: ["confirm what the problem is", "give your guess about the cause", "ask for what you need", "promise a time for an update"] },
+  { role: "Mr. Kazemi, owner of an Iranian online shop, negotiating a freelance app project with the learner (a freelance developer)",
+    tasks: ["ask what features they need", "give a time estimate", "negotiate the deadline", "agree on the payment plan"] },
+  { role: "Ms. Salehi, an investor at a Tehran tech-park accelerator, listening to the learner pitch a translation app for pilgrims",
+    tasks: ["present your idea", "explain the market size", "describe your team and progress", "say how much you need and for what"] },
+  { role: "Hasan, a tech-savvy Iranian friend of the learner, who gets a phone call from the learner about a suspicious SMS",
+    tasks: ["describe the message you received", "ask how he knew it was fake", "tell him about your friend who was scammed", "ask how to stay safe"] },
 ];
 
 
