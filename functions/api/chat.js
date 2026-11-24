@@ -319,6 +319,16 @@ export const CHAPTERS = [
     tasks: ["apologise and explain the reason", "move the group to the shade", "promise a change", "offer compensation"] },
   { role: "the members of an Iranian tour group at Baghdad airport at the end of a seven-day tour of Iraq, saying goodbye to the learner, their guide",
     tasks: ["check everyone is there", "remind them about their documents", "thank them", "invite them to come back"] },
+  { role: "Mr. Mousavi, the father of an Iranian young woman in Shiraz, receiving the learner, an Iraqi engineer, who has come with an uncle to ask for his daughter's hand",
+    tasks: ["greet the family respectfully", "introduce yourself and your work", "talk about your family in Iraq", "ask politely for their consent"] },
+  { role: "Mr. Mousavi, the bride's father, discussing the mahriye (dowry) with the learner, the Iraqi groom, finding a compromise between Iranian and Iraqi customs",
+    tasks: ["raise the subject politely", "explain the Iraqi custom of mahr", "suggest a compromise", "agree and congratulate"] },
+  { role: "a clerk at a marriage registry office in Shiraz checking the documents of the learner, an Iraqi groom, before registering the marriage",
+    tasks: ["say why you came", "present the marriage permit", "present the translated documents", "ask about a bilingual certificate"] },
+  { role: "the master of ceremonies at a mixed Iraqi-Iranian wedding in a hall in Shiraz who invites the learner, the groom, to say a few words to the guests",
+    tasks: ["greet the guests", "thank both families", "say something to the bride", "thank the guests from Iraq"] },
+  { role: "Mrs. Mousavi, the learner's Iranian mother-in-law in Shiraz, welcoming the learner, his wife and their baby on their first visit after the birth",
+    tasks: ["greet her warmly", "present a gift from Iraq", "talk about the baby's two languages", "invite her to visit Baghdad"] },
 ];
 
 
