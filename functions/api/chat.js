@@ -329,6 +329,16 @@ export const CHAPTERS = [
     tasks: ["greet the guests", "thank both families", "say something to the bride", "thank the guests from Iraq"] },
   { role: "Mrs. Mousavi, the learner's Iranian mother-in-law in Shiraz, welcoming the learner, his wife and their baby on their first visit after the birth",
     tasks: ["greet her warmly", "present a gift from Iraq", "talk about the baby's two languages", "invite her to visit Baghdad"] },
+  { role: "a clerk at the foreign nationals office in Tehran handling the learner's annual work-residence renewal",
+    tasks: ["say why you came", "present the required documents", "ask about the next steps", "ask when the new card will be ready"] },
+  { role: "Mr. Bahrami, a real-estate agent in Tehran, preparing the preliminary sale agreement (qowlnameh) for the learner, an Iraqi buying his first flat",
+    tasks: ["ask whether foreigners can buy property", "ask about debts on the property", "ask about the deposit and cancellation", "ask about the commission"] },
+  { role: "Mr. Samadi, the learner's landlord in Tehran, who wants to deduct money from the rahn (deposit) when the learner moves out",
+    tasks: ["ask for the deposit back", "show evidence about the damage", "accept a fair deduction", "ask for a signed receipt"] },
+  { role: "Ms. Rezvani, a first-grade lawyer in Tehran, advising the learner, whose former employer has not paid six months of salary",
+    tasks: ["explain your problem", "present your evidence", "ask about the steps", "ask about a power of attorney"] },
+  { role: "a bank clerk at a branch in Tehran opening an account for the learner, an Iraqi resident, and explaining the rules for foreigners",
+    tasks: ["say you want to open an account", "present your FIDA number and residence card", "ask about transfers from Iraq", "ask about the bank card"] },
 ];
 
 
