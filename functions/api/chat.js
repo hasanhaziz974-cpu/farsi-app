@@ -309,6 +309,16 @@ export const CHAPTERS = [
     tasks: ["introduce yourself and your agency", "ask about the main result", "ask about the timeline", "ask a follow-up question about electricity for Iraq"] },
   { role: "Ms. Navid, the Iranian director of a documentary about the shared heritage of Iraq and Iran, working with the learner, who is translating the subtitles for a Baghdad film festival",
     tasks: ["report your progress on the subtitles", "explain a translation problem", "suggest an Iraqi equivalent", "agree on the deadline"] },
+  { role: "Mr. and Mrs. Tehrani, an Iranian couple on a cultural tour of Iraq standing at the Ishtar Gate in Babylon; the learner is their Iraqi tour guide",
+    tasks: ["welcome them to Babylon", "explain who built the gate", "explain where the original is", "mention the shared history with Iran"] },
+  { role: "a group of Iranian nature-lovers on a mashhouf boat tour in the marshes of southern Iraq; the learner is the guide",
+    tasks: ["give safety instructions for the boat", "explain the reed houses", "talk about the water buffalo", "mention UNESCO and the drought"] },
+  { role: "Mr. Farhadi, an Iranian tourist and book-lover who got separated from the group on Al-Mutanabbi Street in Baghdad and phones the learner, the guide",
+    tasks: ["calm him down", "ask what he can see around him", "tell him to stay where he is", "invite him to join the group at the café"] },
+  { role: "Haj Khanom Amini, an elderly Iranian tourist who complains strongly that the tour bus is late again and the group is waiting in the heat; the learner is the guide",
+    tasks: ["apologise and explain the reason", "move the group to the shade", "promise a change", "offer compensation"] },
+  { role: "the members of an Iranian tour group at Baghdad airport at the end of a seven-day tour of Iraq, saying goodbye to the learner, their guide",
+    tasks: ["check everyone is there", "remind them about their documents", "thank them", "invite them to come back"] },
 ];
 
 
