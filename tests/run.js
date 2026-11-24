@@ -84,6 +84,10 @@ async function content(b, url) {
   });
   for (const k in r) fail('content', k + ' (' + r[k].length + '): ' + r[k].slice(0, 5).join(' | '));
   p.errs.forEach((e) => fail('content', 'JS error ' + e));
+  // The welcome page (welcome/index.html) quotes the app's counts; it must say the current numbers.
+  const n = await p.evaluate(() => ({ les: LES.length, dlg: DLG.length, trip: TRIP.length, gr: GR.length, v: V.length, st: STORY.filter((s) => !s.c).length, cu: STORY.filter((s) => s.c).length }));
+  const wel = fs.readFileSync(path.join(ROOT, 'welcome/index.html'), 'utf8');
+  for (const [k, want] of [['lessons', n.les + ' درساً'], ['conversations', n.dlg + ' محادثة'], ['trip chapters', n.trip + ' فصلاً'], ['rules', n.gr + ' درساً في القواعد'], ['verbs', n.v + ' فعلاً'], ['stories', n.st + ' قص'], ['culture texts', n.cu + ' نصاً']]) if (!wel.includes(want)) fail('content', 'welcome page does not say «' + want + '» (' + k + ')');
   await p.close();
 }
 
