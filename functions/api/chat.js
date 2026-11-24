@@ -289,6 +289,16 @@ export const CHAPTERS = [
     tasks: ["explain your problem", "ask the price", "ask how many visits are needed", "ask what to do after the treatment"] },
   { role: "a clerk at the hospital billing and discharge office in Mashhad; the learner is taking their father home after surgery",
     tasks: ["say you are here for discharge", "ask about the deposit", "ask how to pay", "ask for a summary for the Iraqi doctor"] },
+  { role: "Dr. Nazari, a professor on the PhD admissions interview panel at the University of Tehran; the learner is an Iraqi applicant for a PhD in Persian literature",
+    tasks: ["introduce yourself and your studies", "explain why you chose Iran", "describe your research interest", "ask about the next steps"] },
+  { role: "Dr. Moein, the learner's PhD supervisor at the University of Tehran, reviewing the first chapter of the dissertation and giving honest feedback",
+    tasks: ["present what you have written", "respond politely to criticism", "ask for advice on sources", "agree on a deadline"] },
+  { role: "a librarian at the manuscripts section of the Central Library of the University of Tehran helping the learner find and access a rare Qajar-era manuscript",
+    tasks: ["say what you are looking for", "ask whether you can borrow it", "ask for a digital copy", "ask how long it takes"] },
+  { role: "a professor in the audience at an academic conference in Mashhad asking the learner critical questions after their oral presentation",
+    tasks: ["thank the audience", "answer a question about your sample", "accept a criticism modestly", "explain your next step"] },
+  { role: "Dr. Kazemi, the external examiner at the learner's PhD defence at the University of Tehran; she asks hard but fair questions",
+    tasks: ["present your conclusion", "answer a difficult question", "accept the corrections", "thank the committee"] },
 ];
 
 
