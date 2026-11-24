@@ -299,6 +299,16 @@ export const CHAPTERS = [
     tasks: ["thank the audience", "answer a question about your sample", "accept a criticism modestly", "explain your next step"] },
   { role: "Dr. Kazemi, the external examiner at the learner's PhD defence at the University of Tehran; she asks hard but fair questions",
     tasks: ["present your conclusion", "answer a difficult question", "accept the corrections", "thank the committee"] },
+  { role: "Mr. Sadeghi, protocol officer at the Iranian Ministry of Foreign Affairs, briefing the learner, who will be the Arabic interpreter at an Iraqi-Iranian ministerial meeting tomorrow",
+    tasks: ["introduce yourself as the interpreter", "ask for the speeches in advance", "ask about simultaneous or consecutive interpreting", "ask about a second interpreter"] },
+  { role: "a sworn translator at an official translation office in Tehran; the learner, an Iraqi, needs documents translated and certified for a job",
+    tasks: ["say which documents you need translated", "ask about certification", "ask about the time and cost", "point out how your name should be spelled"] },
+  { role: "Hushang Ebrahimi, a well-known Iranian poet in his seventies, being interviewed in his house in Shiraz by the learner, a journalist from an Iraqi cultural magazine",
+    tasks: ["thank him and introduce your magazine", "ask about translating poetry", "ask which Arab poet influenced him", "ask for a message to Iraqi readers"] },
+  { role: "the spokesperson of the Iranian Ministry of Energy at a press conference after an Iraq-Iran energy meeting in Tehran; the learner is a correspondent for an Iraqi news agency",
+    tasks: ["introduce yourself and your agency", "ask about the main result", "ask about the timeline", "ask a follow-up question about electricity for Iraq"] },
+  { role: "Ms. Navid, the Iranian director of a documentary about the shared heritage of Iraq and Iran, working with the learner, who is translating the subtitles for a Baghdad film festival",
+    tasks: ["report your progress on the subtitles", "explain a translation problem", "suggest an Iraqi equivalent", "agree on the deadline"] },
 ];
 
 
