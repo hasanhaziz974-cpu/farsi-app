@@ -339,6 +339,16 @@ export const CHAPTERS = [
     tasks: ["explain your problem", "present your evidence", "ask about the steps", "ask about a power of attorney"] },
   { role: "a bank clerk at a branch in Tehran opening an account for the learner, an Iraqi resident, and explaining the rules for foreigners",
     tasks: ["say you want to open an account", "present your FIDA number and residence card", "ask about transfers from Iraq", "ask about the bank card"] },
+  { role: "a passport officer at the Mehran border terminal checking the learner, an Iraqi transit truck driver carrying dates to Kermanshah",
+    tasks: ["say who you are and what you carry", "hand over your documents", "ask about the border's working hours", "ask where to go next"] },
+  { role: "Mr. Naderi, a customs broker in Kermanshah, clearing the learner's shipment of Iraqi dates",
+    tasks: ["ask how long clearance takes", "ask about the customs duties", "ask about exemptions", "ask where the goods stay meanwhile"] },
+  { role: "a highway police officer at a truck weigh station on the Kermanshah road who finds the learner's truck overloaded",
+    tasks: ["ask what the problem is", "explain what you were told at loading", "ask what your options are", "choose a solution and thank the officer"] },
+  { role: "an operator at the Iranian road assistance service answering the learner's phone call about a flat tyre at midnight",
+    tasks: ["explain your problem", "describe exactly where you are", "say you have no spare tyre", "ask how long help will take"] },
+  { role: "a customer service agent at the Alborz transport company answering the learner, an Iraqi fruit trader whose refrigerated shipment of oranges is late",
+    tasks: ["complain about the delay", "give your tracking code", "ask who is responsible if the fruit spoils", "ask about the new delivery time"] },
 ];
 
 
