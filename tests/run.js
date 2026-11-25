@@ -514,6 +514,13 @@ async function inviteGift() {
   if (g.status !== 403) fail('server', 'invite gift: Parsa chapter 4 answers ' + g.status + ', expected 403 (subscribers only)');
   if (p.status === 403) fail('server', 'a paid subscriber is refused Parsa chapter 4');
   if (t.status === 403) fail('server', 'invite gift: the free taste of chapter 1 is refused');
+  // Parsa's daily count lives in KV, so a learner without the cookie (cleared) still has 12 used of 12.
+  store.set('pc:paid@x.iq:' + new Date().toISOString().slice(0, 10), '12');
+  const cookie = sessionCookie(await makeSession(kv, 'paid@x.iq')).split(';')[0];
+  const left = await (await onRequest({ env, request: new Request('https://site.dev/api/chat', { headers: { Cookie: cookie } }) })).json();
+  if (left.left !== 0 || left.limit !== 12) fail('server', 'Parsa daily limit without the cookie: ' + JSON.stringify(left));
+  const over = await ask('paid@x.iq', 3);
+  if (over.status !== 429) fail('server', 'Parsa: message 13 of the day answers ' + over.status + ', expected 429');
   // The gift goes to the inviter only, for the first 3 friends; the new learner gets nothing.
   const { applyInvite, inviteCode, INVITE_DAYS } = await import(path.join(ROOT, 'lib/invite.js'));
   const code = await inviteCode(kv, 'host@x.iq'), ends = [];

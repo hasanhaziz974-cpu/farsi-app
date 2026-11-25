@@ -611,10 +611,15 @@ async function transcribe(request, env, admin) {
   return { text };
 }
 
+// Today's messages with Parsa: kept in KV ("pc:<email>:<day>", gone after 2 days), so clearing the browser's
+// cookies does not reset it (Workers Paid plan: enough KV writes for one per message). The signed cookie is a
+// second count, for the moment KV has not yet seen the last write: the larger of the two counts.
+const pcKey = (email) => 'pc:' + email + ':' + today();
 async function counter(request, kv, email) {
   const m = (request.headers.get('Cookie') || '').match(/(?:^|;\s*)pc=([A-Za-z0-9_.-]+)/);
   const v = m ? await readSigned(kv, m[1]) : null;
-  return v && v.e === email && v.d === today() ? v.n : 0;
+  const c = v && v.e === email && v.d === today() ? v.n : 0;
+  return Math.max(c, Number(await kv.get(pcKey(email))) || 0);
 }
 
 export async function onRequest({ request, env }) {
@@ -636,6 +641,7 @@ export async function onRequest({ request, env }) {
 
   const counted = async (obj) => {
     const n = used + 1;
+    await kv.put(pcKey(email), String(n), { expirationTtl: 2 * 86400 });
     const cookie = `pc=${await signValue(kv, { e: email, d: today(), n })}; Path=/api/chat; Max-Age=172800; HttpOnly; Secure; SameSite=Lax`;
     return json({ ...obj, left: Math.max(0, limit - n) }, 200, { 'Set-Cookie': cookie });
   };
