@@ -2244,7 +2244,9 @@ function webApp(){return !bkNative()&&(location.protocol==='https:'||location.ho
 // app runs standalone, when the browser reports the install, or when Chrome's getInstalledRelatedApps finds it).
 // S.instHide: the learner closed the install card. Both belong to the device and are not synced.
 function standalone(){try{return matchMedia('(display-mode: standalone)').matches||navigator.standalone===true}catch(e){return false}}
-function installed(){return standalone()||!!S.inst}
+// S.inst remembers an install (Chrome does not say when the icon is removed); Chrome offering the install again
+// (beforeinstallprompt) means it is no longer there, so the card to install shows again.
+function installed(){return standalone()||(!!S.inst&&!INST)}
 function instMark(){if(!S.inst){S.inst=1;save();try{render()}catch(x){}}}
 function instHide(){S.instHide=1;save();render();toast('لن تظهر هذه البطاقة مرة أخرى. تجد الشرح في الإعدادات.')}
 if(webApp()){
@@ -2269,7 +2271,7 @@ if('serviceWorker' in navigator){navigator.serviceWorker.addEventListener('messa
 try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persisted().then(function(p){if(!p)navigator.storage.persist()})}catch(e){}
 // Keep the reminder switch in step with the server (e.g. after reinstalling or on a second device).
 if(remOk()&&navigator.onLine)remApi().then(function(i){var on=!!i.on,h=i.hour==null?(S.rem||{}).hour:i.hour;if(!S.rem||S.rem.on!==on||S.rem.hour!==h){S.rem={on:on,hour:h};save();if(tab==='me')render()}}).catch(function(){})});
-window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();INST=e;try{render()}catch(x){}});
+window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();INST=e;if(S.inst){S.inst=0;save()}try{render()}catch(x){}});
 if(standalone()&&!S.inst){S.inst=1;save()}
 try{if(navigator.getInstalledRelatedApps)navigator.getInstalledRelatedApps().then(function(a){if(a&&a.length)instMark()}).catch(function(){})}catch(e){}
 window.addEventListener('appinstalled',function(){INST=null;S.inst=1;save();toast('✅ صار الموقع على شاشة هاتفك، افتحه من أيقونته');try{render()}catch(x){}});
