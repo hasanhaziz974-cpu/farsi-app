@@ -494,6 +494,26 @@ async function server() {
     if (r.status !== want) fail('server', `${p} answers ${r.status}, expected ${want}`);
   }
   await zaincash();
+  await inviteGift();
+}
+
+// An invite gift opens the lessons but not the trip with Parsa: beyond chapter 1's taste the chat answers 'free'.
+// A paid subscriber with the same kind of access ('member') is not stopped.
+async function inviteGift() {
+  const store = new Map(), kv = { get: async (k, ty) => { const v = store.has(k) ? store.get(k) : null; return v !== null && ty === 'json' ? JSON.parse(v) : v; }, put: async (k, v) => { store.set(k, String(v)); }, delete: async (k) => { store.delete(k); } };
+  const { makeSession, sessionCookie } = await import(path.join(ROOT, 'lib/auth.js'));
+  const { onRequest } = await import(path.join(ROOT, 'functions/api/chat.js'));
+  const day = new Date(Date.now() + 5 * 864e5).toISOString().slice(0, 10);
+  const env = { TRIALS: kv, AI: { run: async () => { throw new Error('no AI in tests'); } } };
+  const ask = async (email, c) => {
+    const cookie = sessionCookie(await makeSession(kv, email)).split(';')[0];
+    return onRequest({ env, request: new Request('https://site.dev/api/chat', { method: 'POST', headers: { Cookie: cookie, Origin: 'https://site.dev', 'Content-Type': 'application/json' }, body: JSON.stringify({ s: 0, c, msgs: [{ r: 'u', t: 'سلام' }] }) }) });
+  };
+  store.set('allow:gift@x.iq', day); store.set('invg:gift@x.iq', day); store.set('allow:paid@x.iq', day);
+  const g = await ask('gift@x.iq', 3), p = await ask('paid@x.iq', 3), t = await ask('gift@x.iq', 0);
+  if (g.status !== 403) fail('server', 'invite gift: Parsa chapter 4 answers ' + g.status + ', expected 403 (subscribers only)');
+  if (p.status === 403) fail('server', 'a paid subscriber is refused Parsa chapter 4');
+  if (t.status === 403) fail('server', 'invite gift: the free taste of chapter 1 is refused');
 }
 
 // ZainCash online payment against a simulated gateway and KV: a paid order extends the subscription once; a wrong

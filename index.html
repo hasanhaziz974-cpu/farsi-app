@@ -1089,6 +1089,8 @@ function webTrial(){if(OPEN)return false;try{return webApp()&&(ME?ME.ok!==false&
 // The Android app has no account, so it is always the free version; the full content is for subscribers on the site.
 function natLite(){return!OPEN&&bkNative()}
 function webLite(){return webFree()||webTrial()||natLite()}
+// The trip with Parsa (AI) is for paid subscribers: an invite gift opens everything else (functions/api/chat.js checks it too).
+function pLite(){return webLite()||(!OPEN&&!!(ME&&ME.gift))}
 var TRIAL_D=5;
 function allowed(k,i){if(OPEN)return true;if(webLite())return k==='L'?i<LVL[0].L[1]:k==='G'?i<LVL[0].G[1]:k==='D'?i<TRIAL_D:false;return i<FREE[k]||!!S.prem||!!(S.unl&&S.unl[k+i])}
 function premTxt(){return webLite()?'⭐ للمشتركين · اشترك لتفتحه':'Premium أو شاهد إعلاناً'}
@@ -1910,14 +1912,14 @@ var INV=null;
 function invLoad(){if(INV||!webApp()||!navigator.onLine)return;INV={busy:true};fetch('/api/invite',{credentials:'same-origin'}).then(function(r){return r.ok?r.json():null}).then(function(j){INV=j&&j.link?j:{err:1};
 if(INV.n>(S.invn||0)){var k=INV.n-(S.invn||0);S.invn=INV.n;save();try{celebrate([k>1?'🎉 سجّل '+k+' من أصدقائك من رابطك!':'🎉 سجّل صديق من رابطك!',INV.forever?'شكراً لأنك تنشر التطبيق 💙':'ربحت '+(k*INV.days)+' أيام من الاشتراك الكامل'])}catch(e){}}
 try{if(tab==='me')render()}catch(e){}}).catch(function(){INV={err:1}})}
-function inviteCard(){if(!webApp()||!S.xp)return'';return'<button class="row" onclick="go(\'me\')"><div><div style="font-weight:600">🎁 ادعُ صديقاً</div><div class="mu">أيام من الاشتراك الكامل لك ولصديقك</div></div><span class="mu">‹</span></button>'}
+function inviteCard(){if(!webApp()||!S.xp)return'';return'<button class="row" onclick="go(\'me\')"><div><div style="font-weight:600">🎁 ادعُ صديقاً</div><div class="mu">أيام تفتح كل الدروس لك ولصديقك</div></div><span class="mu">‹</span></button>'}
 function inviteBox(){if(!webApp())return'';invLoad();if(!INV||INV.busy||INV.err)return'';
-var msg='أتعلّم الفارسية بتطبيق «الفارسية من الصفر»، وهو ممتاز للعرب. سجّل من رابطي واحصل على '+INV.days+' أيام من الاشتراك الكامل مجاناً: '+INV.link;
-return'<div class="det" style="text-align:start"><b>🎁 ادعُ صديقاً</b><p style="margin:6px 0">إذا سجّل صديق جديد من رابطك، يحصل كلٌّ منكما على <b>'+INV.days+' أيام من الاشتراك الكامل</b> مجاناً، مع پارسا'+(INV.max?' (حتى '+INV.max+' أصدقاء)':'')+'.</p>'
+var msg='أتعلّم الفارسية بتطبيق «الفارسية من الصفر»، وهو ممتاز للعرب. سجّل من رابطي واحصل على '+INV.days+' أيام تفتح كل الدروس مجاناً: '+INV.link;
+return'<div class="det" style="text-align:start"><b>🎁 ادعُ صديقاً</b><p style="margin:6px 0">إذا سجّل صديق جديد من رابطك، يحصل كلٌّ منكما على <b>'+INV.days+' أيام تفتح كل الدروس والمحتوى</b> مجاناً، عدا الرحلة مع پارسا فهي للمشتركين'+(INV.max?' (حتى '+INV.max+' أصدقاء)':'')+'.</p>'
 +'<div dir="ltr" style="font-size:14px;background:var(--bg);border-radius:10px;padding:8px;word-break:break-all;font-family:monospace">'+hesc(INV.link)+'</div>'
 +'<div class="btns" style="margin-top:8px"><a class="btn" style="text-decoration:none;text-align:center" target="_blank" rel="noopener" href="https://wa.me/?text='+encodeURIComponent(msg)+'">واتساب</a><button class="btn alt" onclick="invShare()">'+(navigator.share?'مشاركة':'نسخ الرابط')+'</button></div>'
 +(INV.n?'<p class="mu" style="margin:8px 0 0">🎉 سجّل من رابطك: '+INV.n+(INV.forever?'':' · ربحت '+(INV.n*INV.days)+' يوماً')+'</p>':'')+(INV.forever?'<p class="mu" style="margin:6px 0 0">اشتراكك دائم، فالأيام الإضافية لصديقك.</p>':'')+'</div>'}
-function invShare(){var t='أتعلّم الفارسية بتطبيق «الفارسية من الصفر». سجّل من رابطي واحصل على '+INV.days+' أيام من الاشتراك الكامل مجاناً:';if(navigator.share){navigator.share({title:'الفارسية من الصفر',text:t,url:INV.link}).catch(function(){});return}
+function invShare(){var t='أتعلّم الفارسية بتطبيق «الفارسية من الصفر». سجّل من رابطي واحصل على '+INV.days+' أيام تفتح كل الدروس مجاناً:';if(navigator.share){navigator.share({title:'الفارسية من الصفر',text:t,url:INV.link}).catch(function(){});return}
 try{navigator.clipboard.writeText(t+' '+INV.link).then(function(){toast('نُسخ الرابط')},function(){toast(INV.link)})}catch(e){toast(INV.link)}}
 // 🔓 Admin preview: /?open=all opens every lesson, rule, conversation, story, chapter and exam in this browser,
 // only after the server confirms the signed-in account is an admin (GET /api/chat → admin). /?open=off ends it.
@@ -1957,7 +1959,7 @@ function subCopy(i){var v=ME.pay.methods[i].value;try{navigator.clipboard.writeT
 // What the learner has built, shown where they decide whether to subscribe.
 function progLine(){var w=cnt(S.srs),l=cnt(S.pass),d=cnt(S.dp),p=[];if(w)p.push('<b>'+cw(w,'كلمات','كلمة')+'</b>');if(l)p.push('<b>'+cw(l,'دروس','درس','درسين')+'</b>');if(d)p.push('<b>'+cw(d,'محادثات','محادثة','محادثتين')+'</b>');if(S.st>1)p.push('سلسلة <b>'+cw(S.st,'أيام','يوماً','يومين')+'</b> 🔥');return p.length?'تعلّمت حتى الآن '+p.join(' و')+'.':''}
 function subBtn(t){if(bkNative())return'<a class="btn" style="display:block;text-align:center;text-decoration:none" href="'+SITE+'/welcome" target="_blank" rel="noopener">🌐 اشترك وادخل من الموقع</a>';return ME&&ME.pay?'<button class="btn" style="width:100%" onclick="closeSheet();subOpen()">💳 '+(t||'اشترك')+'</button>':'<a class="btn" style="display:block;text-align:center;text-decoration:none" href="'+(ME?meMail():'#')+'">✉️ راسلنا للاشتراك</a>'}
-function freeGate(what){var pl=progLine();sheet('<h2 style="margin-top:0">⭐ للمشتركين</h2><p>'+(what||'هذا المحتوى')+' ضمن الاشتراك.</p>'+(webLite()?'<p class="mu">النسخة المجانية تفتح المستوى الأول كاملاً دائماً، ولمحة من كل قسم.</p>':'')+(pl?'<p class="mu">'+pl+' تابع من حيث وصلت.</p>':'')+'<p style="line-height:2">مع الاشتراك تفتح:<br>📘 كل الدروس الـ'+LES.length+'<br>✍️ القواعد وتصريف '+V.length+' فعلاً<br>💬 المحادثات والقراءة وتمثيل الحوار<br>📖 كل القصص القصيرة بالصوت<br>🎤 التكلّم بالصوت و📕 دفتر أخطائي<br>🧳 رحلتك إلى إيران كاملة: '+TRIP.length+' فصلاً مع پارسا بالذكاء الاصطناعي</p><div class="btns">'+subBtn()+'</div><div class="btns"><button class="btn alt" style="border-color:var(--bd);color:var(--mu)" onclick="closeSheet()">ليس الآن</button></div>')}
+function freeGate(what){var pl=progLine();sheet('<h2 style="margin-top:0">⭐ للمشتركين</h2><p>'+(what||'هذا المحتوى')+' ضمن الاشتراك.</p>'+(webLite()?'<p class="mu">النسخة المجانية تفتح المستوى الأول كاملاً دائماً، ولمحة من كل قسم.</p>':ME&&ME.gift?'<p class="mu">هدية الدعوة تفتح كل الدروس والمحتوى، عدا الرحلة مع پارسا: هي للمشتركين.</p>':'')+(pl?'<p class="mu">'+pl+' تابع من حيث وصلت.</p>':'')+'<p style="line-height:2">مع الاشتراك تفتح:<br>📘 كل الدروس الـ'+LES.length+'<br>✍️ القواعد وتصريف '+V.length+' فعلاً<br>💬 المحادثات والقراءة وتمثيل الحوار<br>📖 كل القصص القصيرة بالصوت<br>🎤 التكلّم بالصوت و📕 دفتر أخطائي<br>🧳 رحلتك إلى إيران كاملة: '+TRIP.length+' فصلاً مع پارسا بالذكاء الاصطناعي</p><div class="btns">'+subBtn()+'</div><div class="btns"><button class="btn alt" style="border-color:var(--bd);color:var(--mu)" onclick="closeSheet()">ليس الآن</button></div>')}
 // Suggests the daily reminder on the home page after the first steps; it lives under Progress, where
 // few would find it, and it is what brings learners back (and says when the trial is ending).
 function remAskCard(){try{if(!remOk()||(S.rem&&S.rem.on)||S.remAsk||S.xp<20||webFree()&&!S.st)return''}catch(e){return''}
@@ -2110,7 +2112,7 @@ for(var v in vo)if(v.length>=4&&tripLev(n,v)===1){sw.push(w+' → '+vo[v]);retur
 var REC={on:false};
 function micOk(){try{return!!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia&&window.MediaRecorder)}catch(e){return false}}
 function aiMic(){if(AIC.busy)return;if(REC.on){try{REC.mr.stop()}catch(e){}return}
-if(webLite()&&AIC.c!==0){freeGate('التكلّم بالصوت');return}
+if(pLite()&&AIC.c!==0){freeGate('التكلّم بالصوت');return}
 navigator.mediaDevices.getUserMedia({audio:true}).then(function(st){var ty=['audio/webm;codecs=opus','audio/webm','audio/mp4'].filter(function(x){try{return MediaRecorder.isTypeSupported(x)}catch(e){return false}})[0];
 var mr=new MediaRecorder(st,ty?{mimeType:ty}:undefined),ch=[];REC={on:true,mr:mr};
 mr.ondataavailable=function(e){if(e.data&&e.data.size)ch.push(e.data)};
@@ -2168,7 +2170,7 @@ function trip(i){S.trip=S.trip||{};return S.trip[i]||{done:[]}}
 // The next chapter the learner can play now, or null.
 function tripNext(){for(var i=0;i<TRIP.length;i++)if(!tripDone(i))return tripLock(i)?null:i;return null}
 function tripDone(i){return!!trip(i).stars}
-function tripLock(i){if(OPEN)return'';if(webLite()&&i>0)return'⭐ للمشتركين';if(i>0&&!tripDone(i-1)&&i>LVL[plc()].T[0]&&i!==LVL[lvOf(i,'T')].T[0])return'🔒 أنهِ الفصل السابق';if(!tripDone(i)&&i>LVL[plc()].T[0]&&!lvGate('T',i)){var tk=lvOf(i,'T');return'🔒 أكمل دروس المستوى '+tk+' «'+LVL[tk-1].n+'» وقواعده ومحادثاته أولاً ('+lvReqPct(tk-1)+'٪ حتى الآن)'}var r=TRIP[i].req;if(r>=0&&!(S.pass&&S.pass[r])&&r>=LVL[plc()].L[0])return'🔒 أنهِ درس «'+LES[r].t+'» أولاً';return''}
+function tripLock(i){if(OPEN)return'';if(pLite()&&i>0)return'⭐ للمشتركين';if(i>0&&!tripDone(i-1)&&i>LVL[plc()].T[0]&&i!==LVL[lvOf(i,'T')].T[0])return'🔒 أنهِ الفصل السابق';if(!tripDone(i)&&i>LVL[plc()].T[0]&&!lvGate('T',i)){var tk=lvOf(i,'T');return'🔒 أكمل دروس المستوى '+tk+' «'+LVL[tk-1].n+'» وقواعده ومحادثاته أولاً ('+lvReqPct(tk-1)+'٪ حتى الآن)'}var r=TRIP[i].req;if(r>=0&&!(S.pass&&S.pass[r])&&r>=LVL[plc()].L[0])return'🔒 أنهِ درس «'+LES[r].t+'» أولاً';return''}
 function tripLevel(){var n=cnt(S.pass);return n<4?0:n<10?1:2}
 function tripStars(n){return'⭐'.repeat(n)+'☆'.repeat(3-n)}
 // The chapter conversation is kept on this device for the day, so leaving and coming back continues it.
@@ -2200,9 +2202,9 @@ function aiUseHint(k){var el=document.getElementById('aiin'),hn=aiHints()[k];if(
 // Parsa needs a signed-in account on the server, so the Android app (no account) links to the site instead;
 // Capacitor opens other sites in the phone's browser.
 function aiCard(){if(bkNative())return'<a class="row" href="https://parsa-farsi.pages.dev/welcome" target="_blank" rel="noopener" style="border-color:var(--pr);text-decoration:none;color:inherit"><div><div style="font-weight:600">🤖 تحدّث مع پارسا في الموقع</div><div class="mu">🧳 رحلتك إلى إيران: '+TRIP.length+' فصلاً تتكلّم فيها الفارسية مع پارسا. تحتاج إلى حساب، فتُفتح في المتصفح.</div></div><span class="mu">‹</span></a>';
-if(!webApp())return'';var tr=webLite();return'<button class="row" style="border-color:var(--pr)" onclick="aiOpen()"><div><div style="font-weight:600">🤖 تحدّث مع پارسا</div><div class="mu">'+(tr?'🎁 جرّب الفصل الأول مجاناً · ':'')+'🧳 رحلتك إلى إيران: '+TRIP.length+' فصلاً بمهام تنجزها بالكلام بالفارسية، ويصحّح أخطاءك</div></div><span class="mu">‹</span></button>'}
+if(!webApp())return'';var tr=pLite();return'<button class="row" style="border-color:var(--pr)" onclick="aiOpen()"><div><div style="font-weight:600">🤖 تحدّث مع پارسا</div><div class="mu">'+(tr?'🎁 جرّب الفصل الأول مجاناً · ':'')+'🧳 رحلتك إلى إيران: '+TRIP.length+' فصلاً بمهام تنجزها بالكلام بالفارسية، ويصحّح أخطاءك</div></div><span class="mu">‹</span></button>'}
 function aiOpen(){AIC.open=true;AIC.s=null;AIC.c=null;AIC.err='';render();scrollTo(0,0);fetch('/api/chat',{credentials:'same-origin'}).then(function(r){return r.ok?r.json():null}).then(function(j){if(!j)return;AIC.left=j.left;AIC.limit=j.limit;AIC.admin=!!j.admin;AIC.models=j.models||[];if(!AIC.model&&AIC.models.length)AIC.model=AIC.models[0];render()}).catch(function(){})}
-function aiStart(i){if(webLite()){freeGate('المواقف الحرّة مع پارسا');return}AIC.s=i;AIC.c=null;AIC.hints=[];AIC.showHints=false;AIC.msgs=[];AIC.err='';render();scrollTo(0,0);aiAsk()}
+function aiStart(i){if(pLite()){freeGate('المواقف الحرّة مع پارسا');return}AIC.s=i;AIC.c=null;AIC.hints=[];AIC.showHints=false;AIC.msgs=[];AIC.err='';render();scrollTo(0,0);aiAsk()}
 function aiAsk(){if(AIC.busy)return;AIC.busy=true;AIC.err='';render();aiBottom();
 fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({s:AIC.s,model:AIC.model,msgs:AIC.msgs.filter(function(m){return m.r!=='n'}).map(function(m){return{r:m.r,t:m.t}})})})
 .then(function(r){return r.json().catch(function(){return{}}).then(function(j){j.status=r.status;return j})})
