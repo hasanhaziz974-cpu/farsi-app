@@ -361,6 +361,16 @@ export const CHAPTERS = [
     tasks: ["present your idea", "explain the market size", "describe your team and progress", "say how much you need and for what"] },
   { role: "Hasan, a tech-savvy Iranian friend of the learner, who gets a phone call from the learner about a suspicious SMS",
     tasks: ["describe the message you received", "ask how he knew it was fake", "tell him about your friend who was scammed", "ask how to stay safe"] },
+  { role: "Ms. Karimi, a Persian literature professor at the University of Tehran, asking the learner (an Iraqi student) to explain a Hafez ghazal in class",
+    tasks: ["say which verse and poet you chose", "explain its meaning simply", "name the poetic form and its radif", "ask about the takhallos"] },
+  { role: "an Iranian grandmother hosting the learner on Yalda night, reading a Hafez fal (divination) for him",
+    tasks: ["say you made your intention", "ask the meaning of a word in the verse", "say what you are waiting for", "thank her and promise sweets"] },
+  { role: "the host of a weekly poetry night in a Tehran bookshop, inviting the learner (an Iraqi poetry lover) to read a verse",
+    tasks: ["introduce yourself modestly", "recite a verse by Saadi", "explain why you chose it", "offer to read an Arabic poem too"] },
+  { role: "a bookseller at the Tehran International Book Fair recommending a modern Persian novel to the learner (an Iraqi reader)",
+    tasks: ["say what kind of book you want", "ask what the story is about", "ask whether the language is easy", "decide what to buy"] },
+  { role: "Sara, an Iranian literary translator helping the learner translate a verse by Saadi into Arabic",
+    tasks: ["say which verse you want to translate", "explain who «او» refers to", "describe the problem with your translation", "suggest a solution"] },
 ];
 
 
