@@ -463,7 +463,7 @@ return '<h2>تقدّمي</h2><div class="stats">'+tile('🔥',live?S.st:0,'أي�
 // 🔓 For the admin only (ME.admin from /api/me): open every lock in this browser, or put them back, without the links.
 function adminBox(){if(!ME||!ME.admin)return'';return'<div class="det" style="text-align:start;border-color:var(--ac)"><b>🛠️ للمدير</b><div class="mu" style="margin:4px 0 8px">'+(OPEN?'كل المحتوى مفتوح الآن في هذا المتصفح.':'المحتوى مقفل بالترتيب كما يراه المتعلّم.')+' الفتح للعرض فقط ولا يغيّر تقدّمك.</div><div class="btns">'+(OPEN?'<button class="btn alt" onclick="location.href=\'/?open=off\'">🔒 أعد القفل كما يراه المتعلّم</button>':'<button class="btn" onclick="location.href=\'/?open=all\'">🔓 افتح كل المحتوى</button>')+'</div></div>'}
 var SETV=false;
-function setView(){return'<button class="back" onclick="SETV=false;render()">› رجوع لتقدّمي</button><h2>⚙️ الإعدادات</h2>'+reminderBox()+backupBox()+settingsBox()+installBox(true)+packBox()
+function setView(){return'<button class="back" onclick="SETV=false;render()">› رجوع لتقدّمي</button><h2>⚙️ الإعدادات</h2>'+reminderBox()+backupBox()+settingsBox()+installBox(true)+packBox()+appVer()
 +'<div style="text-align:center;margin:4px 0 8px"><button class="lnk-no" onclick="resetAll()">إعادة تعيين التقدّم</button></div>'}
 function resetAll(){if(!confirm('سيُحذف كل تقدّمك في هذا الجهاز ولا يمكن التراجع. هل أنت متأكد؟'))return;S={xp:0,st:0,last:'',srs:{},v:28,prem:S.prem,rem:S.rem,remDay:S.remDay,sfx:S.sfx,resetAt:Date.now()};resetVolatile();save();render();top_()}
 
@@ -1100,8 +1100,8 @@ var TRIAL_D=5;
 function allowed(k,i){if(OPEN)return true;if(webLite())return k==='L'?i<LVL[0].L[1]:k==='G'?i<LVL[0].G[1]:k==='D'?i<TRIAL_D:false;return i<FREE[k]||!!S.prem||!!(S.unl&&S.unl[k+i])}
 function premTxt(){return webLite()?'⭐ للمشتركين · اشترك لتفتحه':'Premium أو شاهد إعلاناً'}
 function AV(){return V.filter(function(v,i){return allowed('V',i)})}
-function sheet(h){closeSheet();var d=document.createElement('div');d.id='sh';d.className='ov';d.innerHTML='<div class="sh">'+h+'</div>';d.onclick=function(e){if(e.target===d)closeSheet()};document.body.appendChild(d)}
-function closeSheet(){var d=document.getElementById('sh');if(d&&d.remove)d.remove()}
+function sheet(h){closeSheet();var d=document.createElement('div');d.id='sh';d.className='ov';d.innerHTML='<div class="sh">'+h+'</div>';d.onclick=function(e){if(e.target===d)closeSheet()};document.body.appendChild(d);if(typeof cwSync==='function')cwSync()}
+function closeSheet(){var d=document.getElementById('sh');if(d&&d.remove)d.remove();if(typeof cwSync==='function')cwSync()}
 function openItem(k,i){if(k==='L')sub=i;else if(k==='G')G=i;else if(k==='D')D=i;else{CV=i;CT=0}render()}
 function nextDlg(){var n=D+1;if(allowed('D',n)){D=n;render()}else{D=null;render();gate('D',n)}}
 function gate(k,i){if(webLite()){freeGate(NM[k]);return}var h='<h2 style="margin-top:0">⭐ محتوى Premium</h2><p>'+NM[k]+' ضمن النسخة المدفوعة.</p>';
@@ -1637,7 +1637,7 @@ window.addEventListener('unhandledrejection',function(e){var r=e.reason;repErr('
 function fbLink(){return webApp()?'<p style="text-align:center;margin:30px 0 6px"><button class="btn alt" style="padding:6px 14px;font-size:14px;border-color:var(--bd);color:var(--mu)" onclick="fbOpen()">💬 لديك ملاحظة؟ أخبرنا</button></p>':''}
 function fbOpen(){var w=whereNow();sheet('<h2 style="margin-top:0">💬 لديك ملاحظة؟</h2><p class="mu">اكتب لنا أي شيء: ترجمة أو نطق لم يبدُ لك صحيحاً، أو شيء لا يعمل، أو فكرة تريدها في التطبيق. نقرأ كل رسالة.</p><textarea id="fbt" rows="5" maxlength="1000" style="width:100%;font:inherit;padding:10px;border-radius:10px;border:1px solid var(--bd);background:var(--sf);color:var(--tx)" placeholder="مثلاً: في هذا الدرس معنى كلمة … خطأ"></textarea><p class="mu" style="font-size:13px">الصفحة: '+w.replace(/[<>&]/g,'')+'</p><div class="btns"><button class="btn" onclick="fbSend()">إرسال</button><button class="btn alt" onclick="closeSheet()">إلغاء</button></div>');setTimeout(function(){var t=document.getElementById('fbt');if(t)t.focus()},100)}
 function fbSend(){var t=document.getElementById('fbt'),v=t?t.value.trim():'';if(v.length<3){toast('اكتب ملاحظتك أولاً');return}fetch('/api/report',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({type:'fb',t:v,w:whereNow()})}).then(function(r){if(r.status===429)throw 'limit';if(!r.ok)throw 0;closeSheet();toast('شكراً! وصلت ملاحظتك 🙏')}).catch(function(x){toast(x==='limit'?'أرسلت ملاحظات كثيرة اليوم، شكراً لك':'تعذّر الإرسال، تحقق من الإنترنت')})}
-function render(){var y0=window.scrollY||0,k0=SKEY,st=STAY!==null;try{planCheck()}catch(e){}try{render0();try{var mn=document.getElementById('main');if(mn&&webApp())mn.insertAdjacentHTML('beforeend',fbLink())}catch(x){}markFa();SKEY=scrKey();if(!st&&k0)scrBack(k0,y0)}catch(e){try{console.error(e);repErr('render: '+(e&&e.message?e.message:String(e))+(e&&e.stack?' | '+String(e.stack).split('\n').slice(1,3).join(' '):''),location.href);document.getElementById('main').innerHTML='<div class="det"><div class="big">⚠️</div><p>حدث خطأ غير متوقع، وتقدّمك محفوظ.</p><div class="btns"><button class="btn" onclick="rescue()">العودة للرئيسية</button></div></div>'}catch(x){}}}
+function render(){var y0=window.scrollY||0,k0=SKEY,st=STAY!==null;try{planCheck()}catch(e){}try{render0();try{var mn=document.getElementById('main');if(mn&&webApp())mn.insertAdjacentHTML('beforeend',fbLink())}catch(x){}markFa();SKEY=scrKey();if(!st&&k0)scrBack(k0,y0);if(typeof cwSync==='function')cwSync()}catch(e){try{console.error(e);repErr('render: '+(e&&e.message?e.message:String(e))+(e&&e.stack?' | '+String(e.stack).split('\n').slice(1,3).join(' '):''),location.href);document.getElementById('main').innerHTML='<div class="det"><div class="big">⚠️</div><p>حدث خطأ غير متوقع، وتقدّمك محفوظ.</p><div class="btns"><button class="btn" onclick="rescue()">العودة للرئيسية</button></div></div>'}catch(x){}}}
 window.onerror=function(){try{toast('حدث خطأ بسيط، حاول مرة أخرى')}catch(e){}return false};
 var AC=null;
 function sfx(k){try{if(S.sfx===0)return;if(!AC){var C=window.AudioContext||window.webkitAudioContext;if(!C)return;AC=new C()}if(AC.state==='suspended')AC.resume();
@@ -2250,14 +2250,20 @@ function instHide(){S.instHide=1;save();render();toast('لن تظهر هذه ا�
 if(webApp()){
 // The phone's back button (and the back gesture) goes back inside the app: it closes an open sheet, or presses the
 // screen's own ‹ back button, or returns to the lessons; only on the lessons screen does it leave the app.
-// Chrome skips history entries a page adds without the user touching it, so an entry is added only when a tap
-// opens a new screen or a sheet (never at load, never on a back press); each back press then goes up one step.
-var NAVK=null,NAVB=false;
+// Chrome (Android, version 120 and later): a CloseWatcher, made for this, is kept while there is somewhere to go
+// back to, and the back press closes it instead of leaving the page (cwSync, after every render and sheet).
+// Other browsers: a history entry is added when a tap opens a new screen or a sheet (Chrome skips entries a page
+// adds without a tap), and each back press goes up one step.
+var NAVK=null,NAVB=false,CW=null;
 function navKey(){return scrKey()+'|'+!!document.getElementById('sh')}
+// The app version, for support: the hash of the code (/app.js?v=…) on the web, the build number in the Android app.
+function appVer(){var v='';try{var sc=document.querySelector('script[src*="app.js"]');v=sc?(sc.getAttribute('src').split('v=')[1]||''):(window.APP_BUILD?'build '+window.APP_BUILD:'')}catch(e){}return v?'<p class="mu" style="text-align:center;font-size:12px;direction:ltr">v '+hesc(v)+'</p>':''}
+function canBack(){var m=document.getElementById('main');return!!(document.getElementById('sh')||(m&&m.querySelector('.back'))||tab!=='home')}
 function sysBack(){if(document.getElementById('sh')){closeSheet();return true}var m=document.getElementById('main'),b=m&&m.querySelector('.back');if(b){b.click();return true}if(tab!=='home'){go('home');scrollTo(0,0);return true}return false}
-try{addEventListener('click',function(e){NAVK=NAVB||(e.target&&e.target.closest&&e.target.closest('.back'))?null:navKey()},true);
+function cwSync(){if(!window.CloseWatcher||NAVB)return;try{if(canBack()){if(!CW){CW=new CloseWatcher();CW.onclose=function(){CW=null;NAVB=true;try{sysBack()}finally{NAVB=false}cwSync()}}}else if(CW){var c=CW;CW=null;c.destroy()}}catch(e){}}
+try{if(!window.CloseWatcher){addEventListener('click',function(e){NAVK=NAVB||(e.target&&e.target.closest&&e.target.closest('.back'))?null:navKey()},true);
 addEventListener('click',function(){var k=NAVK;NAVK=null;if(k!==null&&navKey()!==k)history.pushState({parsa:1},'')});
-addEventListener('popstate',function(){NAVB=true;var ok=false;try{ok=sysBack()}finally{NAVB=false}if(!ok)history.back()})}catch(e){}
+addEventListener('popstate',function(){NAVB=true;var ok=false;try{ok=sysBack()}finally{NAVB=false}if(!ok)history.back()})}}catch(e){}
 if('serviceWorker' in navigator){navigator.serviceWorker.addEventListener('message',function(e){if(e.data==='parsa-reload')location.reload();else if(e.data==='parsa-updated')toast('🔄 وصل محتوى جديد، ويظهر عند فتح التطبيق مرة أخرى')})}if('serviceWorker' in navigator)window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});
 // Ask the browser not to clear the progress kept in this site's storage when the phone is short of space.
 try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persisted().then(function(p){if(!p)navigator.storage.persist()})}catch(e){}
