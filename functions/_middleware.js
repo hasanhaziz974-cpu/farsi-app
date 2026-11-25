@@ -56,15 +56,41 @@ const CACHE = [
 // build copies only the site's files to www, so these are not published; a 404 for everyone in case that changes.
 const INTERNAL = /^\/(tools|tests|lib|workers|store|functions|\.github)(\/|$)|^\/(README\.md|package(-lock)?\.json|capacitor\.config\.json|icon-only\.png|\.gitignore)$|\.(py|pyc|gs|md)$/i;
 
+// The recorded pronunciation is deployed in packs (tools/pack-audio.js: audio/p/<first 3 hex>.bin), because Pages
+// takes at most 20,000 files. /audio/<hex>.mp3 is answered from its pack, with byte ranges for the audio
+// player (Safari asks for them). Without the pack (a deployment of the separate files) the file itself is served.
+async function packedAudio({ request, env, next }, name) {
+  const at = new URL('/audio/p/' + name.slice(0, 3) + '.bin', request.url);
+  const pk = env.ASSETS ? await env.ASSETS.fetch(new Request(at)) : await next(new Request(at));
+  if (!pk || pk.status !== 200) return null;
+  const buf = new Uint8Array(await pk.arrayBuffer());
+  if (buf.length < 4) return null;
+  const hl = ((buf[0] << 24) | (buf[1] << 16) | (buf[2] << 8) | buf[3]) >>> 0;
+  let head;
+  try { head = JSON.parse(new TextDecoder().decode(buf.subarray(4, 4 + hl))); } catch (e) { return null; }
+  const e = head[name];
+  if (!e) return new Response('Not found', { status: 404 });
+  const body = buf.subarray(4 + hl + e[0], 4 + hl + e[0] + e[1]), size = body.length;
+  const headers = { 'Content-Type': 'audio/mpeg', 'Accept-Ranges': 'bytes' };
+  const r = /^bytes=(\d*)-(\d*)$/.exec(request.headers.get('Range') || '');
+  if (r && (r[1] || r[2])) {
+    let a = r[1] ? Number(r[1]) : Math.max(0, size - Number(r[2])), b = r[1] && r[2] ? Math.min(Number(r[2]), size - 1) : size - 1;
+    if (a > b || a >= size) return new Response(null, { status: 416, headers: { 'Content-Range': 'bytes */' + size } });
+    return new Response(body.slice(a, b + 1), { status: 206, headers: { ...headers, 'Content-Range': `bytes ${a}-${b}/${size}`, 'Content-Length': String(b - a + 1) } });
+  }
+  return new Response(body.slice(), { headers: { ...headers, 'Content-Length': String(size) } });
+}
+
 export async function onRequest(context) {
   let path0 = '/';
   try {
     path0 = decodeURIComponent(new URL(context.request.url).pathname);
   } catch (e) {}
-  const res = INTERNAL.test(path0) ? new Response('Not found', { status: 404 }) : await handle(context);
+  const au = /^\/audio\/([0-9a-f]{1,8}\.mp3)$/.exec(path0);
+  const res = INTERNAL.test(path0) ? new Response('Not found', { status: 404 }) : (au && (await packedAudio(context, au[1]))) || (await handle(context));
   const out = new Response(res.body, res);
   for (const [k, v] of Object.entries(SECURITY)) out.headers.set(k, v);
-  if (out.status === 200) {
+  if (out.status === 200 || out.status === 206) {
     const path = new URL(context.request.url).pathname;
     const rule = CACHE.find(([re]) => re.test(path));
     if (rule) out.headers.set('Cache-Control', rule[1]);

@@ -43,8 +43,9 @@ OLD_OPEN_POLICY_NAME = 'Open to everyone (temporary)'
 TRIAL_POLICY_NAME = 'Trial: anyone who signs in'
 PUBLIC_POLICY_NAME = 'Public pages: no sign-in'
 KV_TITLE = 'farsi-trials'
-# What Cloudflare Pages copies into the site. Every file the web version serves must be listed here.
-BUILD_COMMAND = 'mkdir -p www && cp -r index.html bridge.js sw.js fonts audio welcome login pwa 404.html www/'
+# What Cloudflare Pages copies into the site. Every file the web version serves must be listed here. The audio goes
+# in 4,096 packs (tools/pack-audio.js), since Pages takes at most 20,000 files per deployment on this plan.
+BUILD_COMMAND = 'mkdir -p www && cp -r index.html bridge.js sw.js fonts welcome login pwa 404.html www/ && node tools/pack-audio.js audio www/audio'
 # How long a sign-in lasts before Cloudflare asks for the email again (its maximum is a month).
 # Access periods are enforced on every page load by functions/_middleware.js, not by this.
 SESSION = os.environ.get('ACCESS_SESSION') or '720h'

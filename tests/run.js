@@ -496,6 +496,32 @@ async function server() {
   await zaincash();
   await inviteGift();
   await appSplit();
+  await audioPacks();
+}
+
+// The site gets the audio in packs (tools/pack-audio.js, Pages takes at most 20,000 files); /audio/<name>.mp3 is
+// answered from its pack, the same bytes, with byte ranges; and the separate files still work without packs.
+async function audioPacks() {
+  const os = require('os'), dir = fs.mkdtempSync(path.join(os.tmpdir(), 'packs-')), src = path.join(dir, 'src'), out = path.join(dir, 'out');
+  fs.mkdirSync(src);
+  const files = { 'abc123.mp3': Buffer.from('first file bytes'), 'abc9f.mp3': Buffer.from('second'), '1f2e3d4c.mp3': Buffer.alloc(3000, 7) };
+  for (const [n, b] of Object.entries(files)) fs.writeFileSync(path.join(src, n), b);
+  fs.writeFileSync(path.join(src, 'manifest.json'), '{}');
+  require(path.join(ROOT, 'tools/pack-audio.js')).pack(src, out);
+  const { onRequest } = await import(path.join(ROOT, 'functions/_middleware.js'));
+  const from = (base) => async (r) => { const f = path.join(base, new URL(r.url).pathname.replace(/^\/audio\//, '')); return fs.existsSync(f) ? new Response(fs.readFileSync(f)) : new Response('nf', { status: 404, headers: { 'Content-Type': 'text/html' } }); };
+  const get = (base, n, h) => { const req = new Request('https://site.dev/audio/' + n, { headers: h || {} }); return onRequest({ request: req, env: { ASSETS: { fetch: from(base) } }, next: (r) => from(base)(r || req) }); };
+  if (fs.readdirSync(path.join(out, 'p')).length !== 2) fail('server', 'audio packs: expected 2 packs for 3 files');
+  for (const [n, b] of Object.entries(files)) {
+    const r = await get(out, n), got = Buffer.from(await r.arrayBuffer());
+    if (r.status !== 200 || !got.equals(b) || r.headers.get('Content-Type') !== 'audio/mpeg') fail('server', 'audio packs: ' + n + ' answers ' + r.status + ' with other bytes');
+  }
+  const part = await get(out, '1f2e3d4c.mp3', { Range: 'bytes=10-19' });
+  if (part.status !== 206 || part.headers.get('Content-Range') !== 'bytes 10-19/3000' || (await part.arrayBuffer()).byteLength !== 10) fail('server', 'audio packs: no byte range');
+  if ((await get(out, 'abc0000.mp3')).status !== 404) fail('server', 'audio packs: a missing file is not 404');
+  const plain = await get(src, 'abc9f.mp3');
+  if (plain.status !== 200 || (await plain.text()) !== 'second') fail('server', 'audio without packs: the separate file is not served');
+  fs.rmSync(dir, { recursive: true, force: true });
 }
 
 // Signed in, the page comes with its inline script apart (/app.js?v=<hash>), and /app.js answers that script, kept
