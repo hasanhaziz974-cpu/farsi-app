@@ -30,6 +30,24 @@ function isMedia(url) {
   return /^\/(fonts|audio)\//.test(url.pathname) || /^\/pwa\/.*\.png$/.test(url.pathname) || url.pathname === '/bridge.js';
 }
 
+// Fetches and saves one version of the app's code, once even when the page and the background update ask
+// together; older versions are dropped. Answers the saved copy, or null when it could not be saved.
+const appLoads = new Map();
+function getApp(href) {
+  if (!appLoads.has(href)) {
+    appLoads.set(href, (async () => {
+      const cache = await caches.open(MEDIA);
+      if (!(await cache.match(href))) {
+        const res = await fetch(href, { credentials: 'same-origin' });
+        if (!(res.ok && res.type === 'basic' && !res.redirected)) return;
+        await cache.put(href, res);
+        for (const k of await cache.keys()) if (new URL(k.url).pathname === '/app.js' && k.url !== href) await cache.delete(k);
+      }
+    })().catch(() => {}).finally(() => appLoads.delete(href)));
+  }
+  return appLoads.get(href).then(() => caches.match(href, { cacheName: MEDIA })).then((r) => r || null);
+}
+
 self.addEventListener('fetch', (e) => {
   const req = e.request;
   if (req.method !== 'GET') return;
@@ -37,23 +55,30 @@ self.addEventListener('fetch', (e) => {
   if (url.origin !== self.location.origin) return;
 
   if (req.mode === 'navigate' && isAppPage(url)) {
-    // The page is large (all the lessons are in it), so a saved copy opens at once and the network copy
-    // replaces it in the background for the next visit. The sign-in check still runs on every visit: when the
-    // background request is sent to the sign-in page (signed out), the saved copy is dropped and the page reloads.
-    const fresh = (async () => {
-      const res = await fetch(req);
+    // The page opens from the saved copy at once and the network copy replaces it in the background for the next
+    // visit. The sign-in check still runs on every visit: when the background request is sent to the sign-in page
+    // (signed out), the saved copy is dropped and the page reloads. The site serves the app's code apart, as
+    // /app.js?v=<hash> (functions/_middleware.js); the new page is saved only once its code is saved, so a saved
+    // page always finds its code here.
+    const net = fetch(req).then((res) => ({ res, page: res.clone(), text: res.clone() }));
+    const stored = net.then(async ({ res, page, text }) => {
       const cache = await caches.open(APP);
       if (res.ok && res.type === 'basic' && !res.redirected) {
-        await cache.put(PAGE, res.clone());
+        const m = (await text.text()).match(/<script src="(\/app\.js\?v=[0-9a-f]+)"/);
+        if (m) await getApp(new URL(m[1], url).href);
+        await cache.put(PAGE, page);
       } else if (res.type === 'opaqueredirect' || res.redirected || res.status === 403) {
         await cache.delete(PAGE);
       }
       return res;
-    })();
+    });
     e.respondWith((async () => {
       const cached = await caches.match(PAGE, { cacheName: APP });
-      if (!cached) return fresh;
-      e.waitUntil(fresh.then(async (res) => {
+      if (!cached) {
+        e.waitUntil(stored.catch(() => {}));
+        return (await net).res;
+      }
+      e.waitUntil(stored.then(async (res) => {
         const out = res.type === 'opaqueredirect' || res.redirected || res.status === 403;
         const tag = (r) => r.headers.get('ETag') || '';
         const msg = out ? 'parsa-reload' : res.ok && tag(res) && tag(res) !== tag(cached) ? 'parsa-updated' : '';
@@ -66,6 +91,12 @@ self.addEventListener('fetch', (e) => {
       }).catch(() => {}));
       return cached;
     })());
+    return;
+  }
+
+  // The app's code (/app.js?v=<hash>): kept until a newer version replaces it; the browser keeps it compiled.
+  if (url.pathname === '/app.js') {
+    e.respondWith((async () => (await caches.match(url.href, { cacheName: MEDIA })) || (await getApp(url.href)) || fetch(req))());
     return;
   }
 

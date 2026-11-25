@@ -74,22 +74,62 @@ export async function onRequest(context) {
   return out;
 }
 
+// The app page carries all its code and lessons in one inline script (2.5 MB). For signed-in visitors the page is
+// sent with that script apart, as /app.js?v=<hash of the script>: the browser (and sw.js) keeps it, compiled,
+// until the hash changes, so the app opens faster. index.html itself stays one file (the Android app and the
+// tests use it as it is). /app.js is served only to signed-in visitors, like the page.
+const APP_JS = '/app.js';
+function appParts(html) {
+  const a = html.indexOf('<script>'), b = html.lastIndexOf('</script>');
+  if (a < 0 || b < a) return null;
+  return { head: html.slice(0, a), js: html.slice(a + 8, b), tail: html.slice(b + 9) };
+}
+let appMemo = { tag: '', v: '' };
+async function appVersion(js, tag) {
+  if (tag && appMemo.tag === tag) return appMemo.v;
+  const d = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(js));
+  const v = [...new Uint8Array(d)].slice(0, 6).map((x) => x.toString(16).padStart(2, '0')).join('');
+  if (tag) appMemo = { tag, v };
+  return v;
+}
+async function splitPage(res) {
+  if (res.status !== 200 || !(res.headers.get('Content-Type') || '').includes('text/html')) return res;
+  const html = await res.text(), parts = appParts(html);
+  const headers = new Headers(res.headers);
+  headers.delete('Content-Encoding');
+  headers.delete('Content-Length');
+  if (!parts || parts.js.length < 10000) return new Response(html, { status: res.status, headers });
+  const v = await appVersion(parts.js, res.headers.get('ETag'));
+  return new Response(parts.head + '<script src="' + APP_JS + '?v=' + v + '"></script>' + parts.tail, { status: res.status, headers });
+}
+async function appScript(request, env, next) {
+  const home = new URL('/', request.url);
+  const res = env.ASSETS ? await env.ASSETS.fetch(new Request(home)) : await next(new Request(home));
+  const parts = res.ok ? appParts(await res.text()) : null;
+  if (!parts) return new Response('Not found', { status: 404 });
+  const v = await appVersion(parts.js, res.headers.get('ETag'));
+  const same = new URL(request.url).searchParams.get('v') === v;
+  return new Response(parts.js, { headers: { 'Content-Type': 'text/javascript; charset=utf-8', 'Cache-Control': same ? 'private, max-age=31536000, immutable' : 'private, no-cache' } });
+}
+
 async function handle({ request, env, next }) {
   const email = await accessEmail(request, env);
   if (!email) return publicOnly(request, next);
   // The shared link is the welcome page; people already signed in go straight to the app (also from /login).
   const path = new URL(request.url).pathname;
   if (WELCOME.has(path)) return Response.redirect(new URL('/', request.url).toString(), 302);
-  if (!PAGES.has(new URL(request.url).pathname) || !env.TRIALS) return next();
+  if (path === APP_JS) return appScript(request, env, next);
+  if (!PAGES.has(path)) return next();
+  if (!env.TRIALS) return splitPage(await next());
 
   // Starts the trial on the first visit. When the trial or subscription has ended the app still
   // opens, in its free version (first lessons and review); it learns which from /api/me.
   // A friend's invite link (/welcome/?r=<code>) left its code in the "pr" cookie: it counts when the trial starts.
   const st = await accessStatus(env.TRIALS, email, true);
   const pr = (request.headers.get('Cookie') || '').match(/(?:^|;\s*)pr=([a-z0-9]{8})(?:;|$)/);
-  if (!pr) return next();
+  if (!pr) return splitPage(await next());
   if (st.fresh) await applyInvite(env.TRIALS, email, pr[1]);
-  const res = await next();
+  const res = await splitPage(await next());
   const out = new Response(res.body, res);
   out.headers.append('Set-Cookie', 'pr=; Max-Age=0; Path=/; Secure; SameSite=Lax');
   return out;

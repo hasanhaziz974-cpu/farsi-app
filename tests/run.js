@@ -495,6 +495,29 @@ async function server() {
   }
   await zaincash();
   await inviteGift();
+  await appSplit();
+}
+
+// Signed in, the page comes with its inline script apart (/app.js?v=<hash>), and /app.js answers that script, kept
+// for a year when the hash matches. Without sign-in /app.js goes to the sign-in page.
+async function appSplit() {
+  const store = new Map(), kv = { get: async (k, ty) => { const v = store.has(k) ? store.get(k) : null; return v !== null && ty === 'json' ? JSON.parse(v) : v; }, put: async (k, v) => { store.set(k, String(v)); }, delete: async (k) => { store.delete(k); } };
+  const { makeSession, sessionCookie } = await import(path.join(ROOT, 'lib/auth.js'));
+  const { onRequest } = await import(path.join(ROOT, 'functions/_middleware.js'));
+  const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  const next = async () => new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8', ETag: '"t1"' } });
+  const cookie = sessionCookie(await makeSession(kv, 'paid@x.iq')).split(';')[0];
+  const env = { TRIALS: kv };
+  const get = (p, c) => onRequest({ request: new Request('https://site.dev' + p, { headers: c ? { Cookie: c } : {} }), env, next });
+  const page = await (await get('/', cookie)).text();
+  const m = /<script src="(\/app\.js\?v=[0-9a-f]{12})"><\/script>/.exec(page);
+  if (!m || page.length > 100000 || !page.includes('id="main"')) fail('server', 'the signed-in page does not come with its script apart (' + page.length + ' bytes)');
+  else {
+    const r = await get(m[1], cookie), js = await r.text(), inline = html.slice(html.indexOf('<script>') + 8, html.lastIndexOf('</script>'));
+    if (js !== inline || !/immutable/.test(r.headers.get('Cache-Control') || '') || !/javascript/.test(r.headers.get('Content-Type') || '')) fail('server', '/app.js does not answer the page script, kept: ' + r.headers.get('Cache-Control'));
+  }
+  const anon = await get('/app.js?v=1');
+  if (anon.status !== 302) fail('server', '/app.js without sign-in answers ' + anon.status + ', expected 302 to the sign-in page');
 }
 
 // Parsa is for paid subscribers only: an invite gift (and the free version) is refused, chapter 1 included.
