@@ -1,6 +1,7 @@
 // Service worker for the installed web app (web version only; the Android app does not register it).
-// - The app page: network first, so the sign-in and trial checks in functions/_middleware.js still run
-//   whenever there is a connection. The last good copy is used only when the phone is offline.
+// - The app page: the last good copy opens at once (it holds all the lessons, so it is large), while the network
+//   copy is fetched in the background, so the sign-in and trial checks in functions/_middleware.js still run on
+//   every visit. New content shows on the next visit (the page is told, and says so).
 // - Fonts, scripts, icons and audio: cached on first use, so lessons heard once also play offline.
 // - Daily reminder: the reminder Worker (workers/reminders/index.js) sends an empty push; the text is chosen here (on the
 //   trial's last day it says the trial is ending).
@@ -36,21 +37,34 @@ self.addEventListener('fetch', (e) => {
   if (url.origin !== self.location.origin) return;
 
   if (req.mode === 'navigate' && isAppPage(url)) {
-    e.respondWith((async () => {
-      try {
-        const res = await fetch(req);
-        const cache = await caches.open(APP);
-        if (res.ok && res.type === 'basic' && !res.redirected) {
-          await cache.put(PAGE, res.clone());
-        } else if (res.status === 403) {
-          await cache.delete(PAGE); // the trial or access period ended
-        }
-        return res;
-      } catch (err) {
-        const cached = await caches.match(PAGE, { cacheName: APP });
-        if (cached) return cached;
-        throw err;
+    // The page is large (all the lessons are in it), so a saved copy opens at once and the network copy
+    // replaces it in the background for the next visit. The sign-in check still runs on every visit: when the
+    // background request is sent to the sign-in page (signed out), the saved copy is dropped and the page reloads.
+    const fresh = (async () => {
+      const res = await fetch(req);
+      const cache = await caches.open(APP);
+      if (res.ok && res.type === 'basic' && !res.redirected) {
+        await cache.put(PAGE, res.clone());
+      } else if (res.type === 'opaqueredirect' || res.redirected || res.status === 403) {
+        await cache.delete(PAGE);
       }
+      return res;
+    })();
+    e.respondWith((async () => {
+      const cached = await caches.match(PAGE, { cacheName: APP });
+      if (!cached) return fresh;
+      e.waitUntil(fresh.then(async (res) => {
+        const out = res.type === 'opaqueredirect' || res.redirected || res.status === 403;
+        const tag = (r) => r.headers.get('ETag') || '';
+        const msg = out ? 'parsa-reload' : res.ok && tag(res) && tag(res) !== tag(cached) ? 'parsa-updated' : '';
+        // The page this navigation opens may not exist yet when the answer comes, so wait for it (up to 10 s).
+        for (let i = 0; msg && i < 40; i++) {
+          const c = e.resultingClientId && (await self.clients.get(e.resultingClientId));
+          if (c) return c.postMessage(msg);
+          await new Promise((ok) => setTimeout(ok, 250));
+        }
+      }).catch(() => {}));
+      return cached;
     })());
     return;
   }

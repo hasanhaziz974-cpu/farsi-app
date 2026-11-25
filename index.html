@@ -2222,7 +2222,7 @@ function installed(){return standalone()||!!S.inst}
 function instMark(){if(!S.inst){S.inst=1;save();try{render()}catch(x){}}}
 function instHide(){S.instHide=1;save();render();toast('لن تظهر هذه البطاقة مرة أخرى. تجد الشرح في الإعدادات.')}
 if(webApp()){
-if('serviceWorker' in navigator)window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});
+if('serviceWorker' in navigator){navigator.serviceWorker.addEventListener('message',function(e){if(e.data==='parsa-reload')location.reload();else if(e.data==='parsa-updated')toast('🔄 وصل محتوى جديد، ويظهر عند فتح التطبيق مرة أخرى')})}if('serviceWorker' in navigator)window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});
 // Ask the browser not to clear the progress kept in this site's storage when the phone is short of space.
 try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persisted().then(function(p){if(!p)navigator.storage.persist()})}catch(e){}
 // Keep the reminder switch in step with the server (e.g. after reinstalling or on a second device).
