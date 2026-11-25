@@ -88,13 +88,20 @@ nav button.on{color:var(--pr);border-top-color:var(--pr)}
 .stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
 .tile{background:var(--sf);border:1px solid var(--bd);border-radius:14px;padding:12px;text-align:center}
 .tv{font-size:22px;font-weight:800;color:var(--pr)}
+#st:empty,#xp:empty{visibility:hidden}
+.boot{display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;padding:90px 20px;color:var(--mu)}
+.boot b{color:var(--tx);font-size:17px}
+.boot span{font-size:14px;max-width:260px}
+.spin{width:38px;height:38px;border:4px solid var(--bd);border-top-color:var(--pr);border-radius:50%;animation:spin .9s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spin{animation-duration:3s}}
 .lnk-no{background:none;border:0;color:var(--no);font:inherit;font-size:14px;text-decoration:underline;cursor:pointer;padding:8px}
 </style>
 </head>
 <body>
 <div id="app">
 <header><h1>الفارسية من الصفر</h1><div class="chips"><span class="chip" id="st"></span><span class="chip" id="xp"></span></div></header>
-<main id="main"></main>
+<main id="main"><div class="boot"><div class="spin"></div><b>جارٍ تحميل الدروس…</b><span>أول فتح يأخذ ثواني قليلة، وبعده يفتح التطبيق فوراً.</span></div></main>
 </div>
 <nav><div id="nav"></div></nav>
 <script src="bridge.js"></script>
