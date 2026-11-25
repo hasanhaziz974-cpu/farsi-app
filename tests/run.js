@@ -514,6 +514,13 @@ async function inviteGift() {
   if (g.status !== 403) fail('server', 'invite gift: Parsa chapter 4 answers ' + g.status + ', expected 403 (subscribers only)');
   if (p.status === 403) fail('server', 'a paid subscriber is refused Parsa chapter 4');
   if (t.status === 403) fail('server', 'invite gift: the free taste of chapter 1 is refused');
+  // The gift goes to the inviter only, for the first 3 friends; the new learner gets nothing.
+  const { applyInvite, inviteCode, INVITE_DAYS } = await import(path.join(ROOT, 'lib/invite.js'));
+  const code = await inviteCode(kv, 'host@x.iq'), ends = [];
+  for (const f of ['f1@x.iq', 'f2@x.iq', 'f3@x.iq', 'f4@x.iq']) { await applyInvite(kv, f, code); ends.push(store.get('allow:host@x.iq')); }
+  const days = (d) => Math.round((Date.parse(d) - Date.parse(new Date().toISOString().slice(0, 10))) / 864e5) + 1;
+  if (['f1@x.iq', 'f2@x.iq', 'f3@x.iq', 'f4@x.iq'].some((f) => store.has('allow:' + f))) fail('server', 'invite: the new learner got a gift');
+  if (ends.map(days).join() !== [1, 2, 3, 3].map((n) => n * INVITE_DAYS).join()) fail('server', 'invite: the inviter got ' + ends.map(days) + ' days after 4 friends, expected 3 gifts of ' + INVITE_DAYS);
 }
 
 // ZainCash online payment against a simulated gateway and KV: a paid order extends the subscription once; a wrong

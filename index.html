@@ -1912,14 +1912,14 @@ var INV=null;
 function invLoad(){if(INV||!webApp()||!navigator.onLine)return;INV={busy:true};fetch('/api/invite',{credentials:'same-origin'}).then(function(r){return r.ok?r.json():null}).then(function(j){INV=j&&j.link?j:{err:1};
 if(INV.n>(S.invn||0)){var k=INV.n-(S.invn||0);S.invn=INV.n;save();try{celebrate([k>1?'🎉 سجّل '+k+' من أصدقائك من رابطك!':'🎉 سجّل صديق من رابطك!',INV.forever?'شكراً لأنك تنشر التطبيق 💙':'ربحت '+(k*INV.days)+' أيام من الاشتراك الكامل'])}catch(e){}}
 try{if(tab==='me')render()}catch(e){}}).catch(function(){INV={err:1}})}
-function inviteCard(){if(!webApp()||!S.xp)return'';return'<button class="row" onclick="go(\'me\')"><div><div style="font-weight:600">🎁 ادعُ صديقاً</div><div class="mu">أيام تفتح كل الدروس لك ولصديقك</div></div><span class="mu">‹</span></button>'}
+function inviteCard(){if(!webApp()||!S.xp)return'';return'<button class="row" onclick="go(\'me\')"><div><div style="font-weight:600">🎁 ادعُ صديقاً</div><div class="mu">أيام تفتح لك كل الدروس عن كل صديق يسجّل</div></div><span class="mu">‹</span></button>'}
 function inviteBox(){if(!webApp())return'';invLoad();if(!INV||INV.busy||INV.err)return'';
-var msg='أتعلّم الفارسية بتطبيق «الفارسية من الصفر»، وهو ممتاز للعرب. سجّل من رابطي واحصل على '+INV.days+' أيام تفتح كل الدروس مجاناً: '+INV.link;
-return'<div class="det" style="text-align:start"><b>🎁 ادعُ صديقاً</b><p style="margin:6px 0">إذا سجّل صديق جديد من رابطك، يحصل كلٌّ منكما على <b>'+INV.days+' أيام تفتح كل الدروس والمحتوى</b> مجاناً، عدا الرحلة مع پارسا فهي للمشتركين'+(INV.max?' (حتى '+INV.max+' أصدقاء)':'')+'.</p>'
+var msg='أتعلّم الفارسية بتطبيق «الفارسية من الصفر»، وهو ممتاز للعرب. سجّل من رابطي وابدأ مجاناً: '+INV.link;
+return'<div class="det" style="text-align:start"><b>🎁 ادعُ صديقاً</b><p style="margin:6px 0">عن كل صديق جديد يسجّل من رابطك تحصل أنت على <b>'+INV.days+' أيام تفتح كل الدروس والمحتوى</b> مجاناً، عدا الرحلة مع پارسا فهي للمشتركين'+(INV.max?' (حتى '+INV.max+' أصدقاء)':'')+'. وصديقك يبدأ بالنسخة المجانية.</p>'
 +'<div dir="ltr" style="font-size:14px;background:var(--bg);border-radius:10px;padding:8px;word-break:break-all;font-family:monospace">'+hesc(INV.link)+'</div>'
 +'<div class="btns" style="margin-top:8px"><a class="btn" style="text-decoration:none;text-align:center" target="_blank" rel="noopener" href="https://wa.me/?text='+encodeURIComponent(msg)+'">واتساب</a><button class="btn alt" onclick="invShare()">'+(navigator.share?'مشاركة':'نسخ الرابط')+'</button></div>'
-+(INV.n?'<p class="mu" style="margin:8px 0 0">🎉 سجّل من رابطك: '+INV.n+(INV.forever?'':' · ربحت '+(INV.n*INV.days)+' يوماً')+'</p>':'')+(INV.forever?'<p class="mu" style="margin:6px 0 0">اشتراكك دائم، فالأيام الإضافية لصديقك.</p>':'')+'</div>'}
-function invShare(){var t='أتعلّم الفارسية بتطبيق «الفارسية من الصفر». سجّل من رابطي واحصل على '+INV.days+' أيام تفتح كل الدروس مجاناً:';if(navigator.share){navigator.share({title:'الفارسية من الصفر',text:t,url:INV.link}).catch(function(){});return}
++(INV.n?'<p class="mu" style="margin:8px 0 0">🎉 سجّل من رابطك: '+INV.n+(INV.forever?'':' · ربحت '+(INV.n*INV.days)+' يوماً')+'</p>':'')+(INV.forever?'<p class="mu" style="margin:6px 0 0">اشتراكك دائم، فلا تحتاج الأيام الإضافية. ادعُ أصدقاءك ليتعلّموا معك.</p>':INV.max&&INV.n>=INV.max?'<p class="mu" style="margin:6px 0 0">نلت هدية الدعوة كاملة ('+INV.max+' أصدقاء). شكراً لك!</p>':'')+'</div>'}
+function invShare(){var t='أتعلّم الفارسية بتطبيق «الفارسية من الصفر». سجّل من رابطي وابدأ مجاناً:';if(navigator.share){navigator.share({title:'الفارسية من الصفر',text:t,url:INV.link}).catch(function(){});return}
 try{navigator.clipboard.writeText(t+' '+INV.link).then(function(){toast('نُسخ الرابط')},function(){toast(INV.link)})}catch(e){toast(INV.link)}}
 // 🔓 Admin preview: /?open=all opens every lesson, rule, conversation, story, chapter and exam in this browser,
 // only after the server confirms the signed-in account is an admin (GET /api/chat → admin). /?open=off ends it.
