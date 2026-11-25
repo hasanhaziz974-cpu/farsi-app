@@ -23,9 +23,8 @@ export const MODELS = [
   '@cf/qwen/qwen3-30b-a3b-fp8',
   '@cf/google/gemma-3-12b-it',
 ];
-const TASTE = 12; // messages in the free version's one taste of Parsa (trip chapter 1)
 // Messages a day with Parsa (each one is checked and corrected): at most 12 for every subscriber; the admin is not
-// limited (to compare models). free: the free version, an invite gift or an ended subscription (its one taste is apart).
+// limited (to compare models). free: the free version, an invite gift or an ended subscription (refused when they send: GET only).
 const LIMIT = { list: 12, member: 12, trial: 12, free: 3 }, ADMIN_LIMIT = 200;
 const RP_VOICE = 120; // role-play recordings a subscriber can check a day (their own counter, not Parsa's messages)
 const VOICE_BYTES = 1024 * 1024; // about a minute of compressed speech; recordings stop at 15 seconds
@@ -650,7 +649,7 @@ export async function onRequest({ request, env }) {
   // checks it. It has its own daily allowance (RP_VOICE, in the signed cookie "rv") and does not use Parsa's messages.
   if (request.method === 'POST' && new URL(request.url).searchParams.get('rp') === '1') {
     if (!/^audio\//.test(request.headers.get('Content-Type') || '')) return json({ error: 'body' }, 400);
-    if (!st.ok && !admin) return json({ error: 'free', msg: 'تمثيل الأدوار بالصوت للمشتركين.' }, 403);
+    if (!(st.ok && st.kind !== 'trial' && !gift) && !admin) return json({ error: 'free', msg: 'تمثيل الأدوار بالصوت للمشتركين.' }, 403);
     const m = (request.headers.get('Cookie') || '').match(/(?:^|;\s*)rv=([A-Za-z0-9_.-]+)/);
     const rv = m ? await readSigned(kv, m[1]) : null;
     const n = rv && rv.e === email && rv.d === today() ? rv.n : 0;
@@ -661,24 +660,14 @@ export async function onRequest({ request, env }) {
     return json({ text: v.text }, 200, { 'Set-Cookie': cookie });
   }
 
-  // Talking with Parsa is for paid subscribers (not an invite gift). The free version and a gift get one taste: trip chapter 1 (c=0, text or voice),
-  // TASTE messages in all, once per person (counted in KV as "taste:<email>").
-  if (request.method === 'POST' && (st.kind === 'trial' || !st.ok || gift) && !admin) {
-    const voiceC = new URL(request.url).searchParams.get('c');
-    let c0 = voiceC === '0';
-    if (!/^audio\//.test(request.headers.get('Content-Type') || '')) {
-      try { c0 = Number((await request.clone().json()).c) === 0; } catch (e) { c0 = false; }
-    }
-    if (!c0) return json({ error: 'free', msg: 'المحادثة مع پارسا للمشتركين. جرّب الفصل الأول مجاناً.' }, 403);
-    const tasted = Number(await kv.get('taste:' + email)) || 0;
-    if (tasted >= TASTE) return json({ error: 'free', msg: 'انتهت لمحتك المجانية مع پارسا. اشترك لتكمل الرحلة وتتكلّم معه كل يوم.' }, 403);
-    await kv.put('taste:' + email, String(tasted + 1));
-    limit = Math.max(limit, used + 1); // the taste is not held back by the daily free allowance
-  }
+  // Talking with Parsa is for paid subscribers only: the free version, an invite gift and an account in its old trial
+  // period are refused (the app shows the trip as ⭐ for subscribers).
+  const paid = st.ok && st.kind !== 'trial' && !gift;
+  if (request.method === 'POST' && !paid && !admin) return json({ error: 'free', msg: 'المحادثة مع پارسا للمشتركين. اشترك لتبدأ الرحلة وتتكلّم معه كل يوم.' }, 403);
 
   // Voice: the learner's recording (audio/webm or audio/mp4, at most VOICE_BYTES) is turned into Persian
   // text with Whisper; the app then scores the pronunciation and sends the text as the reply.
-  // Without a subscription it works only in the free taste of chapter 1 (?c=0, checked above). It counts as one message.
+  // For paid subscribers only (checked above). It counts as one message.
   if (/^audio\//.test(request.headers.get('Content-Type') || '')) {
     if (used >= limit) return json({ error: 'limit', left: 0, free: !st.ok, msg: 'وصلت إلى حدّ اليوم. عُد غداً!' }, 429);
     const v = await transcribe(request, env, admin);

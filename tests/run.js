@@ -132,7 +132,7 @@ async function free(b, url) {
   const st = { xp: 50, st: 1, last: '', srs: {}, v: 28 };
   const p = await page(b, url, { state: st, me: { email: 'f@example.com', kind: 'member', ok: false } });
   const r = await p.evaluate(() => ({ lite: webLite(), L: [7, 8].map((i) => allowed('L', i)), G: [6, 7].map((i) => allowed('G', i)), D: [4, 5].map((i) => allowed('D', i)), stories: STORY.filter((s, i) => !stLock(i)).length, col: [0, 1].map((i) => !colLock(i)), trip: [0, 1].map((i) => !tripLock(i) || tripLock(i).indexOf('⭐') < 0) }));
-  const want = { lite: true, L: [true, false], G: [true, false], D: [true, false], stories: 4, col: [true, false], trip: [true, false] };
+  const want = { lite: true, L: [true, false], G: [true, false], D: [true, false], stories: 4, col: [true, false], trip: [false, false] };
   if (JSON.stringify(r) !== JSON.stringify(want)) fail('free', 'free version opens ' + JSON.stringify(r) + ', expected ' + JSON.stringify(want));
   await p.close();
   const q = await page(b, url, { state: st, me: { email: 's@example.com', kind: 'member', ok: true } });
@@ -497,7 +497,7 @@ async function server() {
   await inviteGift();
 }
 
-// An invite gift opens the lessons but not the trip with Parsa: beyond chapter 1's taste the chat answers 'free'.
+// Parsa is for paid subscribers only: an invite gift (and the free version) is refused, chapter 1 included.
 // A paid subscriber with the same kind of access ('member') is not stopped.
 async function inviteGift() {
   const store = new Map(), kv = { get: async (k, ty) => { const v = store.has(k) ? store.get(k) : null; return v !== null && ty === 'json' ? JSON.parse(v) : v; }, put: async (k, v) => { store.set(k, String(v)); }, delete: async (k) => { store.delete(k); } };
@@ -513,7 +513,7 @@ async function inviteGift() {
   const g = await ask('gift@x.iq', 3), p = await ask('paid@x.iq', 3), t = await ask('gift@x.iq', 0);
   if (g.status !== 403) fail('server', 'invite gift: Parsa chapter 4 answers ' + g.status + ', expected 403 (subscribers only)');
   if (p.status === 403) fail('server', 'a paid subscriber is refused Parsa chapter 4');
-  if (t.status === 403) fail('server', 'invite gift: the free taste of chapter 1 is refused');
+  if (t.status !== 403) fail('server', 'invite gift: Parsa chapter 1 answers ' + t.status + ', expected 403 (no free taste)');
   // Parsa's daily count lives in KV, so a learner without the cookie (cleared) still has 12 used of 12.
   store.set('pc:paid@x.iq:' + new Date().toISOString().slice(0, 10), '12');
   const cookie = sessionCookie(await makeSession(kv, 'paid@x.iq')).split(';')[0];
