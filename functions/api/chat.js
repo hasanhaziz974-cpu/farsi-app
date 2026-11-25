@@ -24,7 +24,9 @@ export const MODELS = [
   '@cf/google/gemma-3-12b-it',
 ];
 const TASTE = 12; // messages in the free version's one taste of Parsa (trip chapter 1)
-const LIMIT = { list: 100, member: 20, trial: 15, free: 3 }; // free: after the trial or subscription ended
+// Messages a day with Parsa (each one is checked and corrected): at most 12 for every subscriber; the admin is not
+// limited (to compare models). free: the free version, an invite gift or an ended subscription (its one taste is apart).
+const LIMIT = { list: 12, member: 12, trial: 12, free: 3 }, ADMIN_LIMIT = 200;
 const RP_VOICE = 120; // role-play recordings a subscriber can check a day (their own counter, not Parsa's messages)
 const VOICE_BYTES = 1024 * 1024; // about a minute of compressed speech; recordings stop at 15 seconds
 const CHECK_MODELS = ['@cf/openai/gpt-oss-120b', '@cf/meta/llama-3.3-70b-instruct-fp8-fast']; // checking trip replies
@@ -624,7 +626,7 @@ export async function onRequest({ request, env }) {
   const gift = st.kind === 'member' && st.ok && (await isGift(kv, email, await kv.get('allow:' + email)));
 
   const admin = ((await kv.get('admins', 'json')) || []).includes(email);
-  let limit = st.ok && !gift ? LIMIT[st.kind] || LIMIT.trial : LIMIT.free;
+  let limit = admin ? ADMIN_LIMIT : st.ok && !gift ? LIMIT[st.kind] || LIMIT.trial : LIMIT.free;
   const used = await counter(request, kv, email);
 
   if (request.method === 'GET') return json({ left: Math.max(0, limit - used), limit, free: !st.ok || gift, admin, models: admin ? MODELS : [] });
