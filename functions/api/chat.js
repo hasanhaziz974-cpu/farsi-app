@@ -6,6 +6,7 @@
 // allocation is the overall limit. Only the admin may choose the model (to compare them).
 import { accessEmail, accessStatus, today } from '../../lib/trial.js';
 import { signValue, readSigned } from '../../lib/auth.js';
+import { isGift } from '../../lib/invite.js';
 
 // The first model is the default (chosen by comparing them on real chats); the rest are fallbacks
 // and the admin's comparison list.
@@ -619,12 +620,14 @@ export async function onRequest({ request, env }) {
   const email = await accessEmail(request, env);
   if (!email || !kv) return json({ error: 'signin' }, 401);
   const st = await accessStatus(kv, email, false);
+  // An invite gift opens the lessons, not the trip with Parsa: for Parsa it counts as the free version.
+  const gift = st.kind === 'member' && st.ok && (await isGift(kv, email, await kv.get('allow:' + email)));
 
   const admin = ((await kv.get('admins', 'json')) || []).includes(email);
-  let limit = st.ok ? LIMIT[st.kind] || LIMIT.trial : LIMIT.free;
+  let limit = st.ok && !gift ? LIMIT[st.kind] || LIMIT.trial : LIMIT.free;
   const used = await counter(request, kv, email);
 
-  if (request.method === 'GET') return json({ left: Math.max(0, limit - used), limit, free: !st.ok, admin, models: admin ? MODELS : [] });
+  if (request.method === 'GET') return json({ left: Math.max(0, limit - used), limit, free: !st.ok || gift, admin, models: admin ? MODELS : [] });
   if (request.method !== 'POST') return json({ error: 'method' }, 405);
   if (request.headers.get('Origin') !== new URL(request.url).origin) return json({ error: 'origin' }, 403);
   if (!env.AI) return json({ error: 'not_ready', msg: 'المحادثة غير جاهزة بعد. حاول لاحقاً.' }, 503);
@@ -650,9 +653,9 @@ export async function onRequest({ request, env }) {
     return json({ text: v.text }, 200, { 'Set-Cookie': cookie });
   }
 
-  // Talking with Parsa is for subscribers. The free version gets one taste: trip chapter 1 (c=0, text or voice),
+  // Talking with Parsa is for paid subscribers (not an invite gift). The free version and a gift get one taste: trip chapter 1 (c=0, text or voice),
   // TASTE messages in all, once per person (counted in KV as "taste:<email>").
-  if (request.method === 'POST' && (st.kind === 'trial' || !st.ok) && !admin) {
+  if (request.method === 'POST' && (st.kind === 'trial' || !st.ok || gift) && !admin) {
     const voiceC = new URL(request.url).searchParams.get('c');
     let c0 = voiceC === '0';
     if (!/^audio\//.test(request.headers.get('Content-Type') || '')) {
