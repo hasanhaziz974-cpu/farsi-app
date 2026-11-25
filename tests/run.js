@@ -276,6 +276,26 @@ async function levels(b, url) {
     const place = [PC.res, PC.qs.length]; PC = null;
     return { before, n, failed, wait, passed, lv3, place, opened5: unlocked(LVL[4].L[0]) };
   });
+  // End-of-phase exams: 40 questions from every level of the phase; open only when all its levels are done; 80% earns the certificate.
+  const ph = await p.evaluate(() => {
+    const out = {}; S.pass = {}; S.gp = {}; S.dp = {}; S.skip = {}; S.exam = {}; S.phx = {}; window.confirm = () => true;
+    for (const n of [1, 2]) {
+      const q = phQs(n), lv = phLv(n), locked = phState(n).indexOf('🔒') === 0;
+      lv.forEach((k) => { S.skip[k] = { ok: true }; });
+      const open = phState(n) === ''; phStart(n); const started = !!(EX && EX.ph === n);
+      EX.qs.forEach((x, i) => { x.ok = i % 10 !== 0; }); EX.i = EX.qs.length - 1; exNext(); const pass = !!(S.phx[n] && S.phx[n].ok);
+      const cert = exView().includes('شهادة إتمام المرحلة');
+      EX = null; S.skip = {};
+      out[n] = { len: q.length, ans: q.every((x) => x.a && x.sk), levels: lv.length, locked, open, started, pass, cert };
+    }
+    S.phx = {}; return out;
+  });
+  for (const n of [1, 2]) { const x = ph[n];
+    if (x.len !== 40 || !x.ans) fail('levels', `phase ${n} exam: ${x.len} questions, all with answers: ${x.ans}`);
+    if (!x.locked || !x.open || !x.started) fail('levels', `phase ${n} exam lock: ${JSON.stringify(x)}`);
+    if (!x.pass || !x.cert) fail('levels', `phase ${n} exam at 90% does not give the certificate: ${JSON.stringify(x)}`);
+  }
+  if (ph[1].levels !== 7 || ph[2].levels < 10) fail('levels', 'phase exams cover the wrong levels: ' + ph[1].levels + ', ' + ph[2].levels);
   if (sk.before) fail('levels', 'level 2 is open before the skip exam');
   if (sk.n < 30) fail('levels', 'the skip exam has only ' + sk.n + ' questions');
   if (sk.failed || !sk.wait) fail('levels', 'a skip exam under 85% opened level 2 or allowed a retry at once');
