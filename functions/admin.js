@@ -4,7 +4,7 @@
 // the same ones the trial check in _middleware.js reads.
 import { DAY, accessEmail, lastDay, today, PLAN_IDS, PAY_METHODS } from '../lib/trial.js';
 import { invitedCount, isGift } from '../lib/invite.js';
-import { zcReady, amountOf, UAT, testConnection } from '../lib/zaincash.js';
+import { zcReady, amountOf, UAT, testConnection, PLAN_DAYS } from '../lib/zaincash.js';
 
 const PERIODS = { week: ['أسبوع', 7], month: ['شهر', 30], quarter: ['3 أشهر', 90], half: ['6 أشهر', 180], year: ['سنة', 365], forever: ['دائم', 0] };
 const FOREVER = 'دائم';
@@ -71,7 +71,9 @@ function payForm(c, env, paid) {
   const ready = zcReady(env), test = ready && !env.ZC_BASE;
   const zcBox = `<b style="display:block;margin-top:12px">الدفع الإلكتروني بزين كاش</b><div class="row"><label><input type="checkbox" name="zc" value="1"${c.zc ? ' checked' : ''}> يدفع المشترك من داخل التطبيق ويُفعَّل اشتراكه تلقائياً</label></div>
 <p class="mu">${ready ? (test ? '🧪 المفاتيح موجودة، وهي لبيئة الاختبار (' + esc(UAT) + '): الدفع تجريبي بمحافظ الاختبار. للتشغيل الحقيقي أضف في Cloudflare المتغيّر ZC_BASE بعنوان الإنتاج الذي يعطيك إياه زين كاش، ومفاتيح الإنتاج.' : '✅ المفاتيح موجودة، والدفع حقيقي.') : '⚠️ لم تُضف مفاتيح زين كاش بعد: أضف في Cloudflare Pages (Settings ← Variables and Secrets) السرّين ZC_CLIENT_ID و ZC_CLIENT_SECRET. لا ترسلهما لأحد.'}</p>`;
-  const paidRows = paid.length ? `<details><summary>آخر المدفوعات بزين كاش (${paid.length})</summary>${paid.map((x) => `<div class="p"><span class="e">${esc(x.email)}</span><span>${esc(x.plan)} · ${esc(String(x.amount))} د.ع · <span class="mu">${ltr(new Date(x.paidAt).toISOString().slice(0, 16).replace('T', ' '))}</span></span></div>`).join('')}</details>` : '';
+  // Each ZainCash payment, with a button for when its money was given back in the ZainCash merchant portal
+  // (Full Reversal): it takes the plan's days off the learner's subscription (action zc-refund).
+  const paidRows = paid.length ? `<details open><summary>آخر المدفوعات بزين كاش (${paid.length})</summary><p class="mu">إن أرجعتَ مبلغاً من بوابة التاجر في زين كاش، اضغط «↩️ أُرجع المبلغ» بجانبه، فتُطرح مدة الباقة من اشتراك صاحبه.</p>${paid.map((x) => `<div class="p"><span class="e">${esc(x.email)}</span><span>${esc(x.plan)} · ${esc(String(x.amount))} د.ع · <span class="mu">${ltr(new Date(x.paidAt).toISOString().slice(0, 16).replace('T', ' '))}</span></span>${x.st === 'refunded' ? `<span class="end">↩️ أُرجع ${ltr(new Date(x.refundedAt).toISOString().slice(0, 10))}</span>` : `<form method="post" style="display:inline"><input type="hidden" name="ref" value="${esc(x.ref)}"><button name="action" value="zc-refund" class="no" style="padding:4px 10px" onclick="return confirm('أُرجع المبلغ إلى ${esc(x.email)}؟ ستُطرح مدة الباقة من اشتراكه.')">↩️ أُرجع المبلغ</button></form>`}</div>`).join('')}</details>` : '';
   return `<h2>💳 إعدادات الاشتراك</h2><form method="post" class="card"><input type="hidden" name="action" value="paycfg">
 <p class="mu" style="margin-top:0">تظهر في صفحة «اشترك» داخل التطبيق وفي صفحة انتهاء التجربة. اترك الخانة فارغة لإخفائها.</p>
 <b>الأسعار</b>${PLAN_IDS.map(([id, label]) => `<div class="row"><span style="min-width:70px">${label}</span><input name="price_${id}" value="${esc(p[id] || '')}" placeholder="مثل: 5,000 دينار" style="flex:1"></div>`).join('')}
@@ -79,7 +81,7 @@ function payForm(c, env, paid) {
 <b style="display:block;margin-top:12px">واتساب لاستقبال الإيصالات</b><div class="row"><input name="whatsapp" value="${esc(c.whatsapp || '')}" placeholder="07701234567" style="flex:1;direction:ltr"></div>
 <b style="display:block;margin-top:12px">ملاحظة (اختيارية)</b><div class="row"><input name="note" value="${esc(c.note || '')}" placeholder="مثل: يُفعَّل الاشتراك خلال ساعات" style="flex:1"></div>
 ${zcBox}
-<div class="row"><button>حفظ</button></div>${paidRows}</form>
+<div class="row"><button>حفظ</button></div></form>${paidRows}
 <form method="post" class="row"><button name="action" value="zc-test" class="alt">🔍 افحص الاتصال بزين كاش</button><span class="mu">يتأكد من المفتاحين بلا أي دفع.</span></form>`;
 }
 
@@ -94,6 +96,26 @@ async function clearPrefix(kv, prefix) {
   return n;
 }
 
+// A ZainCash payment given back (Full Reversal in the merchant portal): its plan's days come off the learner's
+// subscription ("allow:" entry); a forever plan, or a subscription that would end before today, ends yesterday,
+// so the app turns to the free version. The order is marked refunded, once.
+async function refundOrder(kv, ref) {
+  if (!/^[0-9a-f-]{36}$/.test(ref)) return 'عملية غير معروفة.';
+  const o = await kv.get('zco:' + ref, 'json');
+  if (!o || o.st !== 'paid') return o && o.st === 'refunded' ? 'هذه العملية مُسترجعة من قبل.' : 'عملية غير معروفة.';
+  const key = 'allow:' + o.email, days = PLAN_DAYS[o.plan] || 0;
+  const current = await kv.get(key), end = current === null ? null : lastDay(current);
+  const yesterday = addDays(today(), -1);
+  let until = null;
+  if (current !== null) {
+    until = days && end ? addDays(end, -days) : yesterday;
+    if (until <= today()) until = yesterday;
+    await kv.put(key, until);
+  }
+  await kv.put('zco:' + ref, JSON.stringify({ ...o, st: 'refunded', refundedAt: Date.now() }));
+  return until && until >= today() ? `↩️ سُجّل الاسترجاع لـ ${ltr(o.email)}، وصار اشتراكه حتى ${ltr(until)}.` : `↩️ سُجّل الاسترجاع لـ ${ltr(o.email)}، وانتهى اشتراكه؛ يرى الآن النسخة المجانية.`;
+}
+
 async function act(kv, form, env) {
   if (form.get('action') === 'paycfg') return savePay(kv, form);
   if (form.get('action') === 'zc-test') {
@@ -102,6 +124,7 @@ async function act(kv, form, env) {
     const where = env.ZC_BASE ? 'الإنتاج (دفع حقيقي)' : 'بيئة الاختبار';
     return t.ok ? `✅ الاتصال بزين كاش يعمل، والمفتاحان صحيحان (${where}).` : `❌ زين كاش رفض المفتاحين (${t.status}). تأكد أن القيمتين منسوختان كاملتين بلا مسافات، وأن الاسمين ZC_CLIENT_ID و ZC_CLIENT_SECRET.`;
   }
+  if (form.get('action') === 'zc-refund') return refundOrder(kv, String(form.get('ref') || ''));
   const key0 = String(form.get('key') || '');
   if (form.get('action') === 'del-report' && /^(err|fb):[\w:.-]+$/.test(key0)) {
     await kv.delete(key0);
@@ -114,7 +137,7 @@ async function act(kv, form, env) {
   const key = 'allow:' + email;
   if (form.get('action') === 'remove') {
     await kv.delete(key);
-    return `أُوقف ${ltr(email)}. يُمنع من الدخول خلال دقيقة.`;
+    return `أُوقف اشتراك ${ltr(email)}؛ يرى الآن النسخة المجانية.`;
   }
   const period = PERIODS[form.get('period')];
   if (!period) return 'اختر مدة.';
@@ -209,7 +232,7 @@ async function view(kv, msg, env) {
 
   const pay = (await kv.get('paycfg', 'json')) || {};
   const paid = [];
-  { let cursor; do { const res = await kv.list({ prefix: 'zco:', cursor }); for (const k of res.keys) { const v = await kv.get(k.name, 'json'); if (v && v.st === 'paid') paid.push(v); } cursor = res.list_complete ? null : res.cursor; } while (cursor); }
+  { let cursor; do { const res = await kv.list({ prefix: 'zco:', cursor }); for (const k of res.keys) { const v = await kv.get(k.name, 'json'); if (v && (v.st === 'paid' || v.st === 'refunded')) paid.push({ ...v, ref: k.name.slice(4) }); } cursor = res.list_complete ? null : res.cursor; } while (cursor); }
   paid.sort((a, b) => b.paidAt - a.paidAt).splice(30);
   const reports = async (prefix) => {
     const out = [];
