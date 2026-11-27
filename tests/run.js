@@ -497,6 +497,28 @@ async function server() {
   await inviteGift();
   await appSplit();
   await audioPacks();
+  await refund();
+}
+
+// Admin page: a ZainCash payment given back takes its plan's days off the learner's subscription, once; a single
+// month refunded ends it (the free version); the list shows it as refunded.
+async function refund() {
+  const store = new Map(), kv = { get: async (k, ty) => { const v = store.has(k) ? store.get(k) : null; return v !== null && ty === 'json' ? JSON.parse(v) : v; }, put: async (k, v) => { store.set(k, String(v)); }, delete: async (k) => { store.delete(k); }, list: async ({ prefix }) => ({ keys: [...store.keys()].filter((k) => k.startsWith(prefix)).map((name) => ({ name })), list_complete: true }) };
+  const { makeSession, sessionCookie } = await import(path.join(ROOT, 'lib/auth.js'));
+  const { onRequest } = await import(path.join(ROOT, 'functions/admin.js'));
+  const day = (n) => new Date(Date.now() + n * 864e5).toISOString().slice(0, 10);
+  store.set('admins', JSON.stringify(['boss@x.iq']));
+  const r1 = '11111111-1111-4111-8111-111111111111', r2 = '22222222-2222-4222-8222-222222222222';
+  store.set('zco:' + r1, JSON.stringify({ email: 'a@x.iq', plan: 'month', amount: 7000, st: 'paid', paidAt: Date.now() }));
+  store.set('zco:' + r2, JSON.stringify({ email: 'b@x.iq', plan: 'month', amount: 7000, st: 'paid', paidAt: Date.now() }));
+  store.set('allow:a@x.iq', day(30)); store.set('allow:b@x.iq', day(395));
+  const cookie = sessionCookie(await makeSession(kv, 'boss@x.iq')).split(';')[0];
+  const post = (ref) => onRequest({ env: { TRIALS: kv }, request: new Request('https://site.dev/admin', { method: 'POST', headers: { Cookie: cookie, Origin: 'https://site.dev', 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'action=zc-refund&ref=' + ref }) });
+  await post(r1); await post(r2); await post(r2);
+  if (store.get('allow:a@x.iq') !== day(-1)) fail('server', 'refund: a refunded single month should end yesterday, got ' + store.get('allow:a@x.iq'));
+  if (store.get('allow:b@x.iq') !== day(365)) fail('server', 'refund: a month refunded from a longer subscription should take 30 days once, got ' + store.get('allow:b@x.iq'));
+  const html = await (await onRequest({ env: { TRIALS: kv }, request: new Request('https://site.dev/admin', { headers: { Cookie: cookie } }) })).text();
+  if ((html.match(/class="end">↩️ أُرجع/g) || []).length !== 2) fail('server', 'refund: the admin page does not show both payments as refunded');
 }
 
 // The site gets the audio in packs (tools/pack-audio.js, Pages takes at most 20,000 files); /audio/<name>.mp3 is
