@@ -371,6 +371,16 @@ export const CHAPTERS = [
     tasks: ["say what kind of book you want", "ask what the story is about", "ask whether the language is easy", "decide what to buy"] },
   { role: "Sara, an Iranian literary translator helping the learner translate a verse by Saadi into Arabic",
     tasks: ["say which verse you want to translate", "explain who «او» refers to", "describe the problem with your translation", "suggest a solution"] },
+  { role: "a staff member at the University of Tehran's personnel office signing the visiting-professor contract with the learner, an Iraqi professor",
+    tasks: ["say why you came", "list the documents you brought", "ask how the teaching fee is paid", "ask about your office"] },
+  { role: "a first-year student at the University of Tehran asking questions in the learner's first lecture as a visiting professor",
+    tasks: ["introduce yourself to the class", "explain how the grade is calculated", "explain the attendance rule", "say where the lecture notes are"] },
+  { role: "Reza, a struggling student who comes to the learner's (a professor's) office hours, worried about academic probation",
+    tasks: ["welcome the student", "ask about the problem", "give advice gently", "offer to plan the next term together"] },
+  { role: "Maryam, a student who comes to object to her midterm grade on a question that asked for an example",
+    tasks: ["invite her to look at the paper together", "point out what the question asked for", "mention the strength of her answer", "give advice for the final exam"] },
+  { role: "the head of the economics department chairing a department council meeting where the learner (a visiting professor) proposes a new course",
+    tasks: ["propose the new course", "suggest replacing the department seminar", "answer the condition about sources", "ask for it to be recorded in the minutes"] },
 ];
 
 
