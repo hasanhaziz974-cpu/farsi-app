@@ -59,7 +59,14 @@ const INTERNAL = /^\/(tools|tests|lib|workers|store|functions|\.github)(\/|$)|^\
 // The recorded pronunciation is deployed in packs (tools/pack-audio.js: audio/p/<first 3 hex>.bin), because Pages
 // takes at most 20,000 files. /audio/<hex>.mp3 is answered from its pack, with byte ranges for the audio
 // player (Safari asks for them). Without the pack (a deployment of the separate files) the file itself is served.
-async function packedAudio({ request, env, next }, name) {
+// One file out of its pack: its bytes, false when the pack has no such file, null without packs. A file once taken
+// out is kept a day in Cloudflare's cache at that location, so a word heard again is not unpacked again.
+async function audioBytes({ request, env, next, waitUntil }, name) {
+  const cache = typeof caches !== 'undefined' && caches.default, key = new URL('/audio/' + name, request.url).toString();
+  if (cache) {
+    const hit = await cache.match(key).catch(() => null);
+    if (hit) return new Uint8Array(await hit.arrayBuffer());
+  }
   const at = new URL('/audio/p/' + name.slice(0, 3) + '.bin', request.url);
   const pk = env.ASSETS ? await env.ASSETS.fetch(new Request(at)) : await next(new Request(at));
   if (!pk || pk.status !== 200) return null;
@@ -69,8 +76,21 @@ async function packedAudio({ request, env, next }, name) {
   let head;
   try { head = JSON.parse(new TextDecoder().decode(buf.subarray(4, 4 + hl))); } catch (e) { return null; }
   const e = head[name];
-  if (!e) return new Response('Not found', { status: 404 });
-  const body = buf.subarray(4 + hl + e[0], 4 + hl + e[0] + e[1]), size = body.length;
+  if (!e) return false;
+  const body = buf.slice(4 + hl + e[0], 4 + hl + e[0] + e[1]);
+  if (cache) {
+    const put = cache.put(key, new Response(body.slice(), { headers: { 'Content-Type': 'audio/mpeg', 'Cache-Control': 'public, max-age=86400' } })).catch(() => {});
+    if (waitUntil) waitUntil(put); else await put;
+  }
+  return body;
+}
+
+async function packedAudio(context, name) {
+  const { request } = context;
+  const body = await audioBytes(context, name);
+  if (body === null) return null;
+  if (body === false) return new Response('Not found', { status: 404 });
+  const size = body.length;
   const headers = { 'Content-Type': 'audio/mpeg', 'Accept-Ranges': 'bytes' };
   const r = /^bytes=(\d*)-(\d*)$/.exec(request.headers.get('Range') || '');
   if (r && (r[1] || r[2])) {
